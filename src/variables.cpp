@@ -1,9 +1,11 @@
 #include "variables.hpp"
+#include "thermodynamics.hpp"
 #include <vector>
 #include <string>
 #include <fstream>
-
 #include <iostream>
+
+extern double kappa,r;
 
 variables::variables(){}
 
@@ -12,9 +14,12 @@ variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}
     W = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
     flux = std::vector<std::vector<double>>(N_walls,std::vector<double>(N_var,0.0));
     exact_flux = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
+
+    q = std::vector<double>(N,0.0);
+    md = std::vector<double>(N,0.0);
 }
 
-variables::variables(int _N_var, int _N, std::vector<double> W_0) : variables(_N_var,_N)
+variables::variables(int _N_var, int _N, std::vector<double> const& W_0) : variables(_N_var,_N)
 {
     for(auto& wi : W)
     {
@@ -25,7 +30,43 @@ variables::variables(int _N_var, int _N, std::vector<double> W_0) : variables(_N
     }
 }
 
-void variables::export_to_file(std::string path)
+variables::variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N)
+{
+    for(int i = 0; i < N; i++)
+    {
+        for(int k = 0; k < N_var; k++)
+        {
+            W[i][k] = W_0[i][k];
+        }
+    }
+}
+
+void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh)
+{
+    double V = 0;
+
+    for(int i = 1; i < msh.N-1; i++)
+    {
+        if(msh.x[i] > x_from && msh.x[i] < x_to)
+        {
+            V += (msh.xf[i] - msh.xf[i-1])*msh.A[i];
+        }
+    }
+
+    double Q_V = Q_tot/V;
+
+    for(int i = 0; i < N; i++)
+    {
+        if(msh.x[i] > x_from && msh.x[i] < x_to)
+        {
+            q[i] = Q_V*msh.A[i];
+        }
+    }
+
+    std::cout << "Source: " << Q_V << " " << V << "\n";
+}
+
+void variables::export_to_file(std::string path, mesh const& msh)
 {
     auto stream = std::ofstream();
 
@@ -35,10 +76,55 @@ void variables::export_to_file(std::string path)
 
         for(int i = 0; i < N; i++)
         {
-            stream << W[i][k] << "\n";
+            stream << msh.x[i] << " " << W[i][k] << "\n";
         }
 
         stream << "\n";
         stream.close();
     }
+
+    stream =  std::ofstream("out/p.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << thermo::pressure(W[i],kappa) << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/u.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << W[i][1]/W[i][0] << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/T.txt");
+
+    double T_max = 0;
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << thermo::temperature(W[i],kappa,r) << "\n";
+        T_max = std::max(T_max,thermo::temperature(W[i],kappa,r));
+    }
+
+    // std::cout << T_max << "\n";
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/a.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << thermo::speed_of_sound(W[i],kappa) << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
 }
