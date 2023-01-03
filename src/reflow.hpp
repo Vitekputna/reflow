@@ -12,7 +12,7 @@ class reflow
     public:
     variables var;
     mesh msh;
-    std::vector<particle> particles;
+    particle_manager par_man;
 
     void(*left_boundary)(variables&,mesh&,std::vector<double>&);
     void(*right_boundary)(variables&,mesh&,std::vector<double>&);
@@ -21,9 +21,9 @@ class reflow
     std::vector<double> right_values;
 
     int n_dt = 2;
-    int n_res = 5000;
+    int n_res = 10000;
 
-    volatile double max_res = 50;
+    volatile double max_res = 500000;
     
     
     reflow(variables& _var, mesh& _msh);
@@ -40,9 +40,8 @@ class reflow
     void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), std::vector<double> _left_values,
                       void(*right)(variables&,mesh&,std::vector<double>&), std::vector<double> _right_values);
 
-
-    void spawn_particles(int n_particles);
     void export_particles(std::vector<particle>& particles);
+    void init_particles(int N_max, int N_particles, int N_per_group);
 
     void solve();
 };

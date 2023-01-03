@@ -35,7 +35,7 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
     {
         res[i][0] += var.md[i];
         res[i][1] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::pressure(var.W[i],kappa);
-        res[i][2] += var.q[i]/msh.A[i];
+        res[i][2] += var.q[i]/msh.A[i]; 
     }
 }
 
@@ -99,9 +99,9 @@ double solver::max_residual(std::vector<std::vector<double>> const& res, int res
 {
     double max_res = 0;
 
-    for(auto const& r : res)
+    for(unsigned int i = 1; i < res.size()-1; i++)
     {
-        max_res = std::max(max_res, std::abs(r[res_idx]));
+        max_res = std::max(max_res, std::abs(res[i][res_idx]));
         // max_res += abs(r[res_idx]);
     }
 

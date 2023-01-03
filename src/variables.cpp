@@ -128,3 +128,36 @@ void variables::export_to_file(std::string path, mesh const& msh)
     stream << "\n";
     stream.close();
 }
+
+void variables::export_timestep(double t, mesh const& msh, std::vector<particle> const& particles)
+{
+    auto stream = std::ofstream("out/timesteps/data_" + std::to_string(t) + ".txt");
+    
+    stream << "x[m]\trho[kg/m3]\tu[m/s]\tp[Pa]\tT[K]\tP_r[m]\tP_u[m/s]\tP_T[K]\tP_N[-]\n";
+
+    std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
+
+    for(auto const& P : particles)
+    {
+        if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
+    }
+
+    int n;
+    for(auto const& P : particles)
+    {
+        if(P.in_use)
+        {
+            n = particle_values[P.last_cell_idx][3];
+            particle_values[P.last_cell_idx][0] += P.N*P.r/n;
+            particle_values[P.last_cell_idx][1] += P.N*P.u/n;
+            particle_values[P.last_cell_idx][2] += P.N*P.T/n;
+        }
+    }
+
+    for(int i = 1; i < N-1; i++)
+    {
+        stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][1]/W[i][0] << "\t" << thermo::pressure(W[i],kappa) << "\t" << thermo::temperature(W[i],kappa,r)
+                           << "\t" << particle_values[i][0] << "\t" << particle_values[i][1] << "\t" << particle_values[i][2] << "\t" << particle_values[i][3] << "\n";
+    }
+
+}

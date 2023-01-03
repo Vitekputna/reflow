@@ -64,47 +64,17 @@ void reflow::export_particles(std::vector<particle>& particles)
     int n, N;
     double r, u, T;
 
-    auto p_stream = std::ofstream("out/particle.txt");
+    auto p_stream = std::ofstream("out/particles.txt");
 
-    for(int i = 1; i < msh.N; i++)
+    for(auto& P : particles)
     {
-        n = 0;
-        r = 0;
-        N = 0;
-        u = 0;
-        T = 0;
-        for(auto& particle : particles)
-        {
-            if(particle.x > msh.xf[i-1] && particle.x <= msh.xf[i])
-            {
-                N++;
-                n += particle.N;
-                r += particle.r;
-                u += particle.u;
-                T += particle.T;
-            }
-        }
-
-        p_stream << msh.x[i] << " " << n << " " << r/N << " " << u/N << " " << T/N << "\n";
+        p_stream << P.x << " " << P.u << " " << P.T << " " << P.r << "\n";
     }
 }
 
-void reflow::spawn_particles(int n_particles)
+void reflow::init_particles(int N_max, int N_particles, int N_per_group)
 {
-    particles.resize(n_particles);
-
-    //randomizer for velocity
-    std::default_random_engine rnd{std::random_device{}()};
-    std::uniform_real_distribution<double> dist(1e-4,2e-4);
-
-    double du;
-
-    for(int i = 0; i < n_particles; i++)
-    {
-        du = dist(rnd);
-        particles[i] = particle(1,0,du,50,1000,300);
-        // std::cout << 50+du << "\n";
-    }
+    par_man = particle_manager(N_max,N_per_group,N_particles);
 }
 
 void reflow::solve()
@@ -118,9 +88,6 @@ void reflow::solve()
     double residual = 2*max_res;
     double CFL = 0.9;
 
-    //particles
-    spawn_particles(10000);
-
     auto stream = std::ofstream("out/res.txt");
     
     do
@@ -130,9 +97,12 @@ void reflow::solve()
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
 
+        // if(!(n%5)) par_man.particle_inlet(5*dt*1.18,1e-4,10,0,1000,300);
+        // par_man.particle_inlet(dt*1.18,1e-4,10,0,1000,300);
+        par_man.particle_inlet(dt*1.18,1e-4,1.1e-4,10,10,0,0,1000,300);
+
         // lagrangian particles part
-        lagrange_solver::update_particles(dt,particles,var,msh,res);
-        // p_stream << t << " " << particles[0].x << " " << particles[0].u << " " << particles[0].T << "\n";
+        lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
 
         // time integration
         solver::Explicit_Euler(var,res,dt);
@@ -144,6 +114,7 @@ void reflow::solve()
             residual = solver::max_residual(res,2);
             std::cout << t << " " << dt << " " << residual << "              \r" << std::flush; 
             stream << residual << "\n";
+            var.export_timestep(t,msh,par_man.particles);
         }
 
         // boundary
@@ -160,8 +131,9 @@ void reflow::solve()
     std::cout << "total steps[/] \t|end time[s] \t|final residual[/]\n";
     std::cout << n << "\t\t " << t << "\t " << residual << "\n";
     std::cout << "///////////////////////////////////////\n";
+    std::cout << "Number of particles: " << par_man.particles.size() << "\n";
 
-    reflow::export_particles(particles);
+    reflow::export_particles(par_man.particles);
     var.export_to_file("out/test.txt", msh);
     msh.export_to_file();
 }
