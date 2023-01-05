@@ -61,9 +61,6 @@ void reflow::bump_geometry()
 
 void reflow::export_particles(std::vector<particle>& particles)
 {
-    int n, N;
-    double r, u, T;
-
     auto p_stream = std::ofstream("out/particles.txt");
 
     for(auto& P : particles)
@@ -86,9 +83,11 @@ void reflow::solve()
     double dt = 4e-8;
     double t_end = 1;
     double residual = 2*max_res;
-    double CFL = 0.9;
+    double CFL = 0.8;
 
     auto stream = std::ofstream("out/res.txt");
+    stream << "Time [s]\tResidual[...]\n";
+    stream.close();
     
     do
     {
@@ -99,7 +98,7 @@ void reflow::solve()
 
         // if(!(n%5)) par_man.particle_inlet(5*dt*1.18,1e-4,10,0,1000,300);
         // par_man.particle_inlet(dt*1.18,1e-4,10,0,1000,300);
-        par_man.particle_inlet(dt*1.18,1e-4,1.1e-4,10,10,0,0,1000,300);
+        par_man.particle_inlet(dt*1,1e-4,1.1e-4,100,100,0,0,1000,300);
 
         // lagrangian particles part
         lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
@@ -107,15 +106,21 @@ void reflow::solve()
         // time integration
         solver::Explicit_Euler(var,res,dt);
 
-        dt = solver::time_step(var,msh,kappa,CFL);
-
         if(!(n % n_res)) 
         {
-            residual = solver::max_residual(res,2);
+            stream = std::ofstream("out/res.txt",std::ios_base::app);
+            residual = solver::max_residual(res,var,2);
             std::cout << t << " " << dt << " " << residual << "              \r" << std::flush; 
-            stream << residual << "\n";
+            stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,1) << "\t" << residual << "\n";
+            stream.close();
+        }
+
+        if(!(n % n_exp))
+        {
             var.export_timestep(t,msh,par_man.particles);
         }
+
+        dt = solver::time_step(var,msh,kappa,CFL);
 
         // boundary
         left_boundary(var,msh,left_values);
@@ -123,7 +128,8 @@ void reflow::solve()
 
         t += dt;
         n++;
-    } while ((t < t_end && residual > max_res) || n < 500);
+    // } while ((t < t_end && residual > max_res) || n < 500);
+    } while (t < t_end && residual > max_res);
 
     std::cout << "\r" << std::flush;
     std::cout << "Computation done...                    \n";

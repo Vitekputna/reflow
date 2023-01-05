@@ -35,7 +35,7 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
     {
         res[i][0] += var.md[i];
         res[i][1] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::pressure(var.W[i],kappa);
-        res[i][2] += var.q[i]/msh.A[i]; 
+        // res[i][2] += var.q[i]/msh.A[i]; 
     }
 }
 
@@ -95,7 +95,7 @@ double solver::time_step(variables const& var, mesh const& msh, double kappa, do
     return CFL*dt;
 }
 
-double solver::max_residual(std::vector<std::vector<double>> const& res, int res_idx)
+double solver::max_residual(std::vector<std::vector<double>> const& res, variables const& var, int res_idx)
 {
     double max_res = 0;
 

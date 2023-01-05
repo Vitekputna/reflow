@@ -31,5 +31,5 @@ namespace solver
 
     // runtime functions
     double time_step(variables const& var, mesh const& msh, double kappa, double CFL);
-    double max_residual(std::vector<std::vector<double>> const& res, int res_idx);
+    double max_residual(std::vector<std::vector<double>> const& res, variables const& var, int res_idx);
 };

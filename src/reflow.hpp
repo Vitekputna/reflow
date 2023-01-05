@@ -21,9 +21,10 @@ class reflow
     std::vector<double> right_values;
 
     int n_dt = 2;
-    int n_res = 10000;
+    int n_res = 200;
+    int n_exp = 10000;
 
-    volatile double max_res = 500000;
+    volatile double max_res = 5000;
     
     
     reflow(variables& _var, mesh& _msh);

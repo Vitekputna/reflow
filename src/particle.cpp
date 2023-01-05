@@ -54,7 +54,7 @@ bool particle_manager::particle_inlet(double m, double r_from, double r_to, doub
 {
     double r = 0.5*(r_from+r_to);
     int N = m/(4/3*3.14159*r*r*r*rho);
-    spawn_particles(5,N,r_from,r_to,u_from,u_to,x_from,x_to,rho,T);
+    spawn_particles(1,N,r_from,r_to,u_from,u_to,x_from,x_to,rho,T);
     return true;
 }
 
