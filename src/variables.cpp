@@ -4,13 +4,17 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <exception>
 
 extern double kappa,r;
 
 variables::variables(){}
 
-variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}
+variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}, N_comp{_N_var-2}
 {
+    mom_idx = N_comp;
+    eng_idx = N_comp+1;
+
     W = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
     flux = std::vector<std::vector<double>>(N_walls,std::vector<double>(N_var,0.0));
     exact_flux = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
@@ -21,6 +25,9 @@ variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}
 
 variables::variables(int _N_var, int _N, std::vector<double> const& W_0) : variables(_N_var,_N)
 {
+
+    if((uint)N_var != W_0.size()) throw std::overflow_error("Size of initial condition is not the same as declared number of variables");
+
     for(auto& wi : W)
     {
         for(int k = 0; k < N_var; k++)
@@ -69,7 +76,6 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
 void variables::export_to_file(std::string path, mesh const& msh)
 {
     auto stream = std::ofstream();
-
     for(int k = 0; k < N_var; k++)
     {
         stream =  std::ofstream("out/W" + std::to_string(k) + ".txt");
@@ -82,6 +88,23 @@ void variables::export_to_file(std::string path, mesh const& msh)
         stream << "\n";
         stream.close();
     }
+
+   
+    stream =  std::ofstream("out/Y.txt");
+    for(int i = 0; i < N; i++)
+    {
+        std::vector<double> comp = thermo::composition(W[i]);
+
+        stream << msh.x[i] << " ";
+        for(auto const c : comp)
+        {
+            stream << c << " ";
+        }
+        stream << "\n";
+    }
+    stream.close();
+    
+
 
     stream =  std::ofstream("out/p.txt");
 
@@ -112,8 +135,6 @@ void variables::export_to_file(std::string path, mesh const& msh)
         stream << msh.x[i] << " " << thermo::temperature(W[i],kappa,r) << "\n";
         T_max = std::max(T_max,thermo::temperature(W[i],kappa,r));
     }
-
-    // std::cout << T_max << "\n";
 
     stream << "\n";
     stream.close();
@@ -156,7 +177,7 @@ void variables::export_timestep(double t, mesh const& msh, std::vector<particle>
 
     for(int i = 1; i < N-1; i++)
     {
-        stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][1]/W[i][0] << "\t" << thermo::pressure(W[i],kappa) << "\t" << thermo::temperature(W[i],kappa,r)
+        stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][N_comp]/W[i][0] << "\t" << thermo::pressure(W[i],kappa) << "\t" << thermo::temperature(W[i],kappa,r)
                            << "\t" << particle_values[i][0] << "\t" << particle_values[i][1] << "\t" << particle_values[i][2] << "\t" << particle_values[i][3] << "\n";
     }
 

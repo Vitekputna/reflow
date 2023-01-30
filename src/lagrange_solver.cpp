@@ -22,7 +22,7 @@ inline double lagrange_solver::radius_change(double D, double r, double rho, dou
     return std::min(0.0,-D/4/3.14159/((r*r)*rho));   
 }
 
-double lagrange_solver::integrate_particle(double dt, particle& P, std::vector<double>& W, std::vector<std::vector<double>>& res)
+double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<std::vector<double>>& res)
 {
     double K1,K2,K3,K4;
     double ap,up,rp;
@@ -32,8 +32,9 @@ double lagrange_solver::integrate_particle(double dt, particle& P, std::vector<d
     uf = W[1]/W[0];
 
     double C = 1; // momentum transfer constant
-    double D = 1e-6; // mass transfer constant
+    double D = 5e-6; // mass transfer constant
     double alfa = 1000; // heat transfer constant
+    double H = 43.46e6; // heat released for 1kg of fuel
 
     // double du = W[1]/W[0] - P.u;
     // dt = std::min(dt, std::abs(0.5*du/a));
@@ -73,17 +74,23 @@ double lagrange_solver::integrate_particle(double dt, particle& P, std::vector<d
     P.m = 4/3*3.14159*P.r*P.r*P.r*P.rho;
     P.M = P.N*P.m;
 
-    if(P.r < 0) P.reset();
+    if(P.r < 0)
+    {
+        res[P.last_cell_idx][0] += (m0)/dt/V;
+        res[P.last_cell_idx][2] += (m0)*H/dt/V;
+        P.reset();
+        return 0.0;
+    }
 
-    res[P.last_cell_idx][2] += (m0 - P.M)*1e12/dt;
-    // res[P.last_cell_idx][0] += (m0 - P.M)/dt;
+    res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
+    res[P.last_cell_idx][2] += (m0 - P.M)*H/dt/V;
 
     return dt;
 }
 
 void lagrange_solver::update_particles(double dt, std::vector<particle>& particles, variables& var, mesh const& msh, std::vector<std::vector<double>>& res)
 {
-    // double t = 0;
+    double V;
 
     for(auto& P : particles)
     {
@@ -106,7 +113,8 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
             }
 
             // update particle speed, mass, temp...
-            integrate_particle(dt,P,var.W[P.last_cell_idx],res);
+            V = msh.A[P.last_cell_idx]*(msh.xf[P.last_cell_idx] - msh.xf[P.last_cell_idx-1]);
+            integrate_particle(dt,V,P,var.W[P.last_cell_idx],res);
         }
     }
 }

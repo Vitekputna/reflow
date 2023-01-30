@@ -18,6 +18,8 @@ struct variables
     int N; // number of cells
     int N_walls; // number of walls
     int N_ghosts = 2; // number of ghost cells
+    int N_comp; // number of components
+    int mom_idx, eng_idx;
 
     variables();
     variables(int _N_var, int _N);

@@ -1,20 +1,14 @@
 #include <iostream>
 #include <vector>
+
 #include "reflow.hpp"
-#include "initial_cond.hpp"
 #include "boundary_cond.hpp"
 
-#include "mesh.hpp"
-#include "lagrange_solver.hpp"
-#include "particle.hpp"
+double kappa = 1.23;
+double r = 451;
 
-#include <fstream>
-
-// double kappa = 1.23;
-// double r = 451;
-
-double kappa = 1.4;
-double r = 287;
+// double kappa = 1.4;
+// double r = 287;
 
 int main(int argc, char** argv)
 {
@@ -28,18 +22,18 @@ int main(int argc, char** argv)
     curves.push_back(curve);
 
     // výpočet motoru
-    // reflow S(500,0,0.25,3,std::vector<double>{18.47,267,10.87e6});
-    // S.spline_geometry(curves,100);
-    // S.apply_heat_source(7e6,0.03,0.05);
+    reflow S(500,0,0.25,4,std::vector<double>{18.47,1,267,10.87e6});
+    S.spline_geometry(curves,100);
+    S.apply_heat_source(7e6,0,0.25);
     // S.init_particles(200000,100000,100);
-    // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1.18,320,r,kappa},boundary::zero_gradient_r,std::vector<double>{1e5,kappa});
-    // S.solve();
+    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,600,r,kappa,1,0.8},boundary::subsonic_outlet,std::vector<double>{100000,kappa});
+    S.solve();
 
     // test kapiček v trubce
-    reflow S(500,3,std::vector<double>{1.16,0,250000});
-    S.init_particles(200000,1000,100);
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{100,300,r,kappa},boundary::zero_gradient_r,std::vector<double>{1e5,kappa});
-    S.solve();
+    // reflow S(500,3,std::vector<double>{1.16,0,250000});
+    // S.init_particles(200000,1000,100);
+    // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{100,300,r,kappa},boundary::zero_gradient_r,std::vector<double>{1e5,kappa});
+    // S.solve();
 
     return 0;
 }

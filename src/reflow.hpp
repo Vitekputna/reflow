@@ -6,6 +6,7 @@
 #include "solver.hpp"
 #include "thermodynamics.hpp"
 #include "particle.hpp"
+#include "specie.hpp"
 
 class reflow
 {
@@ -13,6 +14,8 @@ class reflow
     variables var;
     mesh msh;
     particle_manager par_man;
+    
+
 
     void(*left_boundary)(variables&,mesh&,std::vector<double>&);
     void(*right_boundary)(variables&,mesh&,std::vector<double>&);
@@ -24,8 +27,9 @@ class reflow
     int n_res = 200;
     int n_exp = 10000;
 
-    volatile double max_res = 5000;
-    
+    bool run_w_particles = false;
+
+    volatile double max_res = 500;
     
     reflow(variables& _var, mesh& _msh);
     reflow(int N, int N_var, std::vector<double> const& init);

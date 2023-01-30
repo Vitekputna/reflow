@@ -65,13 +65,14 @@ void reflow::export_particles(std::vector<particle>& particles)
 
     for(auto& P : particles)
     {
-        p_stream << P.x << " " << P.u << " " << P.T << " " << P.r << "\n";
+        if(P.in_use) p_stream << P.x << " " << P.u << " " << P.T << " " << P.r << "\n";
     }
 }
 
 void reflow::init_particles(int N_max, int N_particles, int N_per_group)
 {
     par_man = particle_manager(N_max,N_per_group,N_particles);
+    run_w_particles = true;
 }
 
 void reflow::solve()
@@ -81,14 +82,14 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 4e-8;
-    double t_end = 1;
+    double t_end = 0.015;
     double residual = 2*max_res;
-    double CFL = 0.8;
+    double CFL = 1;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
     stream.close();
-    
+
     do
     {
         // flow field part
@@ -96,25 +97,28 @@ void reflow::solve()
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
 
-        // if(!(n%5)) par_man.particle_inlet(5*dt*1.18,1e-4,10,0,1000,300);
-        // par_man.particle_inlet(dt*1.18,1e-4,10,0,1000,300);
-        par_man.particle_inlet(dt*1,1e-4,1.1e-4,100,100,0,0,1000,300);
-
         // lagrangian particles part
-        lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
+        if(run_w_particles)
+        {
+            par_man.particle_inlet(dt*0.18,1e-4,100,0,1000,300);
+            // par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,100,100,0,0,1000,300);
+            lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
+        }
 
         // time integration
         solver::Explicit_Euler(var,res,dt);
 
+        // Runtime stuff
         if(!(n % n_res)) 
         {
             stream = std::ofstream("out/res.txt",std::ios_base::app);
-            residual = solver::max_residual(res,var,2);
+            residual = solver::max_residual(res,var,var.eng_idx);
             std::cout << t << " " << dt << " " << residual << "              \r" << std::flush; 
             stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,1) << "\t" << residual << "\n";
             stream.close();
         }
 
+        // Runtime export
         if(!(n % n_exp))
         {
             var.export_timestep(t,msh,par_man.particles);
@@ -128,8 +132,8 @@ void reflow::solve()
 
         t += dt;
         n++;
-    // } while ((t < t_end && residual > max_res) || n < 500);
     } while (t < t_end && residual > max_res);
+    // } while (n < 10);
 
     std::cout << "\r" << std::flush;
     std::cout << "Computation done...                    \n";
