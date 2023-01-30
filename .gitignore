@@ -1,2 +1,4 @@
-out/*.txt
-out/timesteps/.txt
+out/
+out/timesteps/*.txt
+bin/*.o
+reflow.out
