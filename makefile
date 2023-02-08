@@ -1,6 +1,7 @@
 CC = g++
 OPT = -O3
-FLAGS = -Wall -std=c++11
+FLAGS = -std=c++11
+LIBS = -fopenmp
 BIN_PATH = bin/
 SRC_PATH = src/
 
@@ -15,10 +16,10 @@ FILES = $(foreach F,$(FILES),$(SRC_PATH)$(F))
 all: $(BINARY)
 
 $(BINARY): $(OBJECTS)
-	$(CC) -o $@ $^ 
+	$(CC) -o $@ $^ $(LIBS)
 
 bin/%.o: src/%.cpp
-	$(CC) $(FLAGS) $(OPT) -c $^ -o $@
+	$(CC) $(FLAGS) $(OPT) -c $^ -o $@ $(LIBS)
 
 clean: 
 	rm $(BINARY) $(OBJECTS)

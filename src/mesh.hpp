@@ -8,7 +8,7 @@ struct mesh
     std::vector<double> A;
     std::vector<double> Af;
 
-    double dx_min;
+    double dx_min = 1e15;
 
     int N; // number of cells
 
@@ -23,6 +23,9 @@ struct mesh
     mesh();
     mesh(int _N);
     mesh(int _N, double from, double to);
+    void refine(std::vector<std::vector<double>> ref);
+
+    void construct_mesh();
 
     void bump();
     void cubic(std::vector<std::vector<std::vector<double>>> curves, int n);

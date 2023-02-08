@@ -4,8 +4,9 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include "omp.h"
 
-extern double kappa, r;
+// extern double kappa, r;
 
 inline double lagrange_solver::acceleration(double Cd, double r, double du)
 {
@@ -19,7 +20,9 @@ inline double lagrange_solver::heat_flux(double alfa, double C, double dT)
 
 inline double lagrange_solver::radius_change(double D, double r, double rho, double dT)
 {
-    return std::min(0.0,-D/4/3.14159/((r*r)*rho));   
+    // return std::min(0.0,-D/4/3.14159/((r*r)*rho));   
+    return std::min(0.0,-D/r);
+    
 }
 
 double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<std::vector<double>>& res)
@@ -28,13 +31,13 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     double ap,up,rp;
     double Tf, uf;
 
-    Tf = thermo::temperature(W,kappa,r);
-    uf = W[1]/W[0];
+    Tf = thermo::temperature(W);
+    uf = W[W.size()-2]/W[0];
 
     double C = 1; // momentum transfer constant
-    double D = 5e-6; // mass transfer constant
-    double alfa = 1000; // heat transfer constant
-    double H = 43.46e6; // heat released for 1kg of fuel
+    double D = 2e-6; // mass transfer constant
+    double alfa = 10; // heat transfer constant
+    double H = 43.46e5; // heat released for 1kg of fuel
 
     // double du = W[1]/W[0] - P.u;
     // dt = std::min(dt, std::abs(0.5*du/a));
@@ -57,7 +60,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     P.x += P.u*dt;
 
     // Temperature
-    P.T += alfa*dt*(thermo::temperature(W,kappa,r) - P.T);
+    P.T += alfa*dt*(thermo::temperature(W) - P.T);
 
     // radius
     K1 = dt*radius_change(D,P.r,P.rho,Tf-P.T);
@@ -77,13 +80,15 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     if(P.r < 0)
     {
         res[P.last_cell_idx][0] += (m0)/dt/V;
-        res[P.last_cell_idx][2] += (m0)*H/dt/V;
+        res[P.last_cell_idx][2] += (m0)/dt/V;
+        // res[P.last_cell_idx][4] += (m0)*H/dt/V;
         P.reset();
         return 0.0;
     }
 
     res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
-    res[P.last_cell_idx][2] += (m0 - P.M)*H/dt/V;
+    res[P.last_cell_idx][2] += (m0 - P.M)/dt/V;
+    // res[P.last_cell_idx][4] += (m0 - P.M)*H/dt/V;
 
     return dt;
 }
@@ -92,29 +97,31 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
 {
     double V;
 
-    for(auto& P : particles)
+    omp_set_num_threads(6);
+    #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
+    for(int j = 0; j < particles.size();j++)
     {
-        if(P.in_use)
+        if(particles[j].in_use)
         {
             // find where is particle located in mesh
-            for(int i = P.last_cell_idx; i < msh.N; i++)
+            for(int i = particles[j].last_cell_idx; i < msh.N; i++)
             {
-                if(P.x < msh.xf[0]) break;
-                if(P.x > msh.xf[i-1] && P.x <= msh.xf[i])
+                if(particles[j].x < msh.xf[0]) break;
+                if(particles[j].x > msh.xf[i-1] && particles[j].x <= msh.xf[i])
                 {
-                    P.last_cell_idx = i;
+                    particles[j].last_cell_idx = i;
                     break;
                 }
             }
 
-            if(P.x > msh.xf.back())
+            if(particles[j].x > msh.xf.back())
             {
-                P.reset();
+                particles[j].reset();
             }
 
             // update particle speed, mass, temp...
-            V = msh.A[P.last_cell_idx]*(msh.xf[P.last_cell_idx] - msh.xf[P.last_cell_idx-1]);
-            integrate_particle(dt,V,P,var.W[P.last_cell_idx],res);
+            V = msh.A[particles[j].last_cell_idx]*(msh.xf[particles[j].last_cell_idx] - msh.xf[particles[j].last_cell_idx-1]);
+            integrate_particle(dt,V,particles[j],var.W[particles[j].last_cell_idx],res);
         }
     }
 }

@@ -2,20 +2,22 @@
 #include <vector>
 #include "specie.hpp"
 
-class thermodynamics
+class thermo
 {
-    std::vector<specie> species;
+public:
+    static std::vector<specie> species;
 
-    double pressure(std::vector<double> const& W, double kappa);
-    double speed_of_sound(std::vector<double> const& W, double kappa);
-    double temperature(std::vector<double> const& W, double kappa, double r);
-    std::vector<double> composition(std::vector<double> const& W);
+    static int n_comp;
+
+    static void load_specie(specie spec);
+
+    static double pressure(std::vector<double> const& W);
+    static double speed_of_sound(std::vector<double> const& W);
+    static double temperature(std::vector<double> const& W);
+    static void composition(std::vector<double>& comp, std::vector<double> const& W);
+
+    static double kappa_mix(std::vector<double> const& W);
+    static double kappa_mix_comp(std::vector<double>& comp);
+    static double r_mix(std::vector<double> const& W);
+    static double r_mix_comp(std::vector<double>& comp);
 };
-
-// namespace thermo
-// {
-//     double pressure(std::vector<double> const& W, double kappa);
-//     double speed_of_sound(std::vector<double> const& W, double kappa);
-//     double temperature(std::vector<double> const& W, double kappa, double r);
-//     std::vector<double> composition(std::vector<double> const& W);
-// }

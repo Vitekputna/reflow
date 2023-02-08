@@ -14,8 +14,7 @@ class reflow
     variables var;
     mesh msh;
     particle_manager par_man;
-    
-
+    thermo thermo_manager;
 
     void(*left_boundary)(variables&,mesh&,std::vector<double>&);
     void(*right_boundary)(variables&,mesh&,std::vector<double>&);
@@ -26,25 +25,42 @@ class reflow
     int n_dt = 2;
     int n_res = 200;
     int n_exp = 10000;
+    int N, N_var;
+    double from, to;
 
     bool run_w_particles = false;
 
     volatile double max_res = 500;
     
+    // Constructors
+    reflow();
     reflow(variables& _var, mesh& _msh);
+    reflow(int N, int N_var);
     reflow(int N, int N_var, std::vector<double> const& init);
-    reflow(int N, double from, double to, int N_var, std::vector<double> const& init);
+    reflow(int N, int N_var, double from, double to);
+    reflow(int N, int N_var, double from, double to, std::vector<double> const& init);
     reflow(int N, int N_var, std::vector<std::vector<double>> const& init);
 
+    // Sources
     void apply_heat_source(double Q, double x_from, double x_to);
 
+    // Geometry
     void spline_geometry(std::vector<std::vector<std::vector<double>>> curves, int n);
-    void bump_geometry();
+    void bump_geometry(); 
+    void refine_mesh(std::vector<std::vector<double>> ref);
 
+    // Initial conditions
+    void initial_conditions(std::vector<double> const& init);
+
+    // Thermodynamics
+    void add_specie(double r, double kappa);
+
+    // Boundary
     void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&));
     void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), std::vector<double> _left_values,
                       void(*right)(variables&,mesh&,std::vector<double>&), std::vector<double> _right_values);
 
+    // Export
     void export_particles(std::vector<particle>& particles);
     void init_particles(int N_max, int N_particles, int N_per_group);
 

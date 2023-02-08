@@ -73,15 +73,64 @@ mesh::mesh(int _N, double from, double to) : N{_N+2}, x_from{from}, x_to{to}
     x[0] = x[1] - (x[2] - x[1]);
     x[N-1] = x[N-2] + (x[N-2] - x[N-3]);
 
-    // fill xf field
+    construct_mesh();
+}
 
+void mesh::refine(std::vector<std::vector<double>> ref)
+{
+    N = 0;
+    for(auto seg : ref)
+    {
+        N += seg[2];
+    }
+    N += 2 + (ref.size() + 1);
+
+    x_from = ref[0][0];
+    x_to = ref.back()[1];
+
+    x.resize(N);
+    xf.resize(N-1);
+    A.resize(N);
+    Af.resize(N-1);
+
+    double step;
+    int c_idx = 1;
+    bool offset = false;
+
+    for(auto seg : ref)
+    {
+        x[c_idx] = seg[0];
+        c_idx++;
+
+        step = (seg[1] - seg[0])/(seg[2] + 1);  
+
+        dx_min = std::min(dx_min,step);
+
+        for(int i = 1; i < seg[2] + 1; i++)
+        {
+            x[c_idx] = seg[0] + i*step;
+            c_idx++;
+        }
+    }
+
+    x[c_idx] = ref.back()[1];
+
+    x[0] = x[1] - (x[2] - x[1]);
+    x[N-1] = x[N-2] + (x[N-2] - x[N-3]);
+
+    construct_mesh();
+}
+
+void mesh::construct_mesh()
+{
+     // fill xf field
     for(int i = 0; i < N-1; i++)
     {
         xf[i] = (x[i+1] + x[i])/2;
     }
 
     // fill A field
-    step = (A_to-A_from)/(N-3);
+    double step = (A_to-A_from)/(N-3);
 
     for(int i = 1; i < N-1; i++)
     {
@@ -168,11 +217,23 @@ void mesh::cubic(std::vector<std::vector<std::vector<double>>> curves, int n)
 
 void mesh::export_to_file()
 {
+    std::cout << dx_min << " " << N << "\n";
+
     auto stream =  std::ofstream("out/A.txt");
 
     for(int i = 0; i < N; i++)
     {
-        stream << A[i] << "\n";
+        stream << x[i] << " " << A[i] << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/Af.txt");
+
+    for(int i = 0; i < N-1; i++)
+    {
+        stream << xf[i] << " " << Af[i] << "\n";
     }
 
     stream << "\n";

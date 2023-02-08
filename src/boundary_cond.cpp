@@ -3,8 +3,6 @@
 
 #include <iostream>
 
-extern double kappa;
-
 void boundary::_set_value_l(variables& var, int idx, double value)
 {
     var.W[0][idx] = value;
@@ -65,23 +63,34 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
         var.W.back()[idx] = var.W.rbegin()[1][idx];
     }
 
-    double e = values[0]/(values[1]-1) + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0];
+    std::vector<double> comp(var.N_comp,0.0);
+    thermo::composition(comp,var.W.rbegin()[1]);
+
+    double kappa = thermo::kappa_mix_comp(comp);
+
+    double e = values[0]/(kappa-1) + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0];
     var.W.back()[var.eng_idx] = e;
 }
 
-// values = (md,T,r,kappa,Y0,Y1...)
+// values = (md,T,Y0,Y1...)
 void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     // přenos tlaku
+    double p = thermo::pressure(var.W[1]);
     
-    double p = thermo::pressure(var.W[1],kappa);
-    var.W[0][0] = p/values[2]/values[1];
+    std::vector<double> comp = {values[2],values[3],values[4]};
+
+    double r = thermo::r_mix_comp(comp);
+    double kappa = thermo::kappa_mix_comp(comp);
+
+    var.W[0][0] = p/r/values[1];
+    
 
     for(auto idx = 1; idx <= var.N_comp-1; idx++)
     {
-        var.W[0][idx] = var.W[0][0]*values[idx+4];
+        var.W[0][idx] = var.W[0][0]*comp[idx];
     }
 
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
-    var.W[0][var.eng_idx] = p/(values[3]-1) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0];
+    var.W[0][var.eng_idx] = p/(kappa-1) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0];
 }

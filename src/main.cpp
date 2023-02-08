@@ -3,12 +3,9 @@
 
 #include "reflow.hpp"
 #include "boundary_cond.hpp"
+#include "initial_cond.hpp"
 
-double kappa = 1.23;
-double r = 451;
-
-// double kappa = 1.4;
-// double r = 287;
+#include "omp.h"
 
 int main(int argc, char** argv)
 {
@@ -22,18 +19,25 @@ int main(int argc, char** argv)
     curves.push_back(curve);
 
     // výpočet motoru
-    reflow S(500,0,0.25,4,std::vector<double>{18.47,1,267,10.87e6});
-    S.spline_geometry(curves,100);
-    S.apply_heat_source(7e6,0,0.25);
-    // S.init_particles(200000,100000,100);
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,600,r,kappa,1,0.8},boundary::subsonic_outlet,std::vector<double>{100000,kappa});
-    S.solve();
+    reflow S;
 
-    // test kapiček v trubce
-    // reflow S(500,3,std::vector<double>{1.16,0,250000});
-    // S.init_particles(200000,1000,100);
-    // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{100,300,r,kappa},boundary::zero_gradient_r,std::vector<double>{1e5,kappa});
-    // S.solve();
+    // S.refine_mesh(std::vector<std::vector<double>>{{0,0.05,1000},{0.05,0.25,200}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.25,1000}});
+    S.spline_geometry(curves,100);
+
+    S.add_specie(291,1.23); //Products
+    S.add_specie(188,1.31); //Oxydizer
+    S.add_specie(138,1.13); //Fuel
+
+    S.initial_conditions(init::flow(5,1e5,300,0,std::vector<double>{0,1,0}));
+
+    S.init_particles(200000,10000,100);
+    // S.apply_heat_source(1e7,0.005,0.05);
+
+    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,300,0,1,0}
+                  ,boundary::zero_gradient_r,std::vector<double>{150000});
+
+    S.solve();
 
     return 0;
 }
