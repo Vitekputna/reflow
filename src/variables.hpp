@@ -10,6 +10,7 @@ struct variables
     std::vector<std::vector<double>> W;
     std::vector<std::vector<double>> flux;
     std::vector<std::vector<double>> exact_flux;
+    std::vector<std::vector<double>> grad;
 
     std::vector<double> q;
     std::vector<double> md;
@@ -28,6 +29,6 @@ struct variables
 
     void apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh);
 
-    void export_to_file(std::string path, mesh const& msh);
+    void export_to_file(mesh const& msh);
     void export_timestep(double t, mesh const& msh, std::vector<particle> const& particles);
 };

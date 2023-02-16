@@ -2,11 +2,12 @@
 #include "thermodynamics.hpp"
 #include <cmath>
 #include <iostream>
+#include "omp.h"
 
 void solver::compute_wall_flux(double dt, variables& var, mesh const& msh,
-                               void(*flux)(variables&,parameters const&))
+                               void(*flux)(variables&,mesh const&,parameters const&))
 {
-    flux(var, parameters(msh.dx_min,dt,0.8));
+    flux(var, msh, parameters(msh.dx_min,dt,0.7));
 }
 
 void solver::compute_exact_flux(variables& var)
@@ -40,7 +41,6 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
 void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
 {
     double dm, V;
-    // std::vector<double> comp(var.N_comp);
     for(int i = 1; i < var.N-1; i++)
     {
         dm = std::max(0.0,std::min(var.W[i][2],var.W[i][1]/6.6));
@@ -50,11 +50,56 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][2] += -dm/dt; // fuel
 
         // res[i][var.eng_idx] += dm*43.467e6/dt;
-        // res[i][var.eng_idx] += dm*44e6/dt;
+        res[i][var.eng_idx] += dm*44e6/dt;
     }
 }
 
-void solver::Lax_Friedrichs_flux(variables& var, parameters const& par)
+void solver::reconstruct(variables& var, mesh const& msh)
+{
+    double phi;
+    for(auto i = 1; i < var.N-1; i++)
+    {
+        for(auto k = 0; k < var.N_var; k++)
+        {
+            // phi = minmod((var.W[i+1][k] - var.W[i][k])/(msh.x[i+1] - msh.x[i]),(var.W[i][k] - var.W[i-1][k])/(msh.x[i] - msh.x[i-1]));
+            phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
+
+            var.grad[i][k] = phi*(var.W[i+1][k] - var.W[i-1][k])/(msh.x[i+1] - msh.x[i-1]);
+
+            // var.grad[i][k] = 0.5*(var.W[i+1][k] - var.W[i][k])/(msh.x[i+1] - msh.x[i]);
+        }
+    }
+}   
+
+inline double solver::minmod(double a, double b)
+{
+    double r = a/b;
+
+    if(r > 0)
+    {
+        return std::min(2/(1+r),2*r/(1+r));
+    }
+    else
+    {
+        return 0.0; 
+    }
+}
+
+inline double solver::van_albada(double a, double b)
+{
+    double r = a/b;
+
+    if(r > 0)
+    {
+        return 2*r/(r*r+1);
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters const& par)
 {
     compute_exact_flux(var);
 
@@ -63,6 +108,62 @@ void solver::Lax_Friedrichs_flux(variables& var, parameters const& par)
         for(int k = 0; k < var.N_var; k++)
         {
             var.flux[i][k] = 0.5*(var.exact_flux[i+1][k] + var.exact_flux[i][k]) - par.eps*0.5*par.dx/par.dt*(var.W[i+1][k] - var.W[i][k]);
+        }
+    }
+}
+
+void solver::reconstructed_flux(std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx)
+{
+    for(auto i = 0; i < W.size(); i++)
+    {
+        W[i] += grad[i]*dx;
+    }
+
+    Euler_flux(flux,W);
+}
+
+void solver::reconstructed_wave_speed(std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx)
+{
+    for(auto i = 0; i < W.size(); i++)
+    {
+        W[i] += grad[i]*dx;
+    }
+
+    double c = thermo::speed_of_sound(W);
+
+    a[0] = W[W.size()-2]/W[0] - c;
+
+    for(auto i = 1; i < W.size()-2; i++)
+    {
+        a[i] = W[W.size()-2]/W[0];
+    }
+
+    a.back() = W[W.size()-2]/W[0] + c;
+}
+
+void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par)
+{
+    std::vector<double> fr(var.N_var,0.0);
+    std::vector<double> fl(var.N_var,0.0);
+    std::vector<double> ar(var.N_var,0.0);
+    std::vector<double> al(var.N_var,0.0);
+
+    double ul, ur, a;
+
+    for(int i = 0; i < var.N_walls; i++)
+    {
+        reconstructed_flux(fl,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
+        reconstructed_flux(fr,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
+
+        reconstructed_wave_speed(al,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
+        reconstructed_wave_speed(ar,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
+
+        for(int k = 0; k < var.N_var; k++)
+        {
+            ul = var.W[i][k] + var.grad[i][k]*(msh.xf[i]-msh.x[i]);
+            ur = var.W[i+1][k] + var.grad[i+1][k]*(msh.xf[i]-msh.x[i+1]);
+
+            var.flux[i][k] = 0.5*(fr[k]+fl[k]) - std::max(std::abs(ar.back()),std::abs(al.back()))/2*(ur-ul);
         }
     }
 }
@@ -112,7 +213,7 @@ double solver::time_step(variables const& var, mesh const& msh, double CFL)
     for(auto const& w : var.W)
     // for(auto i = 0; i < msh.N; i++)
     {
-        dt = std::min(dt, msh.dx_min/(std::abs(w[var.mom_idx]/w[0] + thermo::speed_of_sound(w))));
+        dt = std::min(dt, msh.dx_min/(std::abs(w[var.mom_idx]/w[0]) + thermo::speed_of_sound(w)));
         // dt = std::min(dt, (msh.xf[i] - msh.xf[i-1])/(std::abs(var.W[i][var.mom_idx]/var.W[i][0] + thermo::speed_of_sound(var.W[i]))));
     }
 

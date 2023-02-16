@@ -92,5 +92,7 @@ void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& va
     }
 
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
-    var.W[0][var.eng_idx] = p/(kappa-1) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0];
+
+    var.W[0][var.eng_idx] = thermo::cp_mix_comp(comp,values[1])*var.W[0][0]*values[1] - p + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0];
+    // var.W[0][var.eng_idx] = p/(kappa-1) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0];
 }

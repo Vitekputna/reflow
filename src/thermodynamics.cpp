@@ -11,8 +11,19 @@ int thermo::n_comp = 0;
 double thermo::pressure(std::vector<double> const& W)
 {
     int mom_idx = W.size()-2;
-    double kappa = thermo::kappa_mix(W);
-    return (kappa-1)*(W[mom_idx+1] - 0.5*W[mom_idx]*W[mom_idx]/W[0]);
+    // double kappa = thermo::kappa_mix(W);
+    double r = thermo::r_mix(W);
+
+    // return (kappa-1)*(W[mom_idx+1] - 0.5*W[mom_idx]*W[mom_idx]/W[0]);
+
+    // double cp = kappa*r/(kappa-1);
+    // double cp = 1500;
+    // std::cout << r << "\n";
+    double cp = thermo::cp_mix(W);
+
+
+    return r/(r-cp)*(0.5*W[mom_idx]*W[mom_idx]/W[0] - W[mom_idx+1]);
+    
 }
 
 double thermo::speed_of_sound(std::vector<double> const& W)
@@ -23,8 +34,10 @@ double thermo::speed_of_sound(std::vector<double> const& W)
 
 double thermo::temperature(std::vector<double> const& W)
 {
-    double r = thermo::r_mix(W);
-    return thermo::pressure(W)/r/W[0];
+    std::vector<double> comp(n_comp);
+    thermo::composition(comp,W);
+
+    return temp_new(comp,W);
 }
 
 void thermo::composition(std::vector<double>& comp, std::vector<double> const& W)
@@ -96,4 +109,71 @@ double thermo::r_mix_comp(std::vector<double>& comp)
     }
     
     return r;
+}
+
+double thermo::cp_mix(std::vector<double> const& W)
+{
+    std::vector<double> comp(n_comp);
+    thermo::composition(comp,W);
+    double T = thermo::temp_new(comp,W);
+    double cp = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        cp += comp[i]*(thermo::species[i].a/T + thermo::species[i].b + thermo::species[i].c*T + thermo::species[i].d*T*T + thermo::species[i].e*T*T*T + thermo::species[i].f*T*T*T*T
+              + thermo::species[i].g*T*T*T*T*T);
+    }
+
+    // std::cout << cp << "\n";
+
+    return cp;
+}
+
+double thermo::cp_mix_comp(std::vector<double>& comp, double T)
+{
+    double cp = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        cp += comp[i]*thermo::species[i].cp(T);
+    }
+
+    return cp;
+}
+
+double thermo::dF(std::vector<double> const& comp, double T)
+{
+    double df = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        df += comp[i]*(species[i].r - species[i].b - 2*species[i].c*T - 3*species[i].d*T*T - 4*species[i].e*T*T*T - 5*species[i].f*T*T*T*T - 6*species[i].g*T*T*T*T*T); 
+    }
+
+    return df;
+    // return species[1].r - species[1].b - 2*species[1].c*T - 3*species[1].d*T*T - 4*species[1].e*T*T*T - 5*species[1].f*T*T*T*T - 6*species[1].g*T*T*T*T*T;
+}
+
+double thermo::temp_new(std::vector<double> const& comp, std::vector<double> const& W)
+{
+    double C = (0.5*W[3]*W[3]/W[0] - W[4])/W[0];
+    double T = 300, T_last = 300;
+    double F;
+
+    do
+    {
+        T_last = T;
+        F = 0;
+
+        for(int i = 0; i < n_comp; i++)
+        {
+            F += comp[i]*(thermo::species[i].r*T - thermo::species[i].a - thermo::species[i].b*T - thermo::species[i].c*T*T - thermo::species[i].d*T*T*T - thermo::species[i].e*T*T*T*T
+              -thermo::species[i].f*T*T*T*T*T - thermo::species[i].g*T*T*T*T*T*T - C);
+        }
+
+        T = T - ( F )/dF(comp,T);
+
+    } while(std::abs(T-T_last) > 10);
+
+    return T;
 }

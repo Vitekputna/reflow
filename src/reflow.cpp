@@ -89,9 +89,9 @@ void reflow::refine_mesh(std::vector<std::vector<double>> ref)
     to = msh.x_to;
 }
 
-void reflow::add_specie(double r, double kappa)
+void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff)
 {
-    specie spec(r,kappa,0);
+    specie spec(r,kappa,Mm,cp_coeff);
     thermo_manager.load_specie(spec);
 }
 
@@ -118,9 +118,9 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.1;
+    double t_end = 0.02;
     double residual = 2*max_res;
-    double CFL = 1;
+    double CFL = 0.2;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
@@ -129,7 +129,9 @@ void reflow::solve()
     do
     {
         // flow field part  
-        solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
+        solver::reconstruct(var,msh);
+        // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);
@@ -138,7 +140,8 @@ void reflow::solve()
         if(run_w_particles)
         {
             // par_man.particle_inlet(dt*0.18,1e-4,100,0,1000,300);
-            par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
+            if(!(n % 5))  par_man.particle_inlet(5*dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
+            // par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
 
@@ -158,7 +161,8 @@ void reflow::solve()
         // Runtime export
         if(!(n % n_exp))
         {
-            //var.export_timestep(t,msh,par_man.particles);
+            var.export_to_file(msh);
+            // var.export_timestep(t,msh,par_man.particles);
         }
 
         dt = solver::time_step(var,msh,CFL);
@@ -169,9 +173,9 @@ void reflow::solve()
 
         t += dt;
         n++;
+    // } while(n < 2165);
     // } while(false);
     } while (t < t_end && residual > max_res);
-    // } while (n < 10);
 
     std::cout << "\r" << std::flush;
     std::cout << "Computation done...                    \n";
@@ -181,7 +185,9 @@ void reflow::solve()
     std::cout << "///////////////////////////////////////\n";
     std::cout << "Number of particles: " << par_man.particles.size() << "\n";
 
+    solver::reconstruct(var,msh);
+
     reflow::export_particles(par_man.particles);
-    var.export_to_file("out/test.txt", msh);
+    var.export_to_file(msh);
     msh.export_to_file();
 }

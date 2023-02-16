@@ -41,9 +41,12 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
     }
 
     res.push_back(rho*u);
-    res.push_back(p/(kappa-1) + 0.5*rho*u*u);
 
-    // std::cout << res[0] << " " << res[1] << " " << res[2] << " " << res[3] << " " << res[4] << "\n";
+    double e = thermo::cp_mix_comp(comp,T)*rho*T - p + 0.5*rho*u*u;
+
+    res.push_back(e);
+
+    // res.push_back(p/(kappa-1) + 0.5*rho*u*u);
 
     return res;
 }

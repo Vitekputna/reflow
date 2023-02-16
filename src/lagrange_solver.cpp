@@ -21,7 +21,7 @@ inline double lagrange_solver::heat_flux(double alfa, double C, double dT)
 inline double lagrange_solver::radius_change(double D, double r, double rho, double dT)
 {
     // return std::min(0.0,-D/4/3.14159/((r*r)*rho));   
-    return std::min(0.0,-D/r);
+    return std::min(0.0,-D*log(1+dT)/r);
     
 }
 
@@ -35,7 +35,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     uf = W[W.size()-2]/W[0];
 
     double C = 1; // momentum transfer constant
-    double D = 2e-6; // mass transfer constant
+    double D = 1e-6; // mass transfer constant
     double alfa = 10; // heat transfer constant
     double H = 43.46e5; // heat released for 1kg of fuel
 

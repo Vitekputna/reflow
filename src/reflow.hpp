@@ -24,7 +24,7 @@ class reflow
 
     int n_dt = 2;
     int n_res = 200;
-    int n_exp = 10000;
+    int n_exp = 500;
     int N, N_var;
     double from, to;
 
@@ -53,7 +53,7 @@ class reflow
     void initial_conditions(std::vector<double> const& init);
 
     // Thermodynamics
-    void add_specie(double r, double kappa);
+    void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);
 
     // Boundary
     void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&));

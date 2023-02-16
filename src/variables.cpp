@@ -1,5 +1,6 @@
 #include "variables.hpp"
 #include "thermodynamics.hpp"
+#include <cmath>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -18,6 +19,7 @@ variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}
     W = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
     flux = std::vector<std::vector<double>>(N_walls,std::vector<double>(N_var,0.0));
     exact_flux = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
+    grad = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
 
     q = std::vector<double>(N,0.0);
     md = std::vector<double>(N,0.0);
@@ -66,14 +68,15 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
     {
         if(msh.x[i] > x_from && msh.x[i] < x_to)
         {
-            q[i] = Q_V;
+            // q[i] = Q_V;
+            q[i] = Q_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)));
         }
     }
 
     std::cout << "Source: " << Q_V << " " << V << "\n";
 }
 
-void variables::export_to_file(std::string path, mesh const& msh)
+void variables::export_to_file(mesh const& msh)
 {
     double kappa,r;
 
@@ -160,6 +163,19 @@ void variables::export_to_file(std::string path, mesh const& msh)
     }
 
     stream << "\n";
+    stream.close();
+
+
+    stream =  std::ofstream("out/grad.txt");
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " ";
+        for(int k = 0; k < N_var; k++)
+        {
+            stream << grad[i][k] << " ";
+        }
+        stream << "\n";
+    }
     stream.close();
 }
 

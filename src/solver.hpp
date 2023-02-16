@@ -14,14 +14,22 @@ struct parameters
 namespace solver
 {
     // explicit part
-    void compute_wall_flux(double dt, variables& var, mesh const& msh,void(*flux)(variables&,parameters const&));
+    void compute_wall_flux(double dt, variables& var, mesh const& msh,void(*flux)(variables&,mesh const&,parameters const&));
     void compute_exact_flux(variables& var);
     void compute_cell_res(std::vector<std::vector<double>>& res, variables& var, mesh const& msh);
     void apply_source_terms(std::vector<std::vector<double>>& res, variables& var, mesh const& msh);
     void chemical_reactions(double dt,std::vector<std::vector<double>>& res, variables& var, mesh const& msh);
 
+    // reconstruction
+    void reconstruct(variables& var, mesh const& msh);
+    void reconstructed_flux(std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx);
+    void reconstructed_wave_speed(std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx);
+    inline double minmod(double a, double b);
+    inline double van_albada(double a, double b);
+
     // explicit fluxes
-    void Lax_Friedrichs_flux(variables& var, parameters const& par);
+    void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par);
+    void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par);
 
     // exact flux function
     inline void Euler_flux(std::vector<double>& flux, std::vector<double> const& W);
