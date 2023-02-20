@@ -62,7 +62,7 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
         }
     }
 
-    double Q_V = Q_tot/V;
+    double Q_V = 2*Q_tot/V;
 
     for(int i = 0; i < N; i++)
     {
@@ -73,7 +73,35 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
         }
     }
 
-    std::cout << "Source: " << Q_V << " " << V << "\n";
+    std::cout << "heat source: " << Q_V << " " << V << "\n";
+
+    
+}
+
+void variables::apply_mass_source(double M_tot, double x_from, double x_to, mesh const& msh)
+{
+    double V = 0;
+
+    for(int i = 1; i < msh.N-1; i++)
+    {
+        if(msh.x[i] > x_from && msh.x[i] < x_to)
+        {
+            V += (msh.xf[i] - msh.xf[i-1])*msh.A[i];
+        }
+    }
+
+    double M_V = 2*M_tot/V;
+
+    for(int i = 0; i < N; i++)
+    {
+        if(msh.x[i] > x_from && msh.x[i] < x_to)
+        {
+            // q[i] = Q_V;
+            md[i] = M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)));
+        }
+    }
+
+    std::cout << "mass source: " << M_V << " " << V << "\n";
 }
 
 void variables::export_to_file(mesh const& msh)
@@ -175,6 +203,20 @@ void variables::export_to_file(mesh const& msh)
             stream << grad[i][k] << " ";
         }
         stream << "\n";
+    }
+    stream.close();
+
+    stream =  std::ofstream("out/Q_add.txt");
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << q[i] << "\n";
+    }
+    stream.close();
+
+        stream =  std::ofstream("out/md_add.txt");
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << md[i] << "\n";
     }
     stream.close();
 }

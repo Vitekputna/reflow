@@ -33,6 +33,7 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
 {
     for(int i = 1; i < var.N-1; i++)
     {
+        res[i][0] += var.md[i];
         res[i][var.mom_idx] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::pressure(var.W[i]);
         res[i][var.eng_idx] += var.q[i];
     }

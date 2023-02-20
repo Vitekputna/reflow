@@ -35,10 +35,12 @@ int main(int argc, char** argv)
     S.initial_conditions(init::flow(5,1e5,500,0,std::vector<double>{1,0,0}));
 
     // S.init_particles(200000,10000,100);
-    // S.apply_heat_source(10e6,0.005,0.08);
+    S.apply_heat_source(7.82e6,0.005,0.08);
+    S.apply_mass_source(0.18,0.005,0.08);
 
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1.18,3200,1,0,0}
-                  ,boundary::zero_gradient_r,std::vector<double>{50000});
+
+    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,300,1,0,0}
+                  ,boundary::subsonic_outlet,std::vector<double>{1e5});
 
     S.solve();
 

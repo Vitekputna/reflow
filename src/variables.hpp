@@ -28,6 +28,7 @@ struct variables
     variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0);
 
     void apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh);
+    void apply_mass_source(double M_tot, double x_from, double x_to, mesh const& msh);
 
     void export_to_file(mesh const& msh);
     void export_timestep(double t, mesh const& msh, std::vector<particle> const& particles);
