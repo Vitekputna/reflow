@@ -1,9 +1,12 @@
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "reflow.hpp"
 #include "boundary_cond.hpp"
 #include "initial_cond.hpp"
+
+#include "geometry.hpp"
 
 std::vector<double> prod_cp = {72913.76001451393, 1119.6547177177858, 1.256662344680612, -0.000555166379245523, 1.3051468187215095e-07, -1.5588756032619083e-11, 7.455841969813714e-16};
 std::vector<double> fuel_cp = {-235519.57542488514, 1455.374204197742, 3.091173168072451, -0.001445727217091643, 3.428476619622498e-07, -4.0705333490788554e-11, 1.9221666948167e-15};
@@ -21,33 +24,43 @@ int main(int argc, char** argv)
     curve = {{0.2,8.553e-4},{0.25,3.455e-3},{0.5e-1,0},{1e-1,1e-3}};
     curves.push_back(curve);
 
+    // std::vector<std::unique_ptr<geometry::curve>> geo;
+
+    geometry_vector geo;
+
+    geo.emplace_back(new geometry::line(0.0,0.0,2.0,1.0));
+    geo.emplace_back(new geometry::line(2.0,1.0,3.0,0.0));
+
+    geometry::test(geo);
+
+
     // výpočet motoru
-    reflow S;
+//     reflow S;
 
-    // S.refine_mesh(std::vector<std::vector<double>>{{0,0.05,1000},{0.05,0.25,500}});
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.25,500}});
-    S.spline_geometry(curves,100);
-;
-    // Species
-    S.add_specie(291,1.23,31,prod_cp); //Products
-    S.add_specie(188,1.31,44,oxi_cp); //Oxydizer
-    S.add_specie(138,1.13,60,fuel_cp); //Fuel
+//     // S.refine_mesh(std::vector<std::vector<double>>{{0,0.05,1000},{0.05,0.25,500}});
+//     S.refine_mesh(std::vector<std::vector<double>>{{0,0.25,500}});
+//     S.spline_geometry(curves,100);
+// ;
+//     // Species
+//     S.add_specie(291,1.23,31,prod_cp); //Products
+//     S.add_specie(188,1.31,44,oxi_cp); //Oxydizer
+//     S.add_specie(138,1.13,60,fuel_cp); //Fuel
 
-    // Chemistry
-    reaction R(std::vector<int>{1,2},std::vector<int>{},std::vector<double>{0.8684,0.1316},std::vector<double>{}, 5.719e6);
-    S.add_reaction(R);
+//     // Chemistry
+//     reaction R(std::vector<int>{1,2},std::vector<int>{},std::vector<double>{0.8684,0.1316},std::vector<double>{}, 5.719e6);
+//     S.add_reaction(R);
 
-    S.initial_conditions(init::flow(5,1e5,300,0,std::vector<double>{1,0,0}));
+//     S.initial_conditions(init::flow(5,1e5,300,0,std::vector<double>{1,0,0}));
 
-    // S.init_particles(200000,10000,100);
-    // S.apply_heat_source(7.82e6,0.005,0.08);
-    S.apply_mass_source(0.1515,0.005,0.08,std::vector<double>{1,0,1});
+//     // S.init_particles(200000,10000,100);
+//     // S.apply_heat_source(7.82e6,0.005,0.08);
+//     S.apply_mass_source(0.1515,0.005,0.08,std::vector<double>{1,0,1});
 
 
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,300,0,1,0}
-                  ,boundary::zero_gradient_r,std::vector<double>{1e5});
+//     S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,300,0,1,0}
+//                   ,boundary::zero_gradient_r,std::vector<double>{1e5});
 
-    S.solve();
+//     S.solve();
 
     return 0;
 }
