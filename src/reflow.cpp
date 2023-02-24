@@ -55,9 +55,9 @@ void reflow::apply_heat_source(double Q, double x_from, double x_to)
     var.apply_heat_source(Q,x_from,x_to,msh);
 }
 
-void reflow::apply_mass_source(double M, double x_from, double x_to)
+void reflow::apply_mass_source(double M, double x_from, double x_to, std::vector<double> comp)
 {
-    var.apply_mass_source(M,x_from,x_to,msh);
+    var.apply_mass_source(M,x_from,x_to,msh,comp);
 }
 
 void reflow::set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&))
@@ -100,6 +100,11 @@ void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> c
     thermo_manager.load_specie(spec);
 }
 
+void reflow::add_reaction(reaction& R)
+{
+    chemistry.add_reaction(R);
+}
+
 void reflow::export_particles(std::vector<particle>& particles)
 {
     auto p_stream = std::ofstream("out/particles.txt");
@@ -123,7 +128,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 1;
+    double t_end = 0.1;
     double residual = 2*max_res;
     double CFL = 0.5;
 
@@ -140,6 +145,7 @@ void reflow::solve()
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);
+        // chemistry.solve(dt,res,var,msh);
 
         // lagrangian particles part
         if(run_w_particles)

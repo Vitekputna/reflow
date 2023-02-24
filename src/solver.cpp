@@ -33,7 +33,10 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
 {
     for(int i = 1; i < var.N-1; i++)
     {
-        res[i][0] += var.md[i];
+        for(int k = 0; k < var.N_comp; k++)
+        {
+            res[i][k] += var.md[i][k];
+        }
         res[i][var.mom_idx] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::pressure(var.W[i]);
         res[i][var.eng_idx] += var.q[i];
     }
@@ -50,8 +53,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt; // oxydizer
         res[i][2] += -dm/dt; // fuel
 
-        // res[i][var.eng_idx] += dm*43.467e6/dt;
-        res[i][var.eng_idx] += dm*44e6/dt;
+        res[i][var.eng_idx] += dm*43.467e6/dt;
+        // res[i][var.eng_idx] += dm*44e6/dt;
     }
 }
 
@@ -144,7 +147,7 @@ void solver::reconstructed_wave_speed(std::vector<double>& a, std::vector<double
 
 void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par)
 {
-    std::vector<double> fr(var.N_var,0.0);
+    std::vector<double> fr(var.N_var,0.0); //performance!!!
     std::vector<double> fl(var.N_var,0.0);
     std::vector<double> ar(var.N_var,0.0);
     std::vector<double> al(var.N_var,0.0);

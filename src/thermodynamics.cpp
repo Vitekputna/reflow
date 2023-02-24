@@ -6,6 +6,7 @@
 
 std::vector<specie> thermo::species;
 int thermo::n_comp = 0;
+double thermo::thershold_comp = 1e-4;
 
 // Using ideal gas law
 double thermo::pressure(std::vector<double> const& W)
@@ -147,7 +148,10 @@ double thermo::dF(std::vector<double> const& comp, double T)
 
     for(int i = 0; i < n_comp; i++)
     {
-        df += comp[i]*(species[i].r - species[i].b - 2*species[i].c*T - 3*species[i].d*T*T - 4*species[i].e*T*T*T - 5*species[i].f*T*T*T*T - 6*species[i].g*T*T*T*T*T); 
+        if(comp[i]>thershold_comp)
+        {
+            df += comp[i]*(species[i].r - species[i].b - 2*species[i].c*T - 3*species[i].d*T*T - 4*species[i].e*std::pow(T,3) - 5*species[i].f*std::pow(T,4)- 6*species[i].g*std::pow(T,5)); 
+        }
     }
 
     return df;
@@ -157,7 +161,7 @@ double thermo::dF(std::vector<double> const& comp, double T)
 double thermo::temp_new(std::vector<double> const& comp, std::vector<double> const& W)
 {
     double C = (0.5*W[3]*W[3]/W[0] - W[4])/W[0];
-    double T = 300, T_last = 300;
+    double T = 300, T_last = 1000;
     double F;
 
     do
@@ -167,8 +171,11 @@ double thermo::temp_new(std::vector<double> const& comp, std::vector<double> con
 
         for(int i = 0; i < n_comp; i++)
         {
-            F += comp[i]*(thermo::species[i].r*T - thermo::species[i].a - thermo::species[i].b*T - thermo::species[i].c*T*T - thermo::species[i].d*T*T*T - thermo::species[i].e*T*T*T*T
-              -thermo::species[i].f*T*T*T*T*T - thermo::species[i].g*T*T*T*T*T*T - C);
+            if(comp[i] > thershold_comp)
+            {
+                F += comp[i]*(thermo::species[i].r*T - thermo::species[i].a - thermo::species[i].b*T - thermo::species[i].c*std::pow(T,2) - thermo::species[i].d*std::pow(T,3) - thermo::species[i].e*std::pow(T,4)
+                    -thermo::species[i].f*std::pow(T,5) - thermo::species[i].g*std::pow(T,6) - C);
+            }
         }
 
         T = T - ( F )/dF(comp,T);

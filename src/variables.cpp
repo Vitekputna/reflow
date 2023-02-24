@@ -22,7 +22,7 @@ variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}
     grad = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
 
     q = std::vector<double>(N,0.0);
-    md = std::vector<double>(N,0.0);
+    md = std::vector<std::vector<double>>(N,std::vector<double>(N_comp,0.0));
 }
 
 variables::variables(int _N_var, int _N, std::vector<double> const& W_0) : variables(_N_var,_N)
@@ -78,7 +78,7 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
     
 }
 
-void variables::apply_mass_source(double M_tot, double x_from, double x_to, mesh const& msh)
+void variables::apply_mass_source(double M_tot, double x_from, double x_to, mesh const& msh, std::vector<double> comp)
 {
     double V = 0;
 
@@ -96,8 +96,10 @@ void variables::apply_mass_source(double M_tot, double x_from, double x_to, mesh
     {
         if(msh.x[i] > x_from && msh.x[i] < x_to)
         {
-            // q[i] = Q_V;
-            md[i] = M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)));
+            for(auto k = 0; k < N_comp; k++)
+            {
+                md[i][k] = M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)))*comp[k];
+            }
         }
     }
 
@@ -213,10 +215,15 @@ void variables::export_to_file(mesh const& msh)
     }
     stream.close();
 
-        stream =  std::ofstream("out/md_add.txt");
+    stream =  std::ofstream("out/md_add.txt");
     for(int i = 0; i < N; i++)
     {
-        stream << msh.x[i] << " " << md[i] << "\n";
+        stream << msh.x[i] << " ";
+        for(int k = 0; k < N_comp; k++)
+        {
+            stream << md[i][k] << " ";
+        }
+        stream << "\n";
     }
     stream.close();
 }

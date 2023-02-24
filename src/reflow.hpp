@@ -7,6 +7,7 @@
 #include "thermodynamics.hpp"
 #include "particle.hpp"
 #include "specie.hpp"
+#include "chem_solver.hpp"
 
 class reflow
 {
@@ -15,6 +16,7 @@ class reflow
     mesh msh;
     particle_manager par_man;
     thermo thermo_manager;
+    chem_solver chemistry;
 
     void(*left_boundary)(variables&,mesh&,std::vector<double>&);
     void(*right_boundary)(variables&,mesh&,std::vector<double>&);
@@ -24,7 +26,7 @@ class reflow
 
     int n_dt = 2;
     int n_res = 200;
-    int n_exp = 500;
+    int n_exp = 5000;
     int N, N_var;
     double from, to;
 
@@ -43,7 +45,7 @@ class reflow
 
     // Sources
     void apply_heat_source(double Q, double x_from, double x_to);
-    void apply_mass_source(double M, double x_from, double x_to);
+    void apply_mass_source(double M, double x_from, double x_to, std::vector<double> comp);
 
     // Geometry
     void spline_geometry(std::vector<std::vector<std::vector<double>>> curves, int n);
@@ -55,6 +57,9 @@ class reflow
 
     // Thermodynamics
     void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);
+
+    // Chemistry
+    void add_reaction(reaction& R);
 
     // Boundary
     void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&));

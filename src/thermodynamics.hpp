@@ -8,6 +8,7 @@ public:
     static std::vector<specie> species;
 
     static int n_comp;
+    static double thershold_comp;
 
     static void load_specie(specie spec);
 
