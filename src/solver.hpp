@@ -26,6 +26,7 @@ namespace solver
     void reconstructed_wave_speed(std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx);
     inline double minmod(double a, double b);
     inline double van_albada(double a, double b);
+    inline double van_leer(double a, double b);
 
     // explicit fluxes
     void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par);

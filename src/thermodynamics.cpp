@@ -11,20 +11,11 @@ double thermo::thershold_comp = 1e-4;
 // Using ideal gas law
 double thermo::pressure(std::vector<double> const& W)
 {
-    int mom_idx = W.size()-2;
-    // double kappa = thermo::kappa_mix(W);
+    static int mom_idx = W.size()-2;
     double r = thermo::r_mix(W);
-
-    // return (kappa-1)*(W[mom_idx+1] - 0.5*W[mom_idx]*W[mom_idx]/W[0]);
-
-    // double cp = kappa*r/(kappa-1);
-    // double cp = 1500;
-    // std::cout << r << "\n";
     double cp = thermo::cp_mix(W);
 
-
-    return r/(r-cp)*(0.5*W[mom_idx]*W[mom_idx]/W[0] - W[mom_idx+1]);
-    
+    return r/(r-cp)*(0.5*W[mom_idx]*W[mom_idx]/W[0] - W[mom_idx+1]);    
 }
 
 double thermo::speed_of_sound(std::vector<double> const& W)
@@ -35,7 +26,7 @@ double thermo::speed_of_sound(std::vector<double> const& W)
 
 double thermo::temperature(std::vector<double> const& W)
 {
-    std::vector<double> comp(n_comp);
+    static std::vector<double> comp(n_comp);
     thermo::composition(comp,W);
 
     return temp_new(comp,W);
@@ -62,7 +53,7 @@ void thermo::load_specie(specie spec)
 double thermo::kappa_mix(std::vector<double> const& W)
 {
     double kappa = 0;
-    std::vector<double> comp(n_comp); 
+    static std::vector<double> comp(n_comp); 
     thermo::composition(comp,W);
 
     for(auto idx = 0; idx < n_comp; idx++)
@@ -88,7 +79,7 @@ double thermo::kappa_mix_comp(std::vector<double>& comp)
 double thermo::r_mix(std::vector<double> const& W)
 {
     double r = 0;
-    std::vector<double> comp(n_comp);
+    static std::vector<double> comp(n_comp);
     thermo::composition(comp,W);
 
     for(auto idx = 0; idx < n_comp; idx++)
@@ -114,7 +105,7 @@ double thermo::r_mix_comp(std::vector<double>& comp)
 
 double thermo::cp_mix(std::vector<double> const& W)
 {
-    std::vector<double> comp(n_comp);
+    static std::vector<double> comp(n_comp);
     thermo::composition(comp,W);
     double T = thermo::temp_new(comp,W);
     double cp = 0;
@@ -161,8 +152,9 @@ double thermo::dF(std::vector<double> const& comp, double T)
 double thermo::temp_new(std::vector<double> const& comp, std::vector<double> const& W)
 {
     double C = (0.5*W[3]*W[3]/W[0] - W[4])/W[0];
-    double T = 300, T_last = 1000;
-    double F;
+    static double T = 300;
+    static double T_last;
+    static double F;
 
     do
     {

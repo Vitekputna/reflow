@@ -65,8 +65,9 @@ void solver::reconstruct(variables& var, mesh const& msh)
     {
         for(auto k = 0; k < var.N_var; k++)
         {
-            // phi = minmod((var.W[i+1][k] - var.W[i][k])/(msh.x[i+1] - msh.x[i]),(var.W[i][k] - var.W[i-1][k])/(msh.x[i] - msh.x[i-1]));
-            phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
+            // phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
+            // phi = van_albada(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
+            phi = van_leer(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
 
             var.grad[i][k] = phi*(var.W[i+1][k] - var.W[i-1][k])/(msh.x[i+1] - msh.x[i-1]);
 
@@ -79,7 +80,7 @@ inline double solver::minmod(double a, double b)
 {
     double r = a/b;
 
-    if(r > 0)
+    if(r > 0 && b != 0)
     {
         return std::min(2/(1+r),2*r/(1+r));
     }
@@ -93,9 +94,23 @@ inline double solver::van_albada(double a, double b)
 {
     double r = a/b;
 
-    if(r > 0)
+    if(r > 0 && b != 0)
     {
         return 2*r/(r*r+1);
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+inline double solver::van_leer(double a, double b)
+{
+    double r = a/b;
+
+    if(a*b > 0)
+    {
+        return 4*r/(r+1)/(r+1);
     }
     else
     {
@@ -147,10 +162,10 @@ void solver::reconstructed_wave_speed(std::vector<double>& a, std::vector<double
 
 void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par)
 {
-    std::vector<double> fr(var.N_var,0.0); //performance!!!
-    std::vector<double> fl(var.N_var,0.0);
-    std::vector<double> ar(var.N_var,0.0);
-    std::vector<double> al(var.N_var,0.0);
+    static std::vector<double> fr(var.N_var,0.0);
+    static std::vector<double> fl(var.N_var,0.0);
+    static std::vector<double> ar(var.N_var,0.0);
+    static std::vector<double> al(var.N_var,0.0);
 
     double ul, ur, a;
 

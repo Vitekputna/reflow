@@ -55,9 +55,9 @@ void reflow::apply_heat_source(double Q, double x_from, double x_to)
     var.apply_heat_source(Q,x_from,x_to,msh);
 }
 
-void reflow::apply_mass_source(double M, double x_from, double x_to, std::vector<double> comp)
+void reflow::apply_mass_source(double M, double T, double x_from, double x_to, std::vector<double> comp)
 {
-    var.apply_mass_source(M,x_from,x_to,msh,comp);
+    var.apply_mass_source(M, T, x_from, x_to, msh, comp);
 }
 
 void reflow::set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&))
@@ -128,9 +128,9 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.1;
+    double t_end = 0.04;
     double residual = 2*max_res;
-    double CFL = 0.5;
+    double CFL = 0.3;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";

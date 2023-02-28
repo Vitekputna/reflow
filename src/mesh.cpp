@@ -1,5 +1,4 @@
 #include "mesh.hpp"
-
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -224,6 +223,16 @@ void mesh::export_to_file()
     for(int i = 0; i < N; i++)
     {
         stream << x[i] << " " << A[i] << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/r.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << x[i] << " " << std::sqrt(A[i]/M_PI) << "\n";
     }
 
     stream << "\n";

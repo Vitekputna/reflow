@@ -30,3 +30,33 @@ public:
     private:
     static double dF(std::vector<double> const& comp, double T);
 };
+
+class thermodynamics
+{
+    std::vector<specie> species;
+
+
+
+    int n_comp;
+    double threshold_comp = 1e-4;
+
+    void load_specie(specie spec);
+
+    double pressure(std::vector<double> const& W);
+    double speed_of_sound(std::vector<double> const& W);
+    double temperature(std::vector<double> const& W);
+    void composition(std::vector<double>& comp, std::vector<double> const& W);
+
+    double kappa_mix(std::vector<double> const& W);
+    double kappa_mix_comp(std::vector<double>& comp);
+    double r_mix(std::vector<double> const& W);
+    double r_mix_comp(std::vector<double>& comp);
+
+    double cp_mix(std::vector<double> const& W);
+    double cp_mix_comp(std::vector<double>& comp, double T);
+    double temp_new(std::vector<double> const& comp, std::vector<double> const& W);
+
+    private:
+    double dF(std::vector<double> const& comp, double T);
+
+};

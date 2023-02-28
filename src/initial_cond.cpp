@@ -46,7 +46,5 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 
     res.push_back(e);
 
-    // res.push_back(p/(kappa-1) + 0.5*rho*u*u);
-
     return res;
 }

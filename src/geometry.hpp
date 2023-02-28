@@ -27,8 +27,11 @@ namespace geometry
     class arc : public curve
     {
         public:
-        double x1,y1;
-        arc(double _x0, double _y0, double _x1, double _y1);
+        double x1,y1,rx,ry;
+
+        double phi, alfa, r;
+
+        arc(double _x0, double _y0, double _rx, double _ry, double _x1, double _y1);
         std::vector<double> interpolate(double t);
     };
 

@@ -68,7 +68,6 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
     {
         if(msh.x[i] > x_from && msh.x[i] < x_to)
         {
-            // q[i] = Q_V;
             q[i] = Q_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)));
         }
     }
@@ -78,7 +77,7 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
     
 }
 
-void variables::apply_mass_source(double M_tot, double x_from, double x_to, mesh const& msh, std::vector<double> comp)
+void variables::apply_mass_source(double M_tot, double T, double x_from, double x_to, mesh const& msh, std::vector<double> comp)
 {
     double V = 0;
 
@@ -99,6 +98,7 @@ void variables::apply_mass_source(double M_tot, double x_from, double x_to, mesh
             for(auto k = 0; k < N_comp; k++)
             {
                 md[i][k] = M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)))*comp[k];
+                q[i] += md[i][k]*thermo::cp_mix_comp(comp,T)*T;
             }
         }
     }

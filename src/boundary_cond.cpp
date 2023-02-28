@@ -63,12 +63,13 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
         var.W.back()[idx] = var.W.rbegin()[1][idx];
     }
 
-    std::vector<double> comp(var.N_comp,0.0);
-    thermo::composition(comp,var.W.rbegin()[1]);
+    // std::vector<double> comp(var.N_comp,0.0);
+    // thermo::composition(comp,var.W.rbegin()[1]);
 
-    double kappa = thermo::kappa_mix_comp(comp);
+    double r = thermo::r_mix(var.W.rbegin()[1]);
+    double cp = thermo::cp_mix(var.W.rbegin()[1]);
 
-    double e = values[0]/(kappa-1) + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0];
+    double e = -values[0]*(r-cp)/r + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0];
     var.W.back()[var.eng_idx] = e;
 }
 
@@ -76,12 +77,19 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
 void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     // přenos tlaku
-    double p = thermo::pressure(var.W[1]);
+
+    // double p1 = thermo::pressure(var.W[1]);
+    double p2 = thermo::pressure(var.W[2]);
+
+    // double p = 2*p1-p2; //lin extrapolation of 1 and 2
+    // double p = 0.5*(p1 + p2); //avg of 1 and 2
+    double p = p2; // val of 1
     
-    std::vector<double> comp = {values[2],values[3],values[4]};
+    static std::vector<double> comp;
+    comp = {values[2],values[3],values[4]};
 
     double r = thermo::r_mix_comp(comp);
-    double kappa = thermo::kappa_mix_comp(comp);
+    // double kappa = thermo::kappa_mix_comp(comp);
 
     var.W[0][0] = p/r/values[1];
     
