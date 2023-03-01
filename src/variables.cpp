@@ -89,6 +89,10 @@ void variables::apply_mass_source(double M_tot, double T, double x_from, double 
         }
     }
 
+    std::vector<double> spec_frac = comp;
+
+    spec_frac[0] = 1;
+
     double M_V = 2*M_tot/V;
 
     for(int i = 0; i < N; i++)
@@ -97,8 +101,8 @@ void variables::apply_mass_source(double M_tot, double T, double x_from, double 
         {
             for(auto k = 0; k < N_comp; k++)
             {
-                md[i][k] = M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)))*comp[k];
-                q[i] += md[i][k]*thermo::cp_mix_comp(comp,T)*T;
+                md[i][k] = M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)))*spec_frac[k];
+                q[i] += thermo::cp_mix_comp(comp,T)*T*M_V/2*(1-cos(2*M_PI*(msh.x[i] - x_from)/(x_to-x_from)))*comp[k];
             }
         }
     }

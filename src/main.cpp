@@ -8,7 +8,7 @@
 
 #include "geometry.hpp"
 
-std::vector<double> prod_cp = {72913.76001451393, 1119.6547177177858, 1.256662344680612, -0.000555166379245523, 1.3051468187215095e-07, -1.5588756032619083e-11, 7.455841969813714e-16};
+std::vector<double> prod_cp = {92385.20332747149, 1307.9320148736522, 1.1843020600858043, -0.0004719070244224573, 1.018954129756949e-07, -1.1264527612965708e-11, 5.023488301548345e-16};
 std::vector<double> fuel_cp = {-235519.57542488514, 1455.374204197742, 3.091173168072451, -0.001445727217091643, 3.428476619622498e-07, -4.0705333490788554e-11, 1.9221666948167e-15};
 std::vector<double> oxi_cp = {-8000.032796543984, 629.1342945579523, 1.1223631596599488, -0.0006677168150395522, 1.948637060185014e-07, -2.7403372013652136e-11, 1.4815269244552882e-15};
 
@@ -49,15 +49,15 @@ int main(int argc, char** argv)
     // reaction R(std::vector<int>{1,2},std::vector<int>{},std::vector<double>{0.8684,0.1316},std::vector<double>{}, 5.719e6);
     // S.add_reaction(R);
 
-    S.initial_conditions(init::flow(5,101325,3225,0,std::vector<double>{1,0,0}));
+    S.initial_conditions(init::flow(5,101325,300,0,std::vector<double>{1,0,0}));
 
     // S.init_particles(200000,10000,100);
 
     // S.apply_heat_source(1e5,0.005,0.08);
-    // S.apply_mass_source(0.1573,0.005,0.08,std::vector<double>{1,0,1});
-    S.apply_mass_source(0.3,300,0.005,0.08,std::vector<double>{1,0,0});
+    S.apply_mass_source(0.1573,300,0.005,0.08,std::vector<double>{0,0,1});
+    // S.apply_mass_source(0.3,300,0.005,0.08,std::vector<double>{0,0,1});
 
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1,300,1,0,0}
+    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1.037,300,0,1,0}
                   ,boundary::zero_gradient_r,std::vector<double>{101325});
 
     // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1.1943,3225,1,0,0}
