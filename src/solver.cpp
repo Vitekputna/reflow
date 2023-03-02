@@ -14,7 +14,7 @@ void solver::compute_exact_flux(variables& var)
 {
     for(int i = 0; i < var.N; i++)
     {
-        Euler_flux(var.exact_flux[i],var.W[i]);
+        Euler_flux(i,var.exact_flux[i],var.W[i]);
     }
 }
 
@@ -37,7 +37,7 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
         {
             res[i][k] += var.md[i][k];
         }
-        res[i][var.mom_idx] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::pressure(var.W[i]);
+        res[i][var.mom_idx] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::p[i];
         res[i][var.eng_idx] += var.q[i];
     }
 }
@@ -53,8 +53,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt; // oxydizer
         res[i][2] += -dm/dt; // fuel
 
-        res[i][var.eng_idx] += dm*43.467e6/dt;
-        // res[i][var.eng_idx] += dm*44e6/dt;
+        // res[i][var.eng_idx] += dm*43.467e6/dt;
+        res[i][var.eng_idx] += dm*62e6/dt;
     }
 }
 
@@ -131,24 +131,24 @@ void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters con
     }
 }
 
-void solver::reconstructed_flux(std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx)
+void solver::reconstructed_flux(int idx, std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx)
 {
     for(auto i = 0; i < W.size(); i++)
     {
         W[i] += grad[i]*dx;
     }
 
-    Euler_flux(flux,W);
+    Euler_flux(idx, flux,W);
 }
 
-void solver::reconstructed_wave_speed(std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx)
+void solver::reconstructed_wave_speed(int i, std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx)
 {
     for(auto i = 0; i < W.size(); i++)
     {
         W[i] += grad[i]*dx;
     }
 
-    double c = thermo::speed_of_sound(W);
+    double c = thermo::speed_of_sound(i,W);
 
     a[0] = W[W.size()-2]/W[0] - c;
 
@@ -171,11 +171,11 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
 
     for(int i = 0; i < var.N_walls; i++)
     {
-        reconstructed_flux(fl,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
-        reconstructed_flux(fr,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
+        reconstructed_flux(i,fl,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
+        reconstructed_flux(i+1,fr,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
 
-        reconstructed_wave_speed(al,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
-        reconstructed_wave_speed(ar,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
+        reconstructed_wave_speed(i,al,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
+        reconstructed_wave_speed(i+1,ar,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
 
         for(int k = 0; k < var.N_var; k++)
         {
@@ -187,9 +187,9 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
     }
 }
 
-inline void solver::Euler_flux(std::vector<double>& flux, std::vector<double> const& W)
+inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W)
 {
-    double p = thermo::pressure(W);
+    double p = thermo::p[i];
     int n_var = flux.size()-2;
 
     flux[0] = W[n_var];
@@ -229,10 +229,9 @@ double solver::time_step(variables const& var, mesh const& msh, double CFL)
 {
     double dt = 1e10;
 
-    for(auto const& w : var.W)
-    // for(auto i = 0; i < msh.N; i++)
+    for(int i = 0; i < msh.N; i++)
     {
-        dt = std::min(dt, msh.dx_min/(std::abs(w[var.mom_idx]/w[0]) + thermo::speed_of_sound(w)));
+        dt = std::min(dt, msh.dx_min/(std::abs(var.W[i][var.mom_idx]/var.W[i][0]) + thermo::speed_of_sound(i,var.W[i])));
         // dt = std::min(dt, (msh.xf[i] - msh.xf[i-1])/(std::abs(var.W[i][var.mom_idx]/var.W[i][0] + thermo::speed_of_sound(var.W[i]))));
     }
 

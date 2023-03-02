@@ -150,7 +150,7 @@ void variables::export_to_file(mesh const& msh)
 
     for(int i = 0; i < N; i++)
     {
-        stream << msh.x[i] << " " << thermo::pressure(W[i]) << "\n";
+        stream << msh.x[i] << " " << thermo::p[i] << "\n";
     }
 
     stream << "\n";
@@ -172,7 +172,7 @@ void variables::export_to_file(mesh const& msh)
 
     for(int i = 0; i < N; i++)
     {
-        stream << msh.x[i] << " " << thermo::temperature(W[i]) << "\n";
+        stream << msh.x[i] << " " << thermo::T[i] << "\n";
         T_max = std::max(T_max,thermo::temperature(W[i]));
     }
 
@@ -183,7 +183,7 @@ void variables::export_to_file(mesh const& msh)
 
     for(int i = 0; i < N; i++)
     {
-        stream << msh.x[i] << " " << thermo::speed_of_sound(W[i]) << "\n";
+        stream << msh.x[i] << " " << thermo::speed_of_sound(i,W[i]) << "\n";
     }
 
     stream << "\n";

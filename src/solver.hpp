@@ -22,8 +22,8 @@ namespace solver
 
     // reconstruction
     void reconstruct(variables& var, mesh const& msh);
-    void reconstructed_flux(std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx);
-    void reconstructed_wave_speed(std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx);
+    void reconstructed_flux(int i, std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx);
+    void reconstructed_wave_speed(int i, std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx);
     inline double minmod(double a, double b);
     inline double van_albada(double a, double b);
     inline double van_leer(double a, double b);
@@ -33,7 +33,7 @@ namespace solver
     void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par);
 
     // exact flux function
-    inline void Euler_flux(std::vector<double>& flux, std::vector<double> const& W);
+    inline void Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W);
 
     // time integration
     void Explicit_Euler(variables& var,std::vector<std::vector<double>>& res, double dt);

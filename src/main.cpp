@@ -12,6 +12,9 @@ std::vector<double> prod_cp = {92385.20332747149, 1307.9320148736522, 1.18430206
 std::vector<double> fuel_cp = {-235519.57542488514, 1455.374204197742, 3.091173168072451, -0.001445727217091643, 3.428476619622498e-07, -4.0705333490788554e-11, 1.9221666948167e-15};
 std::vector<double> oxi_cp = {-8000.032796543984, 629.1342945579523, 1.1223631596599488, -0.0006677168150395522, 1.948637060185014e-07, -2.7403372013652136e-11, 1.4815269244552882e-15};
 
+// old thermo time 23s
+// new thermo time 12s :)
+
 
 int main(int argc, char** argv)
 {
@@ -21,7 +24,6 @@ int main(int argc, char** argv)
     curves.push_back(curve);
     curve = {{0.15,4.418e-3},{0.2,8.553e-4},{0.5e-1,0},{0.5e-1,0}};
     curves.push_back(curve);
-    // curve = {{0.2,8.553e-4},{0.25,3.455e-3},{0.5e-1,0},{1e-1,1e-3}};
     curve = {{0.2,8.553e-4},{0.319,4.185e-3},{0.5e-1,0},{2.1e-1,0}};
     curves.push_back(curve);
 
@@ -32,10 +34,9 @@ int main(int argc, char** argv)
     // geo.emplace_back(new geometry::arc(1.0,2.0,1.0,1.0,2.0,1.0));
     // geometry::test(geo);
 
-
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,1000}});
     S.spline_geometry(curves,100);
 
     S.msh.export_to_file();
@@ -53,14 +54,23 @@ int main(int argc, char** argv)
 
     // S.init_particles(200000,10000,100);
 
-    // S.apply_heat_source(1e5,0.005,0.08);
-    S.apply_mass_source(0.1573,300,0.005,0.08,std::vector<double>{0,0,1});
-    // S.apply_mass_source(0.3,300,0.005,0.08,std::vector<double>{0,0,1});
+    double md = 1.1943;
+    double OF = 6.6;
 
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1.037,300,0,1,0}
-                  ,boundary::zero_gradient_r,std::vector<double>{101325});
+    double m_F = md/(OF+1);
+    double m_OX = md-m_F;
 
-    // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{1.1943,3225,1,0,0}
+    std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
+
+    // S.apply_heat_source(6.837e6,0.005,0.08);
+    // S.apply_mass_source(0.1573,300,0.005,0.08,std::vector<double>{0,0,1});
+
+    S.apply_mass_source(m_F,300,0.005,0.08,std::vector<double>{0,0,1}); 
+
+    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{m_OX,300,0,1,0}
+                  ,boundary::subsonic_outlet,std::vector<double>{101325});
+
+    // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{md,3225,1,0,0}
     //               ,boundary::zero_gradient_r,std::vector<double>{101325});
 
     S.solve();

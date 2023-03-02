@@ -8,11 +8,15 @@
 
 extern double kappa;
 
-reflow::reflow(variables& _var, mesh& _msh) : var{_var}, msh{_msh} {}
+reflow::reflow(variables& _var, mesh& _msh) : var{_var}, msh{_msh} 
+{
+    thermo::init(N);    
+}
 
 reflow::reflow(int _N, int _N_var) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N);
+    thermo::init(N);
 }
 
 reflow::reflow()
@@ -88,6 +92,7 @@ void reflow::bump_geometry()
 
 void reflow::refine_mesh(std::vector<std::vector<double>> ref)
 {
+    thermo::init(N);
     msh.refine(ref);
     N = msh.N-2;
     from = msh.x_from;
@@ -128,9 +133,9 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.04;
+    double t_end = 0.1;
     double residual = 2*max_res;
-    double CFL = 0.3;
+    double CFL = 0.2;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
@@ -138,6 +143,9 @@ void reflow::solve()
 
     do
     {
+        // update pressure and temperature
+        thermo::update(var.W);
+
         // flow field part  
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
@@ -184,8 +192,7 @@ void reflow::solve()
 
         t += dt;
         n++;
-    // } while(n < 2165);
-    // } while(false);
+
     } while (t < t_end && residual > max_res);
 
     std::cout << "\r" << std::flush;
