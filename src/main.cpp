@@ -8,7 +8,7 @@
 
 #include "geometry.hpp"
 
-std::vector<double> prod_cp = {92385.20332747149, 1307.9320148736522, 1.1843020600858043, -0.0004719070244224573, 1.018954129756949e-07, -1.1264527612965708e-11, 5.023488301548345e-16};
+std::vector<double> prod_cp = {5.08463301e+04, 7.90800230e+02, 8.13709463e-01, -3.31579428e-04, 7.29586918e-08, -8.24771479e-12, 3.79540565e-16};
 std::vector<double> fuel_cp = {-235519.57542488514, 1455.374204197742, 3.091173168072451, -0.001445727217091643, 3.428476619622498e-07, -4.0705333490788554e-11, 1.9221666948167e-15};
 std::vector<double> oxi_cp = {-8000.032796543984, 629.1342945579523, 1.1223631596599488, -0.0006677168150395522, 1.948637060185014e-07, -2.7403372013652136e-11, 1.4815269244552882e-15};
 
@@ -36,13 +36,13 @@ int main(int argc, char** argv)
 
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,1000}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,300}});
     S.spline_geometry(curves,100);
 
     S.msh.export_to_file();
 
     // Species
-    S.add_specie(291,1.23,31,prod_cp); //Products
+    S.add_specie(311.39,1.23,26.7,prod_cp); //Products
     S.add_specie(188,1.31,44,oxi_cp); //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp); //Fuel
 
