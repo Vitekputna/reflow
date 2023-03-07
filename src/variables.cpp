@@ -77,7 +77,7 @@ void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh
     
 }
 
-void variables::apply_mass_source(double M_tot, double T, double x_from, double x_to, mesh const& msh, std::vector<double> comp)
+void variables::apply_mass_source(double M_tot, double T, double x_from, double x_to, mesh const& msh, std::vector<double> const& comp)
 {
     double V = 0;
 
@@ -130,7 +130,6 @@ void variables::export_to_file(mesh const& msh)
 
     std::vector<double> comp(thermo::n_comp);
     stream =  std::ofstream("out/Y.txt");
-    stream << "x[m]\tY(P)\tY(O)\tY(F)\n";
     for(int i = 0; i < N; i++)
     {
         thermo::composition(comp,W[i]);
@@ -144,7 +143,6 @@ void variables::export_to_file(mesh const& msh)
     }
     stream.close();
     
-
 
     stream =  std::ofstream("out/p.txt");
 
@@ -174,6 +172,26 @@ void variables::export_to_file(mesh const& msh)
     {
         stream << msh.x[i] << " " << thermo::T[i] << "\n";
         T_max = std::max(T_max,thermo::temperature(W[i]));
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/H.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << thermo::enthalpy(i,W[i]) << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/H0.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << thermo::enthalpy_stagnate(i,W[i]) << "\n";
     }
 
     stream << "\n";
@@ -261,7 +279,7 @@ void variables::export_timestep(double t, mesh const& msh, std::vector<particle>
 
     for(int i = 1; i < N-1; i++)
     {
-        stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][N_comp]/W[i][0] << "\t" << thermo::pressure(W[i]) << "\t" << thermo::temperature(W[i])
+        stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][N_comp]/W[i][0] << "\t" << thermo::p[i] << "\t" << thermo::T[i]
                            << "\t" << particle_values[i][0] << "\t" << particle_values[i][1] << "\t" << particle_values[i][2] << "\t" << particle_values[i][3] << "\n";
     }
 

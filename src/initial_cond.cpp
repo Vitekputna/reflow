@@ -25,10 +25,9 @@ std::vector<std::vector<double>> init::step(int N, int N_var, std::vector<double
     return W_0;
 }
 
-std::vector<double> init::flow(int N_var, double p, double T, double u, std::vector<double> comp)
+std::vector<double> init::flow(int N_var, double p, double T, double u, std::vector<double> const& comp)
 {
     double r = thermo::r_mix_comp(comp);
-    double kappa = thermo::kappa_mix_comp(comp);
 
     int n_comp = N_var - 2;
     double rho = p/r/T;
@@ -42,7 +41,7 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 
     res.push_back(rho*u);
 
-    double e = thermo::cp_mix_comp(comp,T)*rho*T - p + 0.5*rho*u*u;
+    double e = (thermo::enthalpy(T,comp) + 0.5*u*u)*rho - p;
 
     res.push_back(e);
 

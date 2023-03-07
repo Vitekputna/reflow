@@ -48,7 +48,6 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
     for(int i = 1; i < var.N-1; i++)
     {
         dm = std::max(0.0,std::min(var.W[i][2],var.W[i][1]/6.6));
-        // V = msh.A[i]*(msh.xf[i] - msh.xf[i-1]);
 
         res[i][1] += -6.6*dm/dt; // oxydizer
         res[i][2] += -dm/dt; // fuel
@@ -71,8 +70,6 @@ void solver::reconstruct(variables& var, mesh const& msh)
             phi = van_leer(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
 
             var.grad[i][k] = phi*(var.W[i+1][k] - var.W[i-1][k])/(msh.x[i+1] - msh.x[i-1]);
-
-            // var.grad[i][k] = 0.5*(var.W[i+1][k] - var.W[i][k])/(msh.x[i+1] - msh.x[i]);
         }
     }
 }   

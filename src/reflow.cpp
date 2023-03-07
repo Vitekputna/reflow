@@ -59,7 +59,7 @@ void reflow::apply_heat_source(double Q, double x_from, double x_to)
     var.apply_heat_source(Q,x_from,x_to,msh);
 }
 
-void reflow::apply_mass_source(double M, double T, double x_from, double x_to, std::vector<double> comp)
+void reflow::apply_mass_source(double M, double T, double x_from, double x_to, std::vector<double> const& comp)
 {
     var.apply_mass_source(M, T, x_from, x_to, msh, comp);
 }
@@ -133,7 +133,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.1;
+    double t_end = 0.5;
     double residual = 2*max_res;
     double CFL = 0.2;
 
@@ -193,6 +193,7 @@ void reflow::solve()
         t += dt;
         n++;
 
+    // } while (n < 5);
     } while (t < t_end && residual > max_res);
 
     std::cout << "\r" << std::flush;

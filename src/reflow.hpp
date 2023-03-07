@@ -45,7 +45,7 @@ class reflow
 
     // Sources
     void apply_heat_source(double Q, double x_from, double x_to);
-    void apply_mass_source(double M, double T, double x_from, double x_to, std::vector<double> comp);
+    void apply_mass_source(double M, double T, double x_from, double x_to, std::vector<double> const& comp);
 
     // Geometry
     void spline_geometry(std::vector<std::vector<std::vector<double>>> curves, int n);
