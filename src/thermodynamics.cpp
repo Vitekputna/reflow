@@ -202,16 +202,20 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 
     double r = thermo::r_mix_comp(comp);
 
+    double h;
+
     do
     {
         T_last = T;
         F = 0;
 
+        h = thermo::enthalpy(T,comp);
+
         for(int i = 0; i < n_comp; i++)
         {
             if(comp[i] > thershold_comp)
             {
-                F += comp[i]*(thermo::enthalpy(T,comp));
+                F += comp[i]*h;
             }
         }
 

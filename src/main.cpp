@@ -14,6 +14,8 @@ std::vector<double> fuel_cp = {-235519.57542488514, 1455.374204197742, 3.0911731
 std::vector<double> oxi_cp = {-8000.032796543984, 629.1342945579523, 1.1223631596599488, -0.0006677168150395522, 1.948637060185014e-07, -2.7403372013652136e-11, 1.4815269244552882e-15};
 
 const auto init_comp = std::vector<double>{1,0,0};
+double p_0 = 600e3;
+double T_0 = 300;
 
 int main(int argc, char** argv)
 {
@@ -36,7 +38,7 @@ int main(int argc, char** argv)
 
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,1000}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
     S.spline_geometry(curves,100);
 
     S.msh.export_to_file();
@@ -50,12 +52,11 @@ int main(int argc, char** argv)
     // reaction R(std::vector<int>{1,2},std::vector<int>{},std::vector<double>{0.8684,0.1316},std::vector<double>{}, 5.719e6);
     // S.add_reaction(R);
 
-    S.initial_conditions(init::flow(5,101325,3100,0,init_comp));
+    S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
 
     // S.init_particles(200000,10000,100);
 
     double md = 1.1943;
-    // double md = 2;
     double OF = 6.6;
 
     double m_F = md/(OF+1);
@@ -69,7 +70,7 @@ int main(int argc, char** argv)
     S.apply_mass_source(m_F,300,0.005,0.08,std::vector<double>{0,0,1}); 
 
     S.set_boundary(boundary::subsonic_inlet,std::vector<double>{m_OX,300,0,1,0}
-                  ,boundary::zero_gradient_r,std::vector<double>{101325});
+                  ,boundary::subsonic_outlet,std::vector<double>{p_0});
 
     // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{md,3225,1,0,0}
     //               ,boundary::zero_gradient_r,std::vector<double>{101325});

@@ -92,9 +92,9 @@ void reflow::bump_geometry()
 
 void reflow::refine_mesh(std::vector<std::vector<double>> ref)
 {
-    thermo::init(N);
     msh.refine(ref);
     N = msh.N-2;
+    thermo::init(N);
     from = msh.x_from;
     to = msh.x_to;
 }
@@ -144,15 +144,18 @@ void reflow::solve()
     do
     {
         // update pressure and temperature
+
         thermo::update(var.W);
 
-        // flow field part  
+        // flow field part 
+
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
         solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);
+
         // chemistry.solve(dt,res,var,msh);
 
         // lagrangian particles part
@@ -193,7 +196,7 @@ void reflow::solve()
         t += dt;
         n++;
 
-    // } while (n < 5);
+    // } while (n < 2);
     } while (t < t_end && residual > max_res);
 
     std::cout << "\r" << std::flush;
