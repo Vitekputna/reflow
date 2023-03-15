@@ -11,7 +11,7 @@
 
 variables::variables(){}
 
-variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N+2}, N_walls{_N+1}, N_comp{_N_var-2}
+variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N}, N_walls{_N-1}, N_comp{_N_var-2}
 {
     mom_idx = N_comp;
     eng_idx = N_comp+1;

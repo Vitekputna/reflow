@@ -93,7 +93,8 @@ void reflow::bump_geometry()
 void reflow::refine_mesh(std::vector<std::vector<double>> ref)
 {
     msh.refine(ref);
-    N = msh.N-2;
+    N = msh.N;
+
     thermo::init(N);
     from = msh.x_from;
     to = msh.x_to;
@@ -133,7 +134,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.5;
+    double t_end = 0.05;
     double residual = 2*max_res;
     double CFL = 0.2;
 
@@ -144,7 +145,6 @@ void reflow::solve()
     do
     {
         // update pressure and temperature
-
         thermo::update(var.W);
 
         // flow field part 

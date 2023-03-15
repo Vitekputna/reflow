@@ -36,38 +36,54 @@ int main(int argc, char** argv)
     // geometry::test(geo);
 
     // výpočet motoru
-    reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,1000}});
-    S.spline_geometry(curves,100);
+    // reflow S;
+    // S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
+    // S.spline_geometry(curves,100);
 
+    // // Species
+    // S.add_specie(311.39,1.30,26.7,prod_cp); //Products
+    // S.add_specie(188,1.31,44,oxi_cp); //Oxydizer
+    // S.add_specie(138,1.13,60,fuel_cp); //Fuel
+
+    // // // Chemistry
+    // // // reaction R(std::vector<int>{1,2},std::vector<int>{},std::vector<double>{0.8684,0.1316},std::vector<double>{}, 5.719e6);
+    // // // S.add_reaction(R);
+
+    // S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
+
+    // S.msh.export_to_file();
+    // S.var.export_to_file(S.msh);
+
+    // // // S.init_particles(200000,10000,100);
+
+    // double md = 1.1943;
+    // double OF = 6.6;
+
+    // double m_F = md/(OF+1);
+    // double m_OX = md-m_F;
+
+    // std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
+
+    // S.apply_mass_source(m_F,300,0.005,0.08,std::vector<double>{0,0,1});
+
+    // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{m_OX,300,0,1,0}
+    //               ,boundary::subsonic_outlet,std::vector<double>{p_0});
+
+
+    // S.solve();
+
+    reflow S;
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,100}});
     S.msh.export_to_file();
 
-    // Species
     S.add_specie(311.39,1.30,26.7,prod_cp); //Products
     S.add_specie(188,1.31,44,oxi_cp); //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp); //Fuel
 
-    // Chemistry
-    // reaction R(std::vector<int>{1,2},std::vector<int>{},std::vector<double>{0.8684,0.1316},std::vector<double>{}, 5.719e6);
-    // S.add_reaction(R);
-
     S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
 
-    // S.init_particles(200000,10000,100);
-
-    double md = 1.1943;
-    double OF = 6.6;
-
-    double m_F = md/(OF+1);
-    double m_OX = md-m_F;
-
-    std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
-
-    S.apply_mass_source(m_F,300,0.005,0.08,std::vector<double>{0,0,1});
-
-    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{m_OX,300,0,1,0}
-                  ,boundary::subsonic_outlet,std::vector<double>{p_0});
-
+    S.set_boundary(boundary::subsonic_inlet,std::vector<double>{100,300,0,1,0}
+                  ,boundary::supersonic_outlet,std::vector<double>{p_0});
 
     S.solve();
 
