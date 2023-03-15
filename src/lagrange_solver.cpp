@@ -79,15 +79,15 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     if(P.r < 0)
     {
-        res[P.last_cell_idx][0] += (m0)/dt/V;
-        res[P.last_cell_idx][2] += (m0)/dt/V;
+        // res[P.last_cell_idx][0] += (m0)/dt/V;
+        // res[P.last_cell_idx][2] += (m0)/dt/V;
         // res[P.last_cell_idx][4] += (m0)*H/dt/V;
         P.reset();
         return 0.0;
     }
 
-    res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
-    res[P.last_cell_idx][2] += (m0 - P.M)/dt/V;
+    // res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
+    // res[P.last_cell_idx][2] += (m0 - P.M)/dt/V;
     // res[P.last_cell_idx][4] += (m0 - P.M)*H/dt/V;
 
     return dt;

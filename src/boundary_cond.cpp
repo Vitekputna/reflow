@@ -70,7 +70,7 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
     static std::vector<double> comp(var.N_comp);
     thermo::composition(comp,var.W.rbegin()[1]);
 
-    double e = (thermo::enthalpy(T,comp) + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0]/var.W.back()[0]/2)*var.W.back()[0] - values[0]; 
+    double e = (thermo::enthalpy(T,comp) + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0]/var.W.back()[0])*var.W.back()[0] - values[0]; 
 
     var.W.back()[var.eng_idx] = e;
 }
