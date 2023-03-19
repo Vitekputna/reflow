@@ -15,8 +15,8 @@ thermo::thermo() {}
 
 void thermo::init(int n)
 {
-    thermo::p = std::vector<double>(n,0.0);
-    thermo::T = std::vector<double>(n,0.0);
+    thermo::p = std::vector<double>(n,1e5);
+    thermo::T = std::vector<double>(n,300);
 }
 
 // Using ideal gas law
@@ -52,6 +52,8 @@ double thermo::enthalpy(double T, std::vector<double> const& comp)
 {
     double h = 0;
 
+    // if(T > 4000) T = 4000;
+
     int j = 0;
     for(auto const& spec : thermo::species)
     {
@@ -66,7 +68,9 @@ double thermo::enthalpy(double T, std::vector<double> const& comp)
 
 double thermo::enthalpy_stagnate(int i, std::vector<double> const& W)
 {
-    return thermo::enthalpy(i,W) + pow(W[3]/W[0],2)/2;
+    int n = W.size();
+
+    return thermo::enthalpy(i,W) + pow(W[n-2]/W[0],2)/2;
 }
 
 double thermo::temperature(std::vector<double> const& W)
@@ -192,7 +196,8 @@ double thermo::dF(std::vector<double> const& comp, double r, double T)
 
 double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<double> const& W)
 {
-    double C = W[4]/W[0] - 0.5*W[3]*W[3]/W[0]/W[0];
+    int n = W.size()-1;
+    double C = W[n]/W[0] - 0.5*W[n-1]*W[n-1]/W[0]/W[0];
     static double T;
     static double T_last;
     static double F;
@@ -246,6 +251,7 @@ void thermo::update(std::vector<std::vector<double>> const& W)
 
     for(int i = 0; i < W.size(); i++)
     {
+        // std::cout << i << "\n";
         thermo::composition(comp,W[i]);
         thermo::T[i] = thermo::temp_new(i,comp,W[i]);
         thermo::p[i] = thermo::pressure(i,W[i],comp);

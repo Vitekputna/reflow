@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cmath>
 struct specie
 {
     double r;
@@ -20,6 +20,8 @@ struct specie
 
     double cp(double T)
     {
+        T = std::min(T,4000.0);
+
         return a/T + b + c*T + d*T*T + e*T*T*T + f*T*T*T*T + g*T*T*T*T*T;
     }
 };

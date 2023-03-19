@@ -29,7 +29,11 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 {
     double r = thermo::r_mix_comp(comp);
 
-    int n_comp = N_var - 2;
+    int n_comp = comp.size();
+
+    int n_other = N_var-n_comp-2;
+
+    // int n_comp = N_var - 2;
     double rho = p/r/T;
 
     std::vector<double> res = {rho};
@@ -37,6 +41,11 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
     for(auto i = 1; i < n_comp; i++)
     {
         res.push_back(rho*comp[i]);
+    }
+
+    for(int i = 0; i < n_other;i++)
+    {
+        res.push_back(0);
     }
 
     res.push_back(rho*u);
@@ -47,3 +56,4 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 
     return res;
 }
+

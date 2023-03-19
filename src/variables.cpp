@@ -27,7 +27,6 @@ variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N}, N_walls{_N-1}, 
 
 variables::variables(int _N_var, int _N, std::vector<double> const& W_0) : variables(_N_var,_N)
 {
-
     if((uint)N_var != W_0.size()) throw std::overflow_error("Size of initial condition is not the same as declared number of variables");
 
     for(auto& wi : W)
@@ -41,6 +40,8 @@ variables::variables(int _N_var, int _N, std::vector<double> const& W_0) : varia
 
 variables::variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N)
 {
+    if((uint)N_var != W_0.size()) throw std::overflow_error("Size of initial condition is not the same as declared number of variables");
+
     for(int i = 0; i < N; i++)
     {
         for(int k = 0; k < N_var; k++)
@@ -48,6 +49,35 @@ variables::variables(int _N_var, int _N, std::vector<std::vector<double>> const&
             W[i][k] = W_0[i][k];
         }
     }
+}
+
+variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<double> const& W_0) : variables(_N_var, _N, W_0)
+{
+    N_drop_frac = _N_drop_frac;
+    drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
+
+    N_comp = (N_var-2) - N_drop_frac;
+
+    std::cout << N_comp << "\n";
+
+    // if(_N_drop_mom == _N_drop_frac)
+    // {
+    //     for(int i = 0; i < N_drop_frac; i++)
+    //     {
+    //         drop_mom_idx[i] = i+N_comp+N_drop_frac;
+    //         std::cout << drop_mom_idx[i] << "\n";
+    //     }
+
+    // }
+    // else
+    // {
+
+    // }
+}
+
+variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N, W_0)
+{
+
 }
 
 void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh)
@@ -212,6 +242,16 @@ void variables::export_to_file(mesh const& msh)
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i] << " " << W[i][mom_idx]*msh.A[i] << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
+    stream =  std::ofstream("out/X.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " " << W[i][3]/W[i][0] << "\n";
     }
 
     stream << "\n";

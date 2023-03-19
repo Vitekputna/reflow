@@ -91,12 +91,13 @@ void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& va
     double r = thermo::r_mix_comp(comp);
 
     var.W[0][0] = p/r/values[1];
-    
 
     for(auto idx = 1; idx <= var.N_comp-1; idx++)
     {
         var.W[0][idx] = var.W[0][0]*comp[idx];
     }
+
+    var.W[0][3] = 1*var.W[0][0];
 
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
 

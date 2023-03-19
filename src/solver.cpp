@@ -53,7 +53,10 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][2] += -dm/dt; // fuel
 
         res[i][var.eng_idx] += dm*33.326e6/dt;
-        // res[i][var.eng_idx] += dm*43.467e6/dt;
+
+        res[i][3] += -var.W[i][3]*(thermo::T[i] - 300);
+
+        // res[i][var.eng_idx] += dm*30.467e6/dt;
         // res[i][var.eng_idx] += dm*62e6/dt;
     }
 }

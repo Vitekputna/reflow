@@ -32,7 +32,7 @@ class reflow
 
     bool run_w_particles = false;
 
-    volatile double max_res = 500;
+    volatile double max_res = 1;
     
     // Constructors
     reflow();
@@ -54,6 +54,8 @@ class reflow
 
     // Initial conditions
     void initial_conditions(std::vector<double> const& init);
+    void initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init);
+    void particle_distribution();
 
     // Thermodynamics
     void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);

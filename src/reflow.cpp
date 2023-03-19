@@ -54,6 +54,12 @@ void reflow::initial_conditions(std::vector<double> const& init)
     var = variables(N_var,N,init);
 }
 
+void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init)
+{
+    N_var = init.size();
+    var = variables(N_var,N,N_drop,N_drop_mom,init);
+}
+
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
 {
     var.apply_heat_source(Q,x_from,x_to,msh);
@@ -127,6 +133,17 @@ void reflow::init_particles(int N_max, int N_particles, int N_per_group)
     run_w_particles = true;
 }
 
+void reflow::particle_distribution()
+{
+    for(int i = 0; i < N; i++)
+    {
+        if(msh.x[i] > 2 && msh.x[i] < 4)
+        {
+            var.W[i][3] = 1;
+        }
+    }
+}
+
 void reflow::solve()
 {
     std::vector<std::vector<double>> res(var.N+2,std::vector<double>(var.N_var,0.0));
@@ -134,9 +151,9 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.05;
+    double t_end = 0.5;
     double residual = 2*max_res;
-    double CFL = 0.2;
+    double CFL = 0.5;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
@@ -186,7 +203,7 @@ void reflow::solve()
             var.export_to_file(msh);
             // var.export_timestep(t,msh,par_man.particles);
         }
-
+    
         dt = solver::time_step(var,msh,CFL);
 
         // boundary
@@ -196,7 +213,7 @@ void reflow::solve()
         t += dt;
         n++;
 
-    // } while (n < 2);
+    // } while (n < 3);
     } while (t < t_end && residual > max_res);
 
     std::cout << "\r" << std::flush;
