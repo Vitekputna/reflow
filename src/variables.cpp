@@ -58,7 +58,13 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std:
 
     N_comp = (N_var-2) - N_drop_frac;
 
-    std::cout << N_comp << "\n";
+    std::cout << "##########################################\n";
+    std::cout << "Variables:\n";
+    std::cout << "Number of compounds:\t\t" << N_comp << "\n";
+    std::cout << "Number of droplet fractions:\t" << N_drop_frac << "\n";
+    std::cout << "Number of droplet momenta:\t" << _N_drop_mom << "\n\n";
+    std::cout << "##########################################\n";
+
 
     // if(_N_drop_mom == _N_drop_frac)
     // {
@@ -136,8 +142,6 @@ void variables::apply_mass_source(double M_tot, double T, double x_from, double 
             }
         }
     }
-
-    std::cout << "mass source: " << M_V << " " << V << "\n";
 }
 
 void variables::export_to_file(mesh const& msh)

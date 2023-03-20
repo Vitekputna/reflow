@@ -1,25 +1,45 @@
-CC = g++
-OPT = -O3
-FLAGS = -std=c++11 -ffast-math
-LIBS = -fopenmp
-BIN_PATH = bin/
-SRC_PATH = src/
+CXX = g++
+CXXFLAGS = -std=c++11 -O3 -ffast-math 
+SRC_DIR = src
+MAIN_DIR = reflow
+LIB_FLAGS = -fopenmp
+BUILD_DIR = bin
+EXECUTABLE = run.out
 
-BINARY = reflow.out
+# Default 
+MAIN = main
 
-FILES_N = main.cpp mesh.cpp variables.cpp solver.cpp thermodynamics.cpp initial_cond.cpp boundary_cond.cpp reflow.cpp particle.cpp lagrange_solver.cpp chem_solver.cpp geometry.cpp
-OBJECTS_N = main.o mesh.o variables.o solver.o thermodynamics.o initial_cond.o boundary_cond.o reflow.o particle.o lagrange_solver.o chem_solver.o geometry.o
+# List all the source files
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 
-OBJECTS = $(foreach F,$(OBJECTS_N),$(BIN_PATH)$(F))
-FILES = $(foreach F,$(FILES),$(SRC_PATH)$(F))
+# Generate a list of object files by replacing the .cpp extension with .o
+OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
-all: $(BINARY)
+# Define the main source file
+MAIN_SRC = $(MAIN_DIR)/$(addsuffix .cpp,$(MAIN))
 
-$(BINARY): $(OBJECTS)
-	$(CC) -o  $@ $^ $(LIBS)
+# Define the main object file by replacing .cpp extension with .o
+MAIN_OBJ = $(BUILD_DIR)/$(addsuffix .o,$(MAIN))
 
-bin/%.o: src/%.cpp
-	$(CC) $(FLAGS) $(OPT) -c $^ -o $@ $(LIBS)
+# Define the include paths
+INC_FLAGS = -I$(INC_DIR)
 
-clean: 
-	rm $(BINARY) $(OBJECTS)
+all: $(EXECUTABLE)
+
+# Link all the object files into the executable
+$(EXECUTABLE): $(OBJS) $(MAIN_OBJ)
+	$(CXX) $(CXXFLAGS) $(LIB_FLAGS) $^ -o $@
+
+# Compile all the source files into object files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) $(LIB_FLAGS) -c $< -o $@
+
+# Compile the main source file into an object file
+$(MAIN_OBJ): $(MAIN_SRC)
+	$(CXX) $(CXXFLAGS) $(LIB_FLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(BUILD_DIR)/*.o
+	rm $(EXECUTABLE)
+
+.PHONY: all clean

@@ -31,6 +31,7 @@ namespace solver
     // explicit fluxes
     void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par);
     void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par);
+    void HLL_flux(variables& var, mesh const& msh, parameters const& par);
 
     // exact flux function
     inline void Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W);

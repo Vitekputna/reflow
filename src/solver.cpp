@@ -54,7 +54,7 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
 
         res[i][var.eng_idx] += dm*33.326e6/dt;
 
-        res[i][3] += -var.W[i][3]*(thermo::T[i] - 300);
+        // res[i][3] += -var.W[i][3]*(thermo::T[i] - 300);
 
         // res[i][var.eng_idx] += dm*30.467e6/dt;
         // res[i][var.eng_idx] += dm*62e6/dt;
@@ -132,6 +132,54 @@ void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters con
     }
 }
 
+void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par)
+{
+    static double sr,sl;
+    static double cr,cl,ur,ul;
+
+    static bool right, left, center;
+
+    compute_exact_flux(var);
+
+    for(int i = 0; i < var.N_walls; i++)
+    {
+        ur = var.W[i+1][var.mom_idx]/var.W[i+1][0];
+        ul = var.W[i][var.mom_idx]/var.W[i][0];
+
+        cr = thermo::speed_of_sound(i+1,var.W[i+1]);
+        cl = thermo::speed_of_sound(i,var.W[i]);
+
+        sr = std::max(ur+cr,ul+cl);
+        sl = std::min(ur-cr,ul-cl);
+
+        if(sl >= 0)
+        {
+            left = true;
+            right = false;
+            center = false;
+        }
+        else if(sr < 0)
+        {
+            right = true;
+            left = false;
+            center = false;
+        }
+        else
+        {
+            center = true;
+            right = false;
+            left = false;
+        }
+
+        for(int k = 0; k < var.N_var; k++)
+        {
+            var.flux[i][k] = left*var.exact_flux[i][k] + center*((sr*var.exact_flux[i][k] - sl*var.exact_flux[i+1][k] + sr*sl*(var.W[i+1][k]-var.W[i][k]))/(sr-sl))
+                            +right*var.exact_flux[i+1][k];
+        }
+    }
+
+}
+
 void solver::reconstructed_flux(int idx, std::vector<double>& flux, std::vector<double> W, std::vector<double> const& grad, double dx)
 {
     for(auto i = 0; i < W.size(); i++)
@@ -144,21 +192,27 @@ void solver::reconstructed_flux(int idx, std::vector<double>& flux, std::vector<
 
 void solver::reconstructed_wave_speed(int i, std::vector<double>& a, std::vector<double> W, std::vector<double> const& grad, double dx)
 {
-    for(auto i = 0; i < W.size(); i++)
+    static int size;
+    static double c;
+
+    size = W.size();
+    c = thermo::speed_of_sound(i,W);
+
+    for(auto i = 0; i < size; i++)
     {
         W[i] += grad[i]*dx;
     }
 
-    double c = thermo::speed_of_sound(i,W);
+    // c = thermo::speed_of_sound(i,W);
 
-    a[0] = W[W.size()-2]/W[0] - c;
+    a[0] = W[size-2]/W[0] - c;
 
-    for(auto i = 1; i < W.size()-2; i++)
+    for(auto i = 1; i < size-2; i++)
     {
-        a[i] = W[W.size()-2]/W[0];
+        a[i] = W[size-2]/W[0];
     }
 
-    a.back() = W[W.size()-2]/W[0] + c;
+    a[size-1] = W[size-2]/W[0] + c;
 }
 
 void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par)
@@ -190,8 +244,10 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
 
 inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W)
 {
-    double p = thermo::p[i];
-    int n_var = flux.size()-2;
+    static double p;
+    static int n_var = flux.size()-2;
+
+    p = thermo::p[i];
 
     flux[0] = W[n_var];
 
@@ -233,7 +289,6 @@ double solver::time_step(variables const& var, mesh const& msh, double CFL)
     for(int i = 0; i < msh.N; i++)
     {
         dt = std::min(dt, msh.dx_min/(std::abs(var.W[i][var.mom_idx]/var.W[i][0]) + thermo::speed_of_sound(i,var.W[i])));
-        // dt = std::min(dt, (msh.xf[i] - msh.xf[i-1])/(std::abs(var.W[i][var.mom_idx]/var.W[i][0] + thermo::speed_of_sound(var.W[i]))));
     }
 
     return CFL*dt;

@@ -67,6 +67,13 @@ void reflow::apply_heat_source(double Q, double x_from, double x_to)
 
 void reflow::apply_mass_source(double M, double T, double x_from, double x_to, std::vector<double> const& comp)
 {
+    std::cout << "Aplying mass source:\n";
+    std::cout << "Total flux:\t\t" << M << "\n";
+    std::cout << "Temperature:\t\t" << T << "\n";
+    std::cout << "Source from:\t\t" << x_from << "\n";
+    std::cout << "Source to:\t\t" << x_to << "\n";
+    std::cout << "##########################################\n";
+
     var.apply_mass_source(M, T, x_from, x_to, msh, comp);
 }
 
@@ -151,13 +158,16 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.5;
+    double t_end = 0.1;
     double residual = 2*max_res;
     double CFL = 0.5;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
     stream.close();
+
+    std::cout << "time[s]\ttime step[s]\tresidual[]\n";
+    std::cout << "##########################################\n";
 
     do
     {
@@ -168,7 +178,8 @@ void reflow::solve()
 
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);

@@ -94,7 +94,7 @@ void mesh::refine(std::vector<std::vector<double>> ref)
 
     double step;
     int c_idx = 1;
-    bool offset = false;
+    // bool offset = false;
 
     for(auto seg : ref)
     {

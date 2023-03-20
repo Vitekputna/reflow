@@ -20,7 +20,7 @@ void chem_solver::add_reaction(reaction& R)
 
 void chem_solver::solve(double dt,std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
 {
-    double K,V;
+    double K;
 
     std::vector<double> comp(var.N_comp,0.0);
 

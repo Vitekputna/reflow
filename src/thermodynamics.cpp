@@ -236,9 +236,6 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 double thermo::pressure(int i, std::vector<double> const& W, std::vector<double> const& comp)
 {
     static int mom_idx = W.size()-2;
-    double h = thermo::enthalpy(i,W);
-
-    // std::cout << (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/W[0] - W.back())*W[0] << "\n";
 
     return (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/W[0]/W[0])*W[0] - W.back();
 }
@@ -249,7 +246,8 @@ void thermo::update(std::vector<std::vector<double>> const& W)
 
     static std::vector<double> comp(n_comp);
 
-    for(int i = 0; i < W.size(); i++)
+
+    for(int i = 0; i < int(W.size()); i++)
     {
         // std::cout << i << "\n";
         thermo::composition(comp,W[i]);
