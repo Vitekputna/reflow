@@ -33,6 +33,9 @@ namespace solver
     void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par);
     void HLL_flux(variables& var, mesh const& msh, parameters const& par);
 
+    // droplet transport
+    void droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh);
+
     // exact flux function
     inline void Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W);
 

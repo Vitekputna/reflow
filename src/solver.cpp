@@ -49,15 +49,33 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
     {
         dm = std::max(0.0,std::min(var.W[i][2],var.W[i][1]/6.6));
 
-        res[i][1] += -6.6*dm/dt; // oxydizer
-        res[i][2] += -dm/dt; // fuel
+        res[i][1] += -6.6*dm/dt;    // Oxydizer
+        res[i][2] += -dm/dt;        // Fuel
 
         res[i][var.eng_idx] += dm*33.326e6/dt;
+    }
+}
 
-        // res[i][3] += -var.W[i][3]*(thermo::T[i] - 300);
+void solver::droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
+{
+    //W3 number of droplets
+    //W4 droplet mass
 
-        // res[i][var.eng_idx] += dm*30.467e6/dt;
-        // res[i][var.eng_idx] += dm*62e6/dt;
+    static double r;
+    static double dm,dr;
+
+    for(int i = 1; i < var.N-1; i++)
+    {
+        r = std::pow(3*var.W[i][4]/(4*var.W[i][3]*3.14159*700),0.3333);
+        
+        if(var.W[i][3] == 0) r = 0;
+
+        dm = std::max(0.0,1e-3*var.W[i][3]*r*log(1 + 1e-4*std::max(0.0,thermo::T[i] - 300)));
+
+        res[i][4] -= dm;
+
+        // res[i][0] += dm;
+        res[i][2] += dm;
     }
 }
 
@@ -294,7 +312,7 @@ double solver::time_step(variables const& var, mesh const& msh, double CFL)
     return CFL*dt;
 }
 
-double solver::max_residual(std::vector<std::vector<double>> const& res, variables const& var, int res_idx)
+double solver::max_residual(std::vector<std::vector<double>> const& res, variables const& var, int res_idx) 
 {
     double max_res = 0;
 

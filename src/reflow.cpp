@@ -160,7 +160,7 @@ void reflow::solve()
     double dt = 2e-8;
     double t_end = 0.1;
     double residual = 2*max_res;
-    double CFL = 0.5;
+    double CFL = 0.1;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
@@ -178,11 +178,12 @@ void reflow::solve()
 
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);
+        solver::droplet_transport(res,var,msh);
 
         // chemistry.solve(dt,res,var,msh);
 
