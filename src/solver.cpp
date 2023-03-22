@@ -59,7 +59,7 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
 void solver::droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
 {
     //W3 number of droplets
-    //W4 droplet mass
+    //W4 droplet mass fraction
 
     static double r;
     static double dm,dr;
@@ -72,10 +72,10 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
 
         dm = std::max(0.0,1e-3*var.W[i][3]*r*log(1 + 1e-4*std::max(0.0,thermo::T[i] - 300)));
 
-        res[i][4] -= dm;
+        // res[i][4] -= dm;
 
         // res[i][0] += dm;
-        res[i][2] += dm;
+        // res[i][2] += dm;
     }
 }
 

@@ -93,6 +93,20 @@ void reflow::set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), st
     left_values = _left_values;
 }    
 
+void reflow::add_boundary_function(void(*func)(variables&,mesh&,std::vector<double>&),std::vector<double> values)
+{
+    boundary_func_vec.push_back(func);
+    boundary_values_vec.push_back(values);
+}
+
+void reflow::apply_boundary_conditions()
+{
+    for(auto condition : boundary_func_vec)
+    {
+        condition(var,msh,boundary_values_vec[0]);
+    }
+}
+
 void reflow::spline_geometry(std::vector<std::vector<std::vector<double>>> curves, int n)
 {
     msh.cubic(curves,n);
@@ -160,7 +174,7 @@ void reflow::solve()
     double dt = 2e-8;
     double t_end = 0.1;
     double residual = 2*max_res;
-    double CFL = 0.1;
+    double CFL = 0.3;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";

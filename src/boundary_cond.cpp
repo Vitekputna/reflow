@@ -97,11 +97,13 @@ void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& va
         var.W[0][idx] = var.W[0][0]*comp[idx];
     }
 
-    var.W[0][3] = 3.75e10*var.W[0][0];
-
-    var.W[0][4] = 0.157145*var.W[0][0];
-
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
+
+    // var.W[0][3] = 3.75e10;
+    var.W[0][3] = 10;
+
+    // var.W[0][4] = 0.157145;
+    var.W[0][4] = 0.157145/(msh.A[0]*(var.W[0][var.mom_idx]/var.W[0][0]));
 
     var.W[0][var.eng_idx] = (thermo::enthalpy(values[1],comp) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0]/var.W[0][0])*var.W[0][0] - p;
 }

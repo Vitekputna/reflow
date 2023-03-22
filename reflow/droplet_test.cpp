@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     // S.apply_mass_source(m_F,300,0.005,0.08,std::vector<double>{0,0,1});
 
     S.set_boundary(boundary::subsonic_inlet,std::vector<double>{m_OX,500,0,1,0}
-                  ,boundary::subsonic_outlet,std::vector<double>{p_0});
+                  ,boundary::supersonic_outlet,std::vector<double>{p_0});
 
     S.solve();
     return 0;

@@ -257,7 +257,7 @@ void variables::export_to_file(mesh const& msh)
         stream =  std::ofstream("out/X" + std::to_string(k) + ".txt");
         for(int i = 0; i < N; i++)
         {
-            stream << msh.x[i] << " " << W[i][3+k]/W[i][0] << "\n";
+            stream << msh.x[i] << " " << W[i][3+k] << "\n";
         }
         stream << "\n";
         stream.close();
