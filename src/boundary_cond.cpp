@@ -2,6 +2,7 @@
 #include "thermodynamics.hpp"
 
 #include <iostream>
+#include <cmath>
 
 void boundary::_set_value_l(variables& var, int idx, double value)
 {
@@ -99,12 +100,6 @@ void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& va
 
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
 
-    // var.W[0][3] = 3.75e10;
-    var.W[0][3] = 10;
-
-    // var.W[0][4] = 0.157145;
-    var.W[0][4] = 0.157145/(msh.A[0]*(var.W[0][var.mom_idx]/var.W[0][0]));
-
     var.W[0][var.eng_idx] = (thermo::enthalpy(values[1],comp) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0]/var.W[0][0])*var.W[0][0] - p;
 }
 
@@ -115,3 +110,13 @@ void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>&
         var.W.back()[i] = 0.5*(var.W.rbegin()[2][i] + var.W.rbegin()[1][i]);
     }
 }
+
+// values = (md,r,rho)
+void boundary::quiscent_dropplet_inlet(variables& var, mesh& msh, std::vector<double>& values)
+{
+    double dm = 4/3*M_PI*std::pow(values[1],3)*values[2];
+
+    var.W[0][4] = values[0]/(msh.A[0]*(var.W[0][var.mom_idx]/var.W[0][0]));
+    var.W[0][3] = var.W[0][4]/dm;
+}
+

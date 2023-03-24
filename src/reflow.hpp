@@ -21,7 +21,6 @@ class reflow
     thermo thermo_manager;
     chem_solver chemistry;
 
-
     // Boundary 
     void(*left_boundary)(variables&,mesh&,std::vector<double>&);
     void(*right_boundary)(variables&,mesh&,std::vector<double>&);
@@ -32,12 +31,16 @@ class reflow
     std::vector<Boundary_func> boundary_func_vec;
     std::vector<std::vector<double>> boundary_values_vec;
 
-
     // Constatnts
     int n_dt = 2;
     int n_res = 200;
     int n_exp = 5000;
+
     int N, N_var;
+    int n_comp = 0;
+    int n_drop_frac = 0;
+    int n_drop_mom = 0;
+
     double from, to;
 
     bool run_w_particles = false;
@@ -65,7 +68,6 @@ class reflow
     // Initial conditions
     void initial_conditions(std::vector<double> const& init);
     void initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init);
-    void particle_distribution();
 
     // Thermodynamics
     void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);
@@ -74,10 +76,6 @@ class reflow
     void add_reaction(reaction& R);
 
     // Boundary
-    void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&));
-    void set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), std::vector<double> _left_values,
-                      void(*right)(variables&,mesh&,std::vector<double>&), std::vector<double> _right_values);
-
     void add_boundary_function(Boundary_func,std::vector<double> values);
     void apply_boundary_conditions();
 

@@ -19,12 +19,13 @@ struct variables
     int N;              // number of cells
     int N_walls;        // number of walls
     int N_ghosts = 2;   // number of ghost cells
-    int N_comp;         // number of components
-    int N_drop_frac = 0;    // number of drop. fractions
+    static int N_comp;         // number of components
+    static int N_drop_frac;    // number of drop. fractions
     
-    std::vector<int> drop_mom_idx;     //momentum eq. idx for all droplet fractions
+    static std::vector<int> drop_mom_idx;     //momentum eq. idx for all droplet fractions
 
-    int mom_idx, eng_idx;   // indices for fluid momentum and energy equation
+    static int mom_idx;
+    static int eng_idx;   // indices for fluid momentum and energy equation
 
     //default
     variables();

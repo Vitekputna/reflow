@@ -21,4 +21,6 @@ namespace boundary
     void subsonic_inlet(variables& var, mesh& msh, std::vector<double>& values);
     void subsonic_outlet(variables& var, mesh& msh, std::vector<double>& values);
     void supersonic_outlet(variables& var, mesh& msh, std::vector<double>& values);
+
+    void quiscent_dropplet_inlet(variables& var, mesh& msh, std::vector<double>& values);
 }

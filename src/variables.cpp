@@ -7,14 +7,20 @@
 #include <iostream>
 #include <exception>
 
-// extern double kappa,r;
+std::vector<int> variables::drop_mom_idx;
+
+int variables::mom_idx;
+int variables::eng_idx;
+int variables::N_comp;
+int variables::N_drop_frac = 0;
 
 variables::variables(){}
 
-variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N}, N_walls{_N-1}, N_comp{_N_var-2}
+variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N}, N_walls{_N-1}
 {
-    mom_idx = N_comp;
-    eng_idx = N_comp+1;
+    variables::N_comp = _N_var-2;
+    variables::mom_idx = N_comp;
+    variables::eng_idx = N_comp+1;
 
     W = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
     flux = std::vector<std::vector<double>>(N_walls,std::vector<double>(N_var,0.0));
@@ -53,10 +59,10 @@ variables::variables(int _N_var, int _N, std::vector<std::vector<double>> const&
 
 variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<double> const& W_0) : variables(_N_var, _N, W_0)
 {
-    N_drop_frac = _N_drop_frac;
-    drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
+    variables::N_drop_frac = _N_drop_frac;
 
-    N_comp = (N_var-2) - N_drop_frac;
+    variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
+    variables::N_comp = (N_var-2) - N_drop_frac;
 
     std::cout << "##########################################\n";
     std::cout << "Variables:\n";

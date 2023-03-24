@@ -1,6 +1,7 @@
 #include <iostream>
 #include "chem_solver.hpp"
 #include "thermodynamics.hpp"
+#include "variables.hpp"
 
 reaction::reaction(){}
 
@@ -51,7 +52,7 @@ void chem_solver::solve(double dt,std::vector<std::vector<double>>& res, variabl
                 res[i][reaction.product_idx[idx]] += K*reaction.product_fraction[idx]/reaction.reactant_fraction[0]/dt;
             }
 
-            res[i][var.eng_idx] += K*reaction.Heat_relased/dt;
+            res[i][variables::eng_idx] += K*reaction.Heat_relased/dt;
         }
     }
 }

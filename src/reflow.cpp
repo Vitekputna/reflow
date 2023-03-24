@@ -57,6 +57,9 @@ void reflow::initial_conditions(std::vector<double> const& init)
 void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init)
 {
     N_var = init.size();
+    n_drop_frac = N_drop;
+    n_drop_mom = N_drop_mom;
+
     var = variables(N_var,N,N_drop,N_drop_mom,init);
 }
 
@@ -77,22 +80,6 @@ void reflow::apply_mass_source(double M, double T, double x_from, double x_to, s
     var.apply_mass_source(M, T, x_from, x_to, msh, comp);
 }
 
-void reflow::set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), void(*right)(variables&,mesh&,std::vector<double>&))
-{
-    right_boundary = right;
-    left_boundary = left;
-}
-
-void reflow::set_boundary(void(*left)(variables&,mesh&,std::vector<double>&), std::vector<double> _left_values,
-                    void(*right)(variables&,mesh&,std::vector<double>&), std::vector<double> _right_values)
-{
-    right_boundary = right;
-    left_boundary = left;
-
-    right_values = _right_values;
-    left_values = _left_values;
-}    
-
 void reflow::add_boundary_function(void(*func)(variables&,mesh&,std::vector<double>&),std::vector<double> values)
 {
     boundary_func_vec.push_back(func);
@@ -101,9 +88,9 @@ void reflow::add_boundary_function(void(*func)(variables&,mesh&,std::vector<doub
 
 void reflow::apply_boundary_conditions()
 {
-    for(auto condition : boundary_func_vec)
+    for(auto i = 0; i < boundary_func_vec.size(); i++)
     {
-        condition(var,msh,boundary_values_vec[0]);
+        boundary_func_vec[i](var,msh,boundary_values_vec[i]);
     }
 }
 
@@ -131,6 +118,7 @@ void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> c
 {
     specie spec(r,kappa,Mm,cp_coeff);
     thermo_manager.load_specie(spec);
+    n_comp++;
 }
 
 void reflow::add_reaction(reaction& R)
@@ -154,17 +142,6 @@ void reflow::init_particles(int N_max, int N_particles, int N_per_group)
     run_w_particles = true;
 }
 
-void reflow::particle_distribution()
-{
-    for(int i = 0; i < N; i++)
-    {
-        if(msh.x[i] > 2 && msh.x[i] < 4)
-        {
-            var.W[i][3] = 1;
-        }
-    }
-}
-
 void reflow::solve()
 {
     std::vector<std::vector<double>> res(var.N+2,std::vector<double>(var.N_var,0.0));
@@ -174,7 +151,7 @@ void reflow::solve()
     double dt = 2e-8;
     double t_end = 0.1;
     double residual = 2*max_res;
-    double CFL = 0.3;
+    double CFL = 0.4;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
@@ -196,7 +173,7 @@ void reflow::solve()
         solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
-        solver::chemical_reactions(dt,res,var,msh);
+        // solver::chemical_reactions(dt,res,var,msh);
         solver::droplet_transport(res,var,msh);
 
         // chemistry.solve(dt,res,var,msh);
@@ -233,8 +210,7 @@ void reflow::solve()
         dt = solver::time_step(var,msh,CFL);
 
         // boundary
-        left_boundary(var,msh,left_values);
-        right_boundary(var,msh,right_values);
+        apply_boundary_conditions();
 
         t += dt;
         n++;

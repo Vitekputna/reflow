@@ -70,11 +70,11 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
         
         if(var.W[i][3] == 0) r = 0;
 
-        dm = std::max(0.0,1e-3*var.W[i][3]*r*log(1 + 1e-4*std::max(0.0,thermo::T[i] - 300)));
+        dm = std::max(0.0,var.W[i][3]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 300)));
 
-        // res[i][4] -= dm;
+        res[i][4] -= dm;
 
-        // res[i][0] += dm;
+        res[i][0] += dm;
         // res[i][2] += dm;
     }
 }
@@ -87,8 +87,8 @@ void solver::reconstruct(variables& var, mesh const& msh)
         for(auto k = 0; k < var.N_var; k++)
         {
             // phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
-            // phi = van_albada(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
-            phi = van_leer(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
+            phi = van_albada(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
+            // phi = van_leer(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
 
             var.grad[i][k] = phi*(var.W[i+1][k] - var.W[i-1][k])/(msh.x[i+1] - msh.x[i-1]);
         }
@@ -269,9 +269,15 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
 
     flux[0] = W[n_var];
 
-    for(auto idx = 1; idx < n_var; idx++)
+    for(auto idx = 1; idx < variables::N_comp; idx++)
     {
         flux[idx] = W[n_var]*W[idx]/W[0];
+    }
+
+    for(auto idx = 0; idx < variables::N_drop_frac; idx++)
+    {
+        flux[idx+variables::N_comp] = W[idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
+        flux[idx+variables::N_drop_frac+variables::N_comp] = W[idx+variables::N_drop_frac+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
     }
 
     flux[n_var] = W[n_var]*W[n_var]/W[0] + p;

@@ -33,7 +33,9 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 
     int n_other = N_var-n_comp-2;
 
-    // int n_comp = N_var - 2;
+    std::cout << "Detecting other variables than chemical components, momentum and energy.\n";
+    std::cout << "Other variables will be set initialy to zero, alernatively use diff. init. func.\n";
+
     double rho = p/r/T;
 
     std::vector<double> res = {rho};
@@ -57,3 +59,61 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
     return res;
 }
 
+// flow with dropplet init func...
+
+std::vector<double> init::flow_dropplets(int N_var, double p, double T, double u, std::vector<double> const& comp,
+                                         std::vector<double> drp_frac,
+                                         std::vector<double> drp_count,
+                                         std::vector<double> drp_mom)
+{
+    double r = thermo::r_mix_comp(comp);
+
+    int n_comp = comp.size();
+
+    int n_other = N_var-n_comp-2;
+
+    if(N_var != n_comp + 2 + drp_frac.size() + drp_count.size() + drp_mom.size())
+    {
+        std::cout << "Number of parameters is not consistent with supplied parameters!\n";
+        std::cout << "Exiting...\n";
+        exit(0);
+    }
+
+    double rho = p/r/T; // hmotnostní koncentrace plynné fáze (hustota)
+
+    double chi = 0; //hmotnostní koncentrace kondenzované fáze
+
+    for(auto& frac : drp_frac)
+    {
+        chi += frac;
+    }
+    std::vector<double> res = {rho + chi};
+
+    for(auto i = 1; i < n_comp; i++)
+    {
+        res.push_back(rho*comp[i]);
+    }
+
+    for(auto& count : drp_count)
+    {
+        res.push_back(count);
+    }
+
+    for(auto& frac : drp_frac)
+    {
+        res.push_back(frac);
+    }
+
+    for(auto& mom : drp_mom)
+    {
+        res.push_back(mom);
+    }
+
+    res.push_back((rho+chi)*u);
+
+    double e = thermo::enthalpy(T,comp)*rho + 0.5*u*u*(rho+chi) - p;
+
+    res.push_back(e);
+
+    return res;
+}

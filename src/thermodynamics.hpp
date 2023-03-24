@@ -11,6 +11,9 @@ public:
     static std::vector<double> p;
 
     static int n_comp;
+
+    
+
     static double thershold_comp;
 
     thermo();
