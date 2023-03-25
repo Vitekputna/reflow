@@ -64,18 +64,23 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     static double r;
     static double dm,dr;
 
+    static int N_idx, Frac_idx;
+
     for(int i = 1; i < var.N-1; i++)
     {
-        r = std::pow(3*var.W[i][4]/(4*var.W[i][3]*3.14159*700),0.3333);
-        
-        if(var.W[i][3] == 0) r = 0;
+        for(int j = 0; j < var.N_drop_frac; j += 2)
+        {
+            N_idx = var.N_comp + j;
+            Frac_idx = var.N_comp + j + 1;
 
-        dm = std::max(0.0,var.W[i][3]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 300)));
+            r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
+            if(var.W[i][N_idx] == 0) r = 0;
 
-        res[i][4] -= dm;
+            dm = std::max(0.0,var.W[i][N_idx]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 300)));
 
-        res[i][0] += dm;
-        // res[i][2] += dm;
+            res[i][Frac_idx] -= dm;
+            // res[i][0] += dm;
+        }
     }
 }
 
@@ -277,7 +282,6 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
     for(auto idx = 0; idx < variables::N_drop_frac; idx++)
     {
         flux[idx+variables::N_comp] = W[idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
-        flux[idx+variables::N_drop_frac+variables::N_comp] = W[idx+variables::N_drop_frac+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
     }
 
     flux[n_var] = W[n_var]*W[n_var]/W[0] + p;

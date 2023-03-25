@@ -11,9 +11,6 @@ public:
     static std::vector<double> p;
 
     static int n_comp;
-
-    
-
     static double thershold_comp;
 
     thermo();
@@ -24,6 +21,7 @@ public:
 
     static void update(std::vector<std::vector<double>> const& W);
 
+    static double density(std::vector<double> const& W);
     static double pressure(std::vector<double> const& W);
     static double speed_of_sound(int i, std::vector<double> const& W);
     static double temperature(std::vector<double> const& W);

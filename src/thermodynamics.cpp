@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include "specie.hpp"
+#include "variables.hpp"
 
 std::vector<specie> thermo::species;
 
@@ -21,10 +22,24 @@ void thermo::init(int n)
 
 // Using ideal gas law
 
+double thermo::density(std::vector<double> const& W)
+{
+    static double chi;
+    chi = 0;
+
+    for(int idx = 1; idx < variables::N_drop_frac; idx+=2)
+    {
+        chi += W[idx + n_comp];
+    }
+
+    return W[0]-chi;
+}
+
 double thermo::speed_of_sound(int i, std::vector<double> const& W)
 {
     double kappa = thermo::kappa_mix(W);
-    return sqrt(kappa*thermo::p[i]/W[0]);
+    // return sqrt(kappa*thermo::p[i]/W[0]);
+    return sqrt(kappa*thermo::p[i]/density(W));
 }
 
 double thermo::enthalpy(int i, std::vector<double> const& W)
@@ -35,34 +50,14 @@ double thermo::enthalpy(int i, std::vector<double> const& W)
     double T = thermo::T[i];
 
     double h = 0;
-
-    int j = 0;
-    for(auto const& spec : thermo::species)
-    {
-        h += comp[j]*(spec.a*log(T) + spec.b*(T) + spec.c*(pow(T,2))/2 + spec.d*(pow(T,3))/3 + spec.e*(pow(T,4))/4
-           + spec.f*(pow(T,5))/5 + spec.g*(pow(T,6))/6);
-
-        j++;
-    }
-
+    for(int j = 0; j < thermo::n_comp; j++){h += comp[j]*thermo::species[j].h(T);}
     return h;
 }
 
 double thermo::enthalpy(double T, std::vector<double> const& comp)
 {
     double h = 0;
-
-    // if(T > 4000) T = 4000;
-
-    int j = 0;
-    for(auto const& spec : thermo::species)
-    {
-        h += comp[j]*(spec.a*log(T) + spec.b*(T) + spec.c*(pow(T,2))/2 + spec.d*(pow(T,3))/3 + spec.e*(pow(T,4))/4
-           + spec.f*(pow(T,5))/5 + spec.g*(pow(T,6))/6);
-
-        j++;
-    }
-
+    for(int j = 0; j < thermo::n_comp; j++){h += comp[j]*thermo::species[j].h(T);}
     return h;
 }
 
@@ -83,11 +78,14 @@ double thermo::temperature(std::vector<double> const& W)
 
 void thermo::composition(std::vector<double>& comp, std::vector<double> const& W)
 {
-    double sum = 0;
-
+    static double sum;
+    static double rho;
+    
+    rho = density(W);
+    sum = 0;
     for(auto idx = 1; idx < n_comp; idx++)
     {
-        comp[idx] = W[idx]/W[0];
+        comp[idx] = W[idx]/rho;
         sum += comp[idx];
     }
     comp[0] = 1-sum;
@@ -135,8 +133,6 @@ double thermo::r_mix(std::vector<double> const& W)
     {
         r += thermo::species[idx].r*comp[idx];
     }
-
-    // std::cout << r << "\n";
 
     return r;
 }
@@ -197,7 +193,11 @@ double thermo::dF(std::vector<double> const& comp, double r, double T)
 double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<double> const& W)
 {
     int n = W.size()-1;
-    double C = W[n]/W[0] - 0.5*W[n-1]*W[n-1]/W[0]/W[0];
+    static double rho;
+    rho = density(W);
+    // double C = W[n]/W[0] - 0.5*W[n-1]*W[n-1]/W[0]/W[0];
+    // double C = W[n]/rho - 0.5*W[n-1]*W[n-1]/rho/rho;
+    double C = W[n]/rho - 0.5*W[n-1]*W[n-1]/W[0]/rho;
     static double T;
     static double T_last;
     static double F;
@@ -236,8 +236,14 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 double thermo::pressure(int i, std::vector<double> const& W, std::vector<double> const& comp)
 {
     static int mom_idx = W.size()-2;
+    static double rho_g;
+    static double rho;
+    rho_g = density(W);
+    rho = W[0];
 
-    return (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/W[0]/W[0])*W[0] - W.back();
+    // return (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/W[0]/W[0])*W[0] - W.back();
+    // return (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/rho/rho)*rho - W.back();
+    return rho_g*thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/rho - W.back();
 }
 
 void thermo::update(std::vector<std::vector<double>> const& W)

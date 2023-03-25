@@ -8,9 +8,9 @@
 
 #include "../src/geometry.hpp"
 
-std::vector<double> prod_cp = {0,  9.95096576e+02,  4.87796972e-01, -1.33106793e-04, 1.32096919e-08,  3.86499580e-13, -9.79511577e-17};
-std::vector<double> fuel_cp = {0, 2.95260582e+02, 4.95204053e+00, -2.60871236e-03, 7.03837556e-07, -9.39772178e-11, 4.90497393e-15};
-std::vector<double> oxi_cp = {0, 6.27400878e+02, 1.09090162e+00, -6.21904849e-04, 1.77914259e-07, -2.46557076e-11, 1.31958533e-15};
+std::vector<double> prod_cp = {9.95096576e+02,  4.87796972e-01, -1.33106793e-04, 1.32096919e-08,  3.86499580e-13, -9.79511577e-17};
+std::vector<double> fuel_cp = {2.95260582e+02, 4.95204053e+00, -2.60871236e-03, 7.03837556e-07, -9.39772178e-11, 4.90497393e-15};
+std::vector<double> oxi_cp = {6.27400878e+02, 1.09090162e+00, -6.21904849e-04, 1.77914259e-07, -2.46557076e-11, 1.31958533e-15};
 
 const auto init_comp = std::vector<double>{1,0,0};
 double p_0 = 101325;
@@ -49,12 +49,13 @@ int main(int argc, char** argv)
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{m_OX,500,0,1,0});
+    // S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{m_OX,500,0,1,0});
+    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,500,0,1,0,1,m_F,1e-3,700});
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p_0});
-    S.add_boundary_function(boundary::quiscent_dropplet_inlet,std::vector<double>{m_F,1e-3,700});
+    // S.add_boundary_function(boundary::quiscent_droplets_inlet,std::vector<double>{1,m_F,1e-3,700});
+    // S.add_boundary_function(boundary::quiscent_droplets_inlet,std::vector<double>{3,m_F/3,1e-3,m_F/3,2.5e-4,m_F/3,5e-4,700});
 
     S.solve();
-    // S.var.export_to_file(S.msh);
 
     return 0;
 }
