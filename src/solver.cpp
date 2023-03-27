@@ -52,7 +52,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt;    // Oxydizer
         res[i][2] += -dm/dt;        // Fuel
 
-        res[i][var.eng_idx] += dm*33.326e6/dt;
+        // res[i][var.eng_idx] += dm*33.326e6/dt;
+        res[i][var.eng_idx] += dm*20e6/dt;
     }
 }
 
@@ -79,7 +80,8 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
             dm = std::max(0.0,var.W[i][N_idx]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 300)));
 
             res[i][Frac_idx] -= dm;
-            // res[i][0] += dm;
+            res[i][2] += dm;
+            res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
         }
     }
 }
