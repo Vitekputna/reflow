@@ -118,6 +118,7 @@ void mesh::refine(std::vector<std::vector<double>> ref)
     x[N-1] = x[N-2] + (x[N-2] - x[N-3]);
 
     construct_mesh();
+    smooth_mesh();
 }
 
 void mesh::construct_mesh()
@@ -144,6 +145,27 @@ void mesh::construct_mesh()
     for(int i = 0; i < N-1; i++)
     {
         Af[i] = (A[i+1] + A[i])/2;
+    }
+}
+
+void mesh::fix_cell_centroids()
+{
+    // fix cell cetroids
+    for(int i = 1; i < N-1; i++)
+    {
+        x[i] = (xf[i]+xf[i-1])/2;
+    }
+}
+
+void mesh::smooth_mesh()
+{
+    for(int k = 0; k < N_smooth_cycles; k++)
+    {
+        for(int i = 0; i < N-1; i++)
+        {
+            xf[i] = (x[i] + x[i+1])/2;
+        }
+        fix_cell_centroids();
     }
 }
 

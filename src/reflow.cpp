@@ -151,7 +151,7 @@ void reflow::solve()
     double dt = 2e-8;
     double t_end = 0.1;
     double residual = 2*max_res;
-    double CFL = 0.2;
+    double CFL = 0.25;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";

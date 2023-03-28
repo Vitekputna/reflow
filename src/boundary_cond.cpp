@@ -144,7 +144,9 @@ void boundary::quiscent_droplets_inlet(variables& var, mesh& msh, std::vector<do
 // values = (md_gas,T,Y0,Y1,Y2,N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
 void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vector<double>& values)
 {
-    double p = thermo::p[1];
+    // double p = (thermo::p[1] + thermo::p[2])/2;
+    double p = 2*thermo::p[1] - thermo::p[2]; // linear extrapolation
+
     const std::vector<double> comp = {values[2],values[3],values[4]};
     double r = thermo::r_mix_comp(comp);
     double md_gas = values[0];
@@ -153,7 +155,9 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
     int N = values[5];
 
     double rho_cond = values.back();
+
     double rho_gas = p/r/T_gas;
+
     double droplet_total_mf = 0;
 
     // Species fractions
@@ -174,7 +178,7 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 
         droplet_total_mf += md_frac*rho_gas/md_gas;
 
-        var.W[0][var.N_comp+i*2+1] = md_frac*rho_gas/md_gas;
+        var.W[0][var.N_comp+i*2+1] = md_frac*rho_gas/md_gas; 
         var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/dm;
     }
 
@@ -183,7 +187,9 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 
     // total momentum
     double u = md_gas/msh.A[0]/rho_gas;
-    var.W[0][var.mom_idx] = (rho_gas+droplet_total_mf)*u;
+
+    // var.W[0][var.mom_idx] = (rho_gas+droplet_total_mf)*u;
+    var.W[0][var.mom_idx] = (values[0]+values[6])/msh.A[0];
 
     // total energy
     var.W[0][var.eng_idx] = rho_gas*thermo::enthalpy(T_gas,comp) + 0.5*u*u*var.W[0][0] - p;

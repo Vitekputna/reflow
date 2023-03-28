@@ -9,7 +9,7 @@ struct mesh
     std::vector<double> Af;
 
     double dx_min = 1e15;
-
+    
     int N; // number of cells
 
     // x bounds
@@ -20,12 +20,18 @@ struct mesh
     double A_from = 1;
     double A_to = 1;
 
+    // 
+    int N_smooth_cycles = 300;
+
     mesh();
     mesh(int _N);
     mesh(int _N, double from, double to);
     void refine(std::vector<std::vector<double>> ref);
 
     void construct_mesh();
+
+    void fix_cell_centroids();
+    void smooth_mesh();
 
     void bump();
     void cubic(std::vector<std::vector<std::vector<double>>> curves, int n);

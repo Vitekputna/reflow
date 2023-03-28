@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.02,200},{0.02,0.319,500}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.02,200},{0.02,0.319,1000}});
     S.spline_geometry(curves,100);
 
     S.msh.export_to_file();

@@ -33,10 +33,10 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
 {
     for(int i = 1; i < var.N-1; i++)
     {
-        for(int k = 0; k < var.N_comp; k++)
-        {
-            res[i][k] += var.md[i][k];
-        }
+        // for(int k = 0; k < var.N_comp; k++)
+        // {
+        //     res[i][k] += var.md[i][k];
+        // }
         res[i][var.mom_idx] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::p[i];
         res[i][var.eng_idx] += var.q[i];
     }
@@ -52,8 +52,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt;    // Oxydizer
         res[i][2] += -dm/dt;        // Fuel
 
-        // res[i][var.eng_idx] += dm*33.326e6/dt;
-        res[i][var.eng_idx] += dm*20e6/dt;
+        res[i][var.eng_idx] += dm*33.326e6/dt;
+        // res[i][var.eng_idx] += dm*20e6/dt;
     }
 }
 
@@ -77,10 +77,13 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
             r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
             if(var.W[i][N_idx] == 0) r = 0;
 
-            dm = std::max(0.0,var.W[i][N_idx]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 300)));
+            dm = std::max(0.0,0.5*var.W[i][N_idx]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 250)));
+
+            if(msh.x[i] < 0.005) dm = 0;
 
             res[i][Frac_idx] -= dm;
             res[i][2] += dm;
+            var.md[i][2] = dm;
             res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
         }
     }
