@@ -39,12 +39,15 @@ int main(int argc, char** argv)
     S.add_specie(188,1.31,44,oxi_cp);           //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp);          //Fuel
 
-    S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
-
     double md = 1.34;
 
+    // S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
+    S.initial_conditions(init::nozzle(S.msh.N,5,md,3200,25e5,1e5,0.15,init_comp,S.msh));
+
     S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{md,3200,1,0,0});
-    S.add_boundary_function(boundary::subsonic_outlet,std::vector<double>{101325});
+    S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{101325});
+
+    S.var.export_to_file(S.msh);
 
     S.solve();
 

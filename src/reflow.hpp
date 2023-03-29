@@ -67,6 +67,7 @@ class reflow
 
     // Initial conditions
     void initial_conditions(std::vector<double> const& init);
+    void initial_conditions(std::vector<std::vector<double>> const& init);
     void initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init);
 
     // Thermodynamics

@@ -10,5 +10,5 @@ namespace init
                                          std::vector<double> drp_frac,
                                          std::vector<double> drp_count,
                                          std::vector<double> drp_mom);
-    std::vector<std::vector<double>> nozzle(int N, int N_var,double md, double T0, double p0, mesh const& msh);
+    std::vector<std::vector<double>> nozzle(int N, int N_var,double md, double T0, double p0, double p2, double L_chamber, std::vector<double> const comp, mesh const& msh);
 }

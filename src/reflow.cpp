@@ -54,6 +54,12 @@ void reflow::initial_conditions(std::vector<double> const& init)
     var = variables(N_var,N,init);
 }
 
+void reflow::initial_conditions(std::vector<std::vector<double>> const& init)
+{
+    N_var = init[0].size();
+    var = variables(N_var,N,init);
+}
+
 void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init)
 {
     N_var = init.size();

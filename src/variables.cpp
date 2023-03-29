@@ -46,7 +46,7 @@ variables::variables(int _N_var, int _N, std::vector<double> const& W_0) : varia
 
 variables::variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N)
 {
-    if((uint)N_var != W_0.size()) throw std::overflow_error("Size of initial condition is not the same as declared number of variables");
+    if((uint)N_var != W_0[0].size()) throw std::overflow_error("Size of initial condition is not the same as declared number of variables");
 
     for(int i = 0; i < N; i++)
     {
