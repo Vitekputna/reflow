@@ -52,8 +52,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt;    // Oxydizer
         res[i][2] += -dm/dt;        // Fuel
 
-        res[i][var.eng_idx] += dm*33.326e6/dt;
-        // res[i][var.eng_idx] += dm*20e6/dt;
+        // res[i][var.eng_idx] += dm*33.326e6/dt;
+        res[i][var.eng_idx] += dm*20e6/dt;
     }
 }
 

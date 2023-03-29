@@ -45,7 +45,7 @@ class reflow
 
     bool run_w_particles = false;
 
-    volatile double max_res = 1;
+    volatile double max_res = 1000;
     
     // Constructors
     reflow();

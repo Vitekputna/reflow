@@ -33,8 +33,11 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 
     int n_other = N_var-n_comp-2;
 
-    std::cout << "Detecting other variables than chemical components, momentum and energy.\n";
-    std::cout << "Other variables will be set initialy to zero, alernatively use diff. init. func.\n";
+    if(n_other != 0)
+    {
+        std::cout << "Detecting other variables than chemical components, momentum and energy.\n";
+        std::cout << "Other variables will be set initialy to zero, alernatively use diff. init. func.\n";
+    }
 
     double rho = p/r/T;
 
@@ -117,3 +120,8 @@ std::vector<double> init::flow_dropplets(int N_var, double p, double T, double u
 
     return res;
 }
+
+// std::vector<std::vector<double>> init::nozzle(int N, int N_var,double md, double T0, double p0, std::vector<double> const comp, mesh const& msh)
+// {
+//     return std::vector<std::vector<double>>{};
+// }
