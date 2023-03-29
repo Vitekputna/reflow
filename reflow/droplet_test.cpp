@@ -6,8 +6,6 @@
 #include "../src/boundary_cond.hpp"
 #include "../src/initial_cond.hpp"
 
-#include "../src/geometry.hpp"
-
 std::vector<double> prod_cp = {9.95096576e+02,  4.87796972e-01, -1.33106793e-04, 1.32096919e-08,  3.86499580e-13, -9.79511577e-17};
 std::vector<double> fuel_cp = {2.95260582e+02, 4.95204053e+00, -2.60871236e-03, 7.03837556e-07, -9.39772178e-11, 4.90497393e-15};
 std::vector<double> oxi_cp = {6.27400878e+02, 1.09090162e+00, -6.21904849e-04, 1.77914259e-07, -2.46557076e-11, 1.31958533e-15};

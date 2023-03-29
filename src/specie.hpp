@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <vector>
 struct specie
 {
     double r;
@@ -19,13 +20,13 @@ struct specie
 
     double cp(double T)
     {
-        T = std::min(T,4000.0);
+        T = std::min(T,5000.0);
         return a + b*T + c*pow(T,2) + d*pow(T,3) + e*pow(T,4) + f*pow(T,5);
     }
 
     double h(double T)
     {
-        T = std::min(T,4000.0);
+        T = std::min(T,5000.0);
         return a*T + b*pow(T,2)/2 + c*pow(T,3)/3 + d*pow(T,4)/4 + e*pow(T,5)/5 + f*pow(T,6)/6;
     }
 };

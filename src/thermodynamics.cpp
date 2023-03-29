@@ -195,8 +195,6 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
     int n = W.size()-1;
     static double rho;
     rho = density(W);
-    // double C = W[n]/W[0] - 0.5*W[n-1]*W[n-1]/W[0]/W[0];
-    // double C = W[n]/rho - 0.5*W[n-1]*W[n-1]/rho/rho;
     double C = W[n]/rho - 0.5*W[n-1]*W[n-1]/W[0]/rho;
     static double T;
     static double T_last;
@@ -209,6 +207,9 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 
     double h;
 
+    static int counter;
+
+    counter = 0;
     do
     {
         T_last = T;
@@ -228,7 +229,8 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 
         T = T - ( F )/dF(comp,r,T);
 
-    } while(std::abs(T-T_last) > 1);
+    counter++;
+    } while(std::abs(T-T_last) > 10);
 
     return T;
 }
