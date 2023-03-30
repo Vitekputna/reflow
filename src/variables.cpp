@@ -89,7 +89,19 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std:
 
 variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N, W_0)
 {
+    variables::N_drop_frac = _N_drop_frac;
 
+    variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
+    variables::N_comp = (N_var-2) - N_drop_frac;
+
+    std::cout << "##########################################\n";
+    std::cout << "Variables:\n";
+    std::cout << "Number of compounds:\t\t" << N_comp << "\n";
+    std::cout << "Number of droplet fractions:\t" << N_drop_frac << "\n";
+    std::cout << "Number of droplet momenta:\t" << _N_drop_mom << "\n\n";
+    std::cout << "##########################################\n";
+
+    
 }
 
 void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh)

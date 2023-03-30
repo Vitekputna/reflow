@@ -69,6 +69,7 @@ class reflow
     void initial_conditions(std::vector<double> const& init);
     void initial_conditions(std::vector<std::vector<double>> const& init);
     void initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init);
+    void initial_conditions(int N_drop, int N_drop_mom, std::vector<std::vector<double>> const& init);
 
     // Thermodynamics
     void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);

@@ -13,8 +13,10 @@ std::vector<double> fuel_cp = {2.95260582e+02, 4.95204053e+00, -2.60871236e-03, 
 std::vector<double> oxi_cp = {6.27400878e+02, 1.09090162e+00, -6.21904849e-04, 1.77914259e-07, -2.46557076e-11, 1.31958533e-15};
 
 const auto init_comp = std::vector<double>{1,0,0};
-double p_0 = 25e5;
-double T_0 = 3200;
+double p0 = 25e5;
+double T0 = 3200;
+double p2 = 101325;
+double md = 1.34;
 
 int main(int argc, char** argv)
 {
@@ -39,10 +41,8 @@ int main(int argc, char** argv)
     S.add_specie(188,1.31,44,oxi_cp);           //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp);          //Fuel
 
-    double md = 1.34;
-
     // S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
-    S.initial_conditions(init::nozzle(S.msh.N,5,md,3200,25e5,1e5,0.15,init_comp,S.msh));
+    S.initial_conditions(init::nozzle(S.msh.N,5,md,T0,p0,p2,0.15,init_comp,S.msh));
 
     S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{md,3200,1,0,0});
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{101325});

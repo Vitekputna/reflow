@@ -10,9 +10,15 @@ std::vector<double> prod_cp = {9.95096576e+02,  4.87796972e-01, -1.33106793e-04,
 std::vector<double> fuel_cp = {2.95260582e+02, 4.95204053e+00, -2.60871236e-03, 7.03837556e-07, -9.39772178e-11, 4.90497393e-15};
 std::vector<double> oxi_cp = {6.27400878e+02, 1.09090162e+00, -6.21904849e-04, 1.77914259e-07, -2.46557076e-11, 1.31958533e-15};
 
-const auto init_comp = std::vector<double>{1,0,0};
-double p_0 = 101325;
-double T_0 = 300;
+const auto init_comp = std::vector<double>{0,1,0};
+double p0 = 25e5;
+double T0 = 3000;
+double p2 = 101325;
+double md = 1.34;
+double OF = 6.6;
+
+double m_F = md/(OF+1);
+double m_OX = md-m_F;
 
 int main(int argc, char** argv)
 {
@@ -37,21 +43,16 @@ int main(int argc, char** argv)
     S.add_specie(188,1.31,44,oxi_cp);           //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp);          //Fuel
 
-    S.initial_conditions(2,0,init::flow_dropplets(7,p_0,T_0,0,init_comp,std::vector<double>{0},std::vector<double>{0},std::vector<double>{}));
-
-    double md = 1.1943;
-    double OF = 6.6;
-
-    double m_F = md/(OF+1);
-    double m_OX = md-m_F;
+    // S.initial_conditions(2,0,init::flow_droplets(7,p0,T0,0,init_comp,std::vector<double>{0},std::vector<double>{0},std::vector<double>{}));
+    S.initial_conditions(2,0,init::nozzle(S.msh.N,7,md,T0,p0,p2,0.15,init_comp,S.msh));
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    // S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{m_OX,500,0,1,0});
     S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,1,m_F,1e-3,700});
-    S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p_0});
-    // S.add_boundary_function(boundary::quiscent_droplets_inlet,std::vector<double>{1,m_F,1e-3,700});
-    // S.add_boundary_function(boundary::quiscent_droplets_inlet,std::vector<double>{3,m_F/3,1e-3,m_F/3,2.5e-4,m_F/3,5e-4,700});
+    S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
+
+    thermo::update(S.var.W);
+    S.var.export_to_file(S.msh);
 
     S.solve();
 

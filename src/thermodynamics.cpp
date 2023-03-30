@@ -50,14 +50,14 @@ double thermo::enthalpy(int i, std::vector<double> const& W)
     double T = thermo::T[i];
 
     double h = 0;
-    for(int j = 0; j < thermo::n_comp; j++){h += comp[j]*thermo::species[j].h(T);}
+    for(int j = 0; j < n_comp; j++){h += comp[j]*thermo::species[j].h(T);}
     return h;
 }
 
 double thermo::enthalpy(double T, std::vector<double> const& comp)
 {
     double h = 0;
-    for(int j = 0; j < thermo::n_comp; j++){h += comp[j]*thermo::species[j].h(T);}
+    for(int j = 0; j < n_comp; j++){h += comp[j]*thermo::species[j].h(T);}
     return h;
 }
 
@@ -230,7 +230,7 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
         T = T - ( F )/dF(comp,r,T);
 
     counter++;
-    } while(std::abs(T-T_last) > 10);
+    } while((std::abs(T-T_last) > 1) && counter < 100);
 
     return T;
 }

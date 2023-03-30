@@ -63,8 +63,7 @@ std::vector<double> init::flow(int N_var, double p, double T, double u, std::vec
 }
 
 // flow with dropplet init func...
-
-std::vector<double> init::flow_dropplets(int N_var, double p, double T, double u, std::vector<double> const& comp,
+std::vector<double> init::flow_droplets(int N_var, double p, double T, double u, std::vector<double> const& comp,
                                          std::vector<double> drp_frac,
                                          std::vector<double> drp_count,
                                          std::vector<double> drp_mom)
@@ -125,6 +124,16 @@ std::vector<std::vector<double>> init::nozzle(int N, int N_var,double md, double
 {
     std::vector<std::vector<double>> res = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
 
+    // number of components and droplet variables
+    int n_comp = thermo::n_comp;
+
+    // variables indices
+    int rho_idx = 0;
+    int Y_idx = 1;
+    int mom_idx = N_var-2;
+    int eng_idx = N_var-1;
+
+    // thermodynamic properties
     double r = thermo::r_mix_comp(comp);
     double kappa = thermo::kappa_mix_comp(comp);
 
@@ -137,13 +146,13 @@ std::vector<std::vector<double>> init::nozzle(int N, int N_var,double md, double
     {
         if(msh.x[i] < L_chamber)
         {
-            res[i][0] = rho0;    //Density
+            res[i][rho_idx] = rho0;    //Density
             
             for(int k = 1; k < thermo::n_comp; k++) res[i][k] = comp[k]*rho0;  //Mass concentration of species
 
-            res[i][thermo::n_comp] = rho0*u0;  // Momentum
+            res[i][mom_idx] = rho0*u0;  // Momentum
 
-            res[i][thermo::n_comp+1] = rho0*thermo::enthalpy(T0,comp) + 0.5*rho0*u0*u0 - p0;
+            res[i][eng_idx] = rho0*thermo::enthalpy(T0,comp) + 0.5*rho0*u0*u0 - p0;
         }
         else
         {
@@ -174,14 +183,45 @@ std::vector<std::vector<double>> init::nozzle(int N, int N_var,double md, double
         p = t*(p0-p2) + p2;
         T = t*(T0-T2) + T2;
 
-        res[i][0] = rho;
+        res[i][rho_idx] = rho;
 
         for(int k = 1; k < thermo::n_comp; k++) res[i][k] = comp[k]*rho;  //Mass concentration of species
 
-        res[i][thermo::n_comp] = rho0*u0;
+        res[i][mom_idx] = rho0*u0;
 
-        res[i][thermo::n_comp+1] = rho*thermo::enthalpy(T,comp) + 0.5*rho*u*u - p;
+        res[i][eng_idx] = rho*thermo::enthalpy(T,comp) + 0.5*rho*u*u - p;
     }
 
     return res;
 }
+
+// std::vector<std::vector<double>> init::nozzle_droplets(int N, int N_var,double md, double T0, double p0, double p2, double L_chamber,
+//                                          std::vector<double> const comp, mesh const& msh,
+//                                          std::vector<double> drp_frac,
+//                                          std::vector<double> drp_count,
+//                                          std::vector<double> drp_mom)
+// {
+//     // number of components and droplet variables
+//     int n_comp = thermo::n_comp;
+//     int n_drop_frac = drp_frac.size();
+//     int n_drop_mom = drp_mom.size();
+
+//     // variables indices
+//     int rho_idx = 0;
+//     int Y_idx = 1;
+//     int drp_num_idx = n_comp;
+//     int drp_frac_idx = n_comp+n_drop_frac;
+//     int drp_mom_idx = drp_frac_idx + n_drop_frac;
+//     int mom_idx = drp_mom_idx + n_drop_mom;
+//     int eng_idx = mom_idx + 1;
+
+//     std::cout << eng_idx << "\n";
+
+//     // Initial conditions wo droplets
+//     auto no_drop_init = nozzle(N,N_var,md,T0,p0,p2,L_chamber,comp,msh);
+
+//     //
+//     auto drop_init = 
+
+    
+// }

@@ -77,7 +77,7 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
             r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
             if(var.W[i][N_idx] == 0) r = 0;
 
-            dm = std::max(0.0,0.8*var.W[i][N_idx]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 250)));
+            dm = std::max(0.0,0.8*var.W[i][N_idx]*r*log(1 + 1e-2*std::max(0.0,thermo::T[i] - 200)));
 
             if(msh.x[i] < 0.005) dm = 0;
 
@@ -245,10 +245,10 @@ void solver::reconstructed_wave_speed(int i, std::vector<double>& a, std::vector
 
 void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par)
 {
-    static std::vector<double> fr(var.N_var,0.0);
-    static std::vector<double> fl(var.N_var,0.0);
-    static std::vector<double> ar(var.N_var,0.0);
-    static std::vector<double> al(var.N_var,0.0);
+    std::vector<double> fr(var.N_var,0.0);
+    std::vector<double> fl(var.N_var,0.0);
+    std::vector<double> ar(var.N_var,0.0);
+    std::vector<double> al(var.N_var,0.0);
 
     double ul, ur, a;
 

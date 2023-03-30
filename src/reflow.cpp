@@ -69,6 +69,15 @@ void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<double> 
     var = variables(N_var,N,N_drop,N_drop_mom,init);
 }
 
+void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<std::vector<double>> const& init)
+{
+    N_var = init[0].size();
+    n_drop_frac = N_drop;
+    n_drop_mom = N_drop_mom;
+
+    var = variables(N_var,N,N_drop,N_drop_mom,init);
+}
+
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
 {
     var.apply_heat_source(Q,x_from,x_to,msh);
@@ -155,7 +164,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.1;
+    double t_end = 0.0001;
     double residual = 2*max_res;
     double CFL = 0.25;
 
@@ -171,12 +180,12 @@ void reflow::solve()
         // update pressure and temperature
         thermo::update(var.W);
 
-        // // flow field part 
+        // flow field part 
 
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);
