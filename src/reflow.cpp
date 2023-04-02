@@ -164,7 +164,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.0001;
+    double t_end = 1;
     double residual = 2*max_res;
     double CFL = 0.25;
 
@@ -181,7 +181,6 @@ void reflow::solve()
         thermo::update(var.W);
 
         // flow field part 
-
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
         // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);

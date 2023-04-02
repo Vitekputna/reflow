@@ -43,12 +43,11 @@ int main(int argc, char** argv)
     S.add_specie(188,1.31,44,oxi_cp);           //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp);          //Fuel
 
-    // S.initial_conditions(2,0,init::flow_droplets(7,p0,T0,0,init_comp,std::vector<double>{0},std::vector<double>{0},std::vector<double>{}));
-    S.initial_conditions(2,0,init::nozzle(S.msh.N,7,md,T0,p0,p2,0.15,init_comp,S.msh));
+    S.initial_conditions(6,0,init::nozzle(S.msh.N,11,md,T0,p0,p2,0.15,init_comp,S.msh));
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,1,m_F,1e-3,700});
+    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,3,m_F/3,0.8e-3,m_F/3,1e-3,m_F/3,1.2e-3,700});
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
     thermo::update(S.var.W);
