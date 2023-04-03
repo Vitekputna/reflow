@@ -115,4 +115,6 @@ plt.ylabel(r"$H[Jm^{-3}]$")
 plt.legend()
 plt.grid()
 
+
+
 plt.show()

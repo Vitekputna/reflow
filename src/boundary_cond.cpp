@@ -188,8 +188,8 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
     // total momentum
     double u = md_gas/msh.A[0]/rho_gas;
 
-    // var.W[0][var.mom_idx] = (rho_gas+droplet_total_mf)*u;
-    var.W[0][var.mom_idx] = (values[0]+values[6])/msh.A[0];
+    var.W[0][var.mom_idx] = (rho_gas+droplet_total_mf)*u;
+    // var.W[0][var.mom_idx] = (values[0]+values[6])/msh.A[0];
 
     // total energy
     var.W[0][var.eng_idx] = rho_gas*thermo::enthalpy(T_gas,comp) + 0.5*u*u*var.W[0][0] - p;
@@ -198,6 +198,31 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 
 std::vector<double> boundary::normal_distribution(int N_fracs, double mass_flow, double r_mean, double r_var, double r_min, double r_max)
 {
+    // Construct linspace from r_min to r_max with N intervals
+    int N_points = N_fracs+1;
+
+    double delta_r = (r_max-r_min)/N_fracs;
+
+    double tolerance = 1e-8;
+
+    std::vector<double> r_vector;
+
+    for(double r = r_min; r-r_max < tolerance; r+=delta_r)
+    {
+        r_vector.push_back(r);
+    }
+
+    // Compute disrete normal distribution
+    double f,r;
+
+    for(int i = 0; i < N_fracs; i++)
+    {
+        r = (r_vector[i+1] + r_vector[i])/2;       //mean r inside interval
+
+        f = (1/(r_var*sqrt(2*M_PI)))*exp(-pow(r -r_mean,2)/2/pow(r_var,2));     //
+
+
+    }
 
     return std::vector<double>{};
 }
