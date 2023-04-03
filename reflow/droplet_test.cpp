@@ -47,7 +47,12 @@ int main(int argc, char** argv)
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,3,m_F/3,0.8e-3,m_F/3,1e-3,m_F/3,1.2e-3,700});
+    // S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,3,m_F/3,0.8e-3,m_F/3,1e-3,m_F/3,1.2e-3,700});
+
+    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,3,0.0007908634467841619,0.15512609890232193,
+                                                                                                         0.0013527523490098506,1.1238287154704327,
+                                                                                                         0.0020091991841891025,0.06105561561091367,700});
+
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
     thermo::update(S.var.W);
