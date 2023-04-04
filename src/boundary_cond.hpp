@@ -28,5 +28,11 @@ namespace boundary
 
     // drop + flow
     void mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vector<double>& values);
-    std::vector<double> normal_distribution(int N_fracs, double mass_flow, double r_mean, double r_var, double r_min, double r_max);
+    std::vector<double> normal_distribution(int N_fracs, double mass_flow, double r_mean, double r_var);
+
+    //helper functions
+    double normal_distribution(std::vector<double> values);
+    double mass_distribution(double(*distribution)(std::vector<double>),std::vector<double> values);
+    double trapz(double(*func)(std::vector<double>),std::vector<double> values,double x_from, double x_to, int N);
+    double discretize_distribution();
 }

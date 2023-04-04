@@ -196,8 +196,13 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 }
 
 
-std::vector<double> boundary::normal_distribution(int N_fracs, double mass_flow, double r_mean, double r_var, double r_min, double r_max)
+std::vector<double> boundary::normal_distribution(int N_fracs, double mass_flow, double r_mean,double r_var)
 {
+    double r_max = r_mean + 5*r_var;
+    double r_min = r_mean - 5*r_var;
+
+    if(r_min < 0) r_min = 0;
+
     // Construct linspace from r_min to r_max with N intervals
     int N_points = N_fracs+1;
 
@@ -209,6 +214,7 @@ std::vector<double> boundary::normal_distribution(int N_fracs, double mass_flow,
 
     for(double r = r_min; r-r_max < tolerance; r+=delta_r)
     {
+        std::cout << r << "\n";
         r_vector.push_back(r);
     }
 
@@ -217,6 +223,9 @@ std::vector<double> boundary::normal_distribution(int N_fracs, double mass_flow,
 
     for(int i = 0; i < N_fracs; i++)
     {
+
+        for(int j = )
+
         r = (r_vector[i+1] + r_vector[i])/2;       //mean r inside interval
 
         f = (1/(r_var*sqrt(2*M_PI)))*exp(-pow(r -r_mean,2)/2/pow(r_var,2));     //
@@ -225,4 +234,44 @@ std::vector<double> boundary::normal_distribution(int N_fracs, double mass_flow,
     }
 
     return std::vector<double>{};
+}
+
+// (x,mean,var)
+double boundary::normal_distribution(std::vector<double> values)
+{
+    double x = values[0];
+    double mean = values[1];
+    double var = values[2];
+
+    return (1/(var*sqrt(2*M_PI)))*exp(-pow(x -mean,2)/2/pow(var,2));
+}
+
+// (x,mean,var,rho,N)
+double boundary::mass_distribution(double(*distribution)(std::vector<double>),std::vector<double> values)
+{
+    std::vector<double> params = {values[0],values[1],values[2]};
+
+    double x = values[0];
+    double rho = values[3];
+    double N = values[4];
+
+    return normal_distribution(params)*(4*M_PI*pow(x,3)/3*rho*N);   
+}
+
+double boundary::trapz(double(*func)(std::vector<double>),std::vector<double> values, double x_from, double x_to, int N)
+{
+    int N_points = N+1;
+
+    double delta_r = (x_to-x_from)/N;
+
+    double tolerance = 1e-8;
+
+    std::vector<double> x;
+
+    for(double r = x_from; r-x_to < tolerance; r+=delta_r)
+    {
+        x.push_back(r);
+    }
+
+    
 }
