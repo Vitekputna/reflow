@@ -59,32 +59,36 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
 
 void solver::droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
 {
-    //W3 number of droplets
-    //W4 droplet mass fraction
-
     static double r;
     static double dm,dr;
 
     static int N_idx, Frac_idx;
+    static int N_comp;
+    
+    N_comp = var.N_comp;
 
     for(int i = 1; i < var.N-1; i++)
     {
+        if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
+
+        const double T_coeff = log(1 + 1e-3*std::max(0.0,thermo::T[i] - 200));
+
+        var.md[i][2] = 0;
+
         for(int j = 0; j < var.N_drop_frac; j += 2)
         {
-            N_idx = var.N_comp + j;
-            Frac_idx = var.N_comp + j + 1;
+            N_idx = N_comp + j;
+            Frac_idx = N_comp + j + 1;
 
             r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
             if(var.W[i][N_idx] == 0) r = 0;
 
-            dm = std::max(0.0,3*var.W[i][N_idx]*r*log(1 + 1e-3*std::max(0.0,thermo::T[i] - 200)));
+            dm = std::max(0.0,3*var.W[i][N_idx]*r*T_coeff);
 
-            if(msh.x[i] < 0.005) dm = 0;
-
-            res[i][Frac_idx] -= dm;
-            res[i][2] += dm;
-            var.md[i][2] = dm;
-            res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
+            // res[i][Frac_idx] -= dm;
+            // res[i][2] += dm;
+            // var.md[i][2] += dm;
+            // res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
         }
     }
 }

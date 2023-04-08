@@ -17,6 +17,8 @@ double p2 = 101325;
 double md = 1.34;
 double OF = 6.6;
 
+int N_frac = 1;
+
 double m_F = md/(OF+1);
 double m_OX = md-m_F;
 
@@ -43,23 +45,17 @@ int main(int argc, char** argv)
     S.add_specie(188,1.31,44,oxi_cp);           //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp);          //Fuel
 
-    S.initial_conditions(10,0,init::nozzle(S.msh.N,15,md,300,p0,p2,0.15,init_comp,S.msh));
+    S.initial_conditions(2*N_frac,0,init::nozzle(S.msh.N,2*N_frac+5,md,300,p0,p2,0.15,init_comp,S.msh));
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    // S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,3,m_F/3,0.8e-3,m_F/3,1e-3,m_F/3,1.2e-3,700});
+    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,1,m_F,1e-3,700});
 
-    // S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,std::vector<double>{m_OX,300,0,1,0,5,0.00021123295588010936,0.0009620007732977866,
-    //                                                                                                         0.02624689043447874,0.0009825778335494264,
-    //                                                                                                         0.12012475625169018,0.0010001171423589421,
-    //                                                                                                         0.029151618922297836,0.0010175617214114906,
-    //                                                                                                         0.0002653996573385169,0.0010380553687645798,700});
+    // S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,boundary::flow_with_droplets(m_OX,300,init_comp,N_frac,m_F,700,1e-3,1e-5));
 
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
-    boundary::normal_distribution(5,m_F,5,0.2);
-
-    // S.solve();
+    S.solve();
 
     return 0;
 }

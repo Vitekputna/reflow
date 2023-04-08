@@ -269,18 +269,29 @@ void variables::export_to_file(mesh const& msh)
     stream << "\n";
     stream.close();
 
-
-    for(int k = 0; k < N_drop_frac; k++)
+    stream =  std::ofstream("out/X.txt");
+    for(int i = 0; i < N; i++)
     {
-        stream =  std::ofstream("out/X" + std::to_string(k) + ".txt");
-        for(int i = 0; i < N; i++)
+        stream << msh.x[i];
+        for(int k = 1; k < N_drop_frac; k += 2)
         {
-            stream << msh.x[i] << " " << W[i][3+k] << "\n";
+            stream << "\t" << W[i][N_comp+k];
         }
-        stream << "\n";
-        stream.close();
+        stream << "\n";   
     }
+    stream.close();
 
+    stream =  std::ofstream("out/N.txt");
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i];
+        for(int k = 0; k < N_drop_frac; k += 2)
+        {
+            stream << "\t" << W[i][N_comp+k];
+        }
+        stream << "\n";   
+    }
+    stream.close();
 
     stream =  std::ofstream("out/grad.txt");
     for(int i = 0; i < N; i++)
