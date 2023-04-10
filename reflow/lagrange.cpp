@@ -17,7 +17,7 @@ double p2 = 101325;
 double md = 1.34;
 double OF = 6.6;
 
-int N_frac = 15;
+int N_frac = 0;
 
 double m_F = md/(OF+1);
 double m_OX = md-m_F;
@@ -49,7 +49,9 @@ int main(int argc, char** argv)
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,boundary::flow_with_droplets(m_OX,300,init_comp,N_frac,m_F,700,1e-3,3e-5));
+    S.init_particles(1e6,1e4,100);
+
+    S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{m_OX,400,0,1,0});
 
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 

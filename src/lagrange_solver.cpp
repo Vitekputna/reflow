@@ -31,13 +31,12 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     double ap,up,rp;
     double Tf, uf;
 
-    Tf = thermo::temperature(W);
+    Tf = thermo::T[P.last_cell_idx];
     uf = W[W.size()-2]/W[0];
 
     double C = 1; // momentum transfer constant
     double D = 1e-6; // mass transfer constant
     double alfa = 10; // heat transfer constant
-    double H = 43.46e5; // heat released for 1kg of fuel
 
     // double du = W[1]/W[0] - P.u;
     // dt = std::min(dt, std::abs(0.5*du/a));
@@ -60,7 +59,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     P.x += P.u*dt;
 
     // Temperature
-    P.T += alfa*dt*(thermo::temperature(W) - P.T);
+    P.T += alfa*dt*(Tf - P.T);
 
     // radius
     K1 = dt*radius_change(D,P.r,P.rho,Tf-P.T);
@@ -79,16 +78,16 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     if(P.r < 0)
     {
-        // res[P.last_cell_idx][0] += (m0)/dt/V;
-        // res[P.last_cell_idx][2] += (m0)/dt/V;
-        // res[P.last_cell_idx][4] += (m0)*H/dt/V;
+        res[P.last_cell_idx][0] += (m0)/dt/V;
+        res[P.last_cell_idx][2] += (m0)/dt/V;
+        res[P.last_cell_idx][4] += m0*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
         P.reset();
         return 0.0;
     }
 
-    // res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
-    // res[P.last_cell_idx][2] += (m0 - P.M)/dt/V;
-    // res[P.last_cell_idx][4] += (m0 - P.M)*H/dt/V;
+    res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
+    res[P.last_cell_idx][2] += (m0 - P.M)/dt/V;
+    res[P.last_cell_idx][4] += (m0 - P.M)*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
 
     return dt;
 }

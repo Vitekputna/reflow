@@ -85,10 +85,10 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
 
             dm = std::max(0.0,3*var.W[i][N_idx]*r*T_coeff);
 
-            // res[i][Frac_idx] -= dm;
-            // res[i][2] += dm;
-            // var.md[i][2] += dm;
-            // res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
+            res[i][Frac_idx] -= dm;
+            res[i][2] += dm;
+            var.md[i][2] += dm;
+            res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
         }
     }
 }

@@ -112,36 +112,6 @@ void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>&
     }
 }
 
-// values = (md,r,rho)
-void boundary::quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<double>& values)
-{
-    double dm = 4/3*M_PI*std::pow(values[1],3)*values[2];
-
-    var.W[0][4] = values[0]/(msh.A[0]*(var.W[0][var.mom_idx]/var.W[0][0]));
-    var.W[0][3] = var.W[0][4]/dm;
-}
-
-// values = (N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
-void boundary::quiscent_droplets_inlet(variables& var, mesh& msh, std::vector<double>& values)
-{
-    int N = values[0];
-
-    double dm;
-    double rho = values.back();
-
-    for(int i = 0; i < N; i++)
-    {  
-        dm = 4/3*M_PI*std::pow(values[2*i+2],3)*rho;
-
-        var.W[0][var.N_comp+i*2+1] = values[2*i+1]/(msh.A[0]*(var.W[0][var.mom_idx]/var.W[0][0]));
-        var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/dm;
-
-        var.W[0][0] += var.W[0][var.N_comp+i*2+1];
-        var.W[0][var.mom_idx] += var.W[0][var.mom_idx]/var.W[0][0]*var.W[0][var.N_comp+i*2+1];
-        var.W[0][var.eng_idx] += 0.5*var.W[0][var.N_comp+i*2+1]*(var.W[0][var.mom_idx]/var.W[0][0])*(var.W[0][var.mom_idx]/var.W[0][0]);
-    }
-}
-
 // values = (md_gas,T,Y0,Y1,Y2,N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
 void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vector<double>& values)
 {
@@ -157,9 +127,7 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 
     double rho_cond = values.back();
 
-    double rho_gas = p/r/T_gas;
-
-    double droplet_total_mf = 0;
+    double rho_gas = p/(r*T_gas);
 
     // Species fractions
     for(auto idx = 1; idx <= var.N_comp-1; idx++)
@@ -169,17 +137,18 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 
     // Droplet mass fractions
     double dm,r_drop,md_frac;
+    double droplet_total_mf = 0;
 
     for(int i = 0; i < N; i++)
     {  
         r_drop = values[2*i+2+5];
         md_frac = values[2*i+1+5];
 
-        dm = 4/3*M_PI*std::pow(r_drop,3)*rho_cond;
+        dm = 4*M_PI*pow(r_drop,3)*rho_cond/3;
 
-        droplet_total_mf += md_frac*rho_gas/md_gas; 
+        droplet_total_mf += rho_gas*md_frac/md_gas;
 
-        var.W[0][var.N_comp+i*2+1] = md_frac*rho_gas/md_gas;
+        var.W[0][var.N_comp+i*2+1] = rho_gas*md_frac/md_gas;
         var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/dm;
     }
 
@@ -313,14 +282,11 @@ std::vector<double> boundary::discretize_distribution(double(*distribution)(doub
     double total_integral = 0;
 
     std::vector<double> params = {mean,var,rho,N};
-
     std::vector<double> return_vec = {(double)N_intervals};
 
     for(int i = 0; i < N_intervals; i++)
     {
         auto res = trapz(distribution,params,x_vector[i],x_vector[i+1],51);
-
-        // std::cout << res[0] << " " << res[1] << "\n";
 
         return_vec.push_back(res[0]);
         return_vec.push_back(res[1]);

@@ -22,10 +22,6 @@ namespace boundary
     void subsonic_outlet(variables& var, mesh& msh, std::vector<double>& values);
     void supersonic_outlet(variables& var, mesh& msh, std::vector<double>& values);
 
-    // drop
-    void quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<double>& values);
-    void quiscent_droplets_inlet(variables& var, mesh& msh, std::vector<double>& values);
-
     // drop + flow
     void mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vector<double>& values);
     std::vector<double> flow_with_droplets(double md_gas, double T, std::vector<double> comp, int N_frac, double md_cond, double rho, double mean_r, double var_r);

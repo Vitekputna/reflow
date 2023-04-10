@@ -65,22 +65,27 @@ def radius(X,N,rho):
 
     N_sum = 0
     X_sum = 0
+    try:
+        for i in range(len(X)):
 
-    for i in range(len(X)):
+            for j in range(1,len(X[0])):
 
-        for j in range(1,len(X[0])):
+                N_sum += N[i,j]
+                X_sum += abs(X[i,j])
 
-            N_sum += N[i,j]
-            X_sum += abs(X[i,j])
+                r[i,j] = (3*abs(X[i,j])/(4*mth.pi*rho*N[i,j]))**(1/3)
+            
+            
+            r[i,0] = (3*X_sum/(4*mth.pi*rho*N_sum))**(1/3)
+            N_sum = 0
+            X_sum = 0
+    except:
+        return r
+    else:
+        return r
 
-            r[i,j] = (3*abs(X[i,j])/(4*mth.pi*rho*N[i,j]))**(1/3)
-        
-        
-        r[i,0] = (3*X_sum/(4*mth.pi*rho*N_sum))**(1/3)
-        N_sum = 0
-        X_sum = 0
 
-    return r
+    
 
 
 x,A = load_file("out/A.txt")
@@ -193,7 +198,7 @@ plt.grid()
 r = radius(X,N,700)
 plt.figure(13)
 plt.plot(x,r[:,1:])
-# plt.plot(x,r[:,0],'k--')
+plt.plot(x,r[:,0],'k--')
 plt.title("Poloměr kapiček")
 plt.xlabel("x[m]")
 plt.ylabel(r"$r[m]$")

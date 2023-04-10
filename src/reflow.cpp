@@ -164,7 +164,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 1;
+    double t_end = 0.1;
     double residual = 2*max_res;
     double CFL = 0.25;
 
@@ -183,11 +183,11 @@ void reflow::solve()
         // flow field part 
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
-        solver::chemical_reactions(dt,res,var,msh);
+        // solver::chemical_reactions(dt,res,var,msh);
         solver::droplet_transport(res,var,msh);
 
         // chemistry.solve(dt,res,var,msh);
@@ -195,8 +195,8 @@ void reflow::solve()
         // lagrangian particles part
         if(run_w_particles)
         {
-            // par_man.particle_inlet(dt*0.18,1e-4,100,0,1000,300);
-            if(!(n % 10))  par_man.particle_inlet(10*dt*0.01,1e-4,1.1e-4,60,70,0,0,1000,300);
+            if(!(n % 5)) par_man.particle_inlet(5*dt*0.176,1e-4,100,0,1000,300);
+            // if(!(n % 10))  par_man.particle_inlet(10*dt*0.01,1e-4,1.1e-4,60,70,0,0,1000,300);
             // par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
@@ -218,6 +218,7 @@ void reflow::solve()
         if(!(n % n_exp))
         {
             var.export_to_file(msh);
+            export_particles(par_man.particles);
             // var.export_timestep(t,msh,par_man.particles);
         }
     
