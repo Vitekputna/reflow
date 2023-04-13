@@ -33,10 +33,11 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
 {
     for(int i = 1; i < var.N-1; i++)
     {
-        // for(int k = 0; k < var.N_comp; k++)
-        // {
-        //     res[i][k] += var.md[i][k];
-        // }
+        for(int k = 0; k < var.N_comp; k++)
+        {
+            // res[i][k] += var.md[i][k];
+            var.md[i][k] = 0;
+        }
         res[i][var.mom_idx] += ((msh.Af[i]-msh.Af[i-1])/(msh.xf[i]-msh.xf[i-1]))/msh.A[i]*thermo::p[i];
         res[i][var.eng_idx] += var.q[i];
     }

@@ -195,8 +195,8 @@ void reflow::solve()
         // lagrangian particles part
         if(run_w_particles)
         {
-            if(!(n % 5)) par_man.particle_inlet(5*dt*0.176,1e-4,100,0,1000,300);
-            // if(!(n % 10))  par_man.particle_inlet(10*dt*0.01,1e-4,1.1e-4,60,70,0,0,1000,300);
+            // if(!(n % 5)) par_man.particle_inlet(5*dt*0.176,1e-4,100,msh.x[1],1000,300);
+            par_man.particle_inlet(dt*0.176,1e-4,1e-4,20,30,msh.x[0],msh.x[1],700,300);
             // par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }

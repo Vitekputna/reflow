@@ -73,6 +73,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     // mass
     double m0 = P.M;
+    double md;
     P.m = 4/3*3.14159*P.r*P.r*P.r*P.rho;
     P.M = P.N*P.m;
 
@@ -80,16 +81,18 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     {
         res[P.last_cell_idx][0] += (m0)/dt/V;
         res[P.last_cell_idx][2] += (m0)/dt/V;
-        res[P.last_cell_idx][4] += m0*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
+        md = m0*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
+        res[P.last_cell_idx][4] += md;
         P.reset();
-        return 0.0;
+        return md;
     }
 
     res[P.last_cell_idx][0] += (m0 - P.M)/dt/V;
     res[P.last_cell_idx][2] += (m0 - P.M)/dt/V;
-    res[P.last_cell_idx][4] += (m0 - P.M)*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
+    md = (m0 - P.M)*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
+    res[P.last_cell_idx][4] += md;
 
-    return dt;
+    return md;
 }
 
 void lagrange_solver::update_particles(double dt, std::vector<particle>& particles, variables& var, mesh const& msh, std::vector<std::vector<double>>& res)
@@ -100,7 +103,7 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
     #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
     for(int j = 0; j < particles.size();j++)
     {
-        if(particles[j].in_use)
+        if(particles[j].in_use && particles[j].x > msh.xf[0])
         {
             // find where is particle located in mesh
             for(int i = particles[j].last_cell_idx; i < msh.N; i++)
@@ -120,7 +123,7 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
 
             // update particle speed, mass, temp...
             V = msh.A[particles[j].last_cell_idx]*(msh.xf[particles[j].last_cell_idx] - msh.xf[particles[j].last_cell_idx-1]);
-            integrate_particle(dt,V,particles[j],var.W[particles[j].last_cell_idx],res);
+            var.md[particles[j].last_cell_idx][2] += dt*integrate_particle(dt,V,particles[j],var.W[particles[j].last_cell_idx],res);
         }
     }
 }
