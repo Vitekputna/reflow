@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.02,200},{0.02,0.319,500}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.1,100},{0.1,0.319,500}});
     S.spline_geometry(curves,100);
 
     S.msh.export_to_file();
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.init_particles(1e6,1e4,100);
+    S.init_particles(1e6,1e3,1000);
 
     S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{m_OX,400,0,1,0});
 

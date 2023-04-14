@@ -162,7 +162,7 @@ void variables::apply_mass_source(double M_tot, double T, double x_from, double 
     }
 }
 
-void variables::export_to_file(mesh const& msh)
+void variables::export_to_file(mesh const& msh,std::vector<particle> const& particles)
 {
     double kappa,r;
 
@@ -323,6 +323,37 @@ void variables::export_to_file(mesh const& msh)
         stream << "\n";
     }
     stream.close();
+
+    std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
+
+    for(auto const& P : particles)
+    {
+        if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
+    }
+
+    int n;
+    for(auto const& P : particles)
+    {
+        if(P.in_use)
+        {
+            n = particle_values[P.last_cell_idx][3];
+            particle_values[P.last_cell_idx][0] += P.N*P.r/n;
+            particle_values[P.last_cell_idx][1] += P.N*P.u/n;
+            particle_values[P.last_cell_idx][2] += P.N*P.T/n;
+        }
+    }
+
+    stream =  std::ofstream("out/particles.txt");
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " ";
+        for(int k = 0; k < 4; k++)
+        {
+            stream << particle_values[i][k] << " ";
+        }
+        stream << "\n";
+    }
+    stream.close();    
 }
 
 void variables::export_timestep(double t, mesh const& msh, std::vector<particle> const& particles)

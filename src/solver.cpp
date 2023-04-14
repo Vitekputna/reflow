@@ -31,6 +31,8 @@ void solver::compute_cell_res(std::vector<std::vector<double>>& res,variables& v
 
 void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
 {
+    var.md[0][2] = 0;
+
     for(int i = 1; i < var.N-1; i++)
     {
         for(int k = 0; k < var.N_comp; k++)

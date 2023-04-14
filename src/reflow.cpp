@@ -164,7 +164,7 @@ void reflow::solve()
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.1;
+    double t_end = 0.5;
     double residual = 2*max_res;
     double CFL = 0.25;
 
@@ -183,20 +183,19 @@ void reflow::solve()
         // flow field part 
         solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         // solver::chemical_reactions(dt,res,var,msh);
-        solver::droplet_transport(res,var,msh);
-
-        // chemistry.solve(dt,res,var,msh);
+        // solver::droplet_transport(res,var,msh);
 
         // lagrangian particles part
         if(run_w_particles)
         {
-            // if(!(n % 5)) par_man.particle_inlet(5*dt*0.176,1e-4,100,msh.x[1],1000,300);
-            par_man.particle_inlet(dt*0.176,1e-4,1e-4,20,30,msh.x[0],msh.x[1],700,300);
+            par_man.particle_inlet(dt*0.176316,1e-4,15,msh.x[0],700,300);
+            // if(!(n % 1)) par_man.particle_inlet(dt*0.176,1e-4,1e-4,20,30,msh.x[0],msh.x[1],700,300);
             // par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
@@ -209,7 +208,7 @@ void reflow::solve()
         {
             stream = std::ofstream("out/res.txt",std::ios_base::app);
             residual = solver::max_residual(res,var,var.eng_idx);
-            std::cout << t << " " << dt << " " << residual << "              \r" << std::flush; 
+            std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << "              \r" << std::flush; 
             stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,1) << "\t" << residual << "\n";
             stream.close();
         }
@@ -217,8 +216,8 @@ void reflow::solve()
         // Runtime export
         if(!(n % n_exp))
         {
-            var.export_to_file(msh);
-            export_particles(par_man.particles);
+            var.export_to_file(msh,par_man.particles);
+            
             // var.export_timestep(t,msh,par_man.particles);
         }
     
@@ -241,9 +240,6 @@ void reflow::solve()
     std::cout << "///////////////////////////////////////\n";
     std::cout << "Number of particles: " << par_man.particles.size() << "\n";
 
-    solver::reconstruct(var,msh);
-
-    reflow::export_particles(par_man.particles);
-    var.export_to_file(msh);
+    var.export_to_file(msh,par_man.particles);
     msh.export_to_file();
 }
