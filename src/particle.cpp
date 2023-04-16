@@ -20,7 +20,7 @@ particle::particle(unsigned int _N, double _x, double _r, double _u, double _rho
     last_cell_idx = 0;
 
     // std::cout << N << " " << r << "\n";
-    m = 4/3*3.14159*r*r*r*rho; // hmotnost jedne kapičky
+    m = 4*M_PI*pow(r,3)*rho/3; // hmotnost jedne kapičky
     M = N*m; // hmotnost grupy
 }
 
@@ -28,14 +28,14 @@ void particle::reset()
 {
     in_use = false;
 
-    x = x_0;
-    r = r_0;
-    u = u_0;
-    T = T_0;
-    rho = rho_0;
-    last_cell_idx = 0;
-    m = 4/3*3.14159*r*r*r*rho; // hmotnost jedne kapičky
-    M = N*m; // hmotnost grupy
+    // x = x_0;
+    // r = r_0;
+    // u = u_0;
+    // T = T_0;
+    // rho = rho_0;
+    // last_cell_idx = 0;
+    // m = 4/3*3.14159*r*r*r*rho; // hmotnost jedne kapičky
+    // M = N*m; // hmotnost grupy
 }
 
 particle_manager::particle_manager(){}
@@ -47,7 +47,7 @@ particle_manager::particle_manager(int _N_max, int _max_per_group, int _N) : N_m
 
 bool particle_manager::particle_inlet(double m, double r, double u, double x, double rho, double T)
 {
-    int N = m/(4*3.14159*r*r*r*rho/3);
+    int N = m/(4*M_PI*pow(r,3)*rho/3);
     spawn_particles(1,N,r,u,x,rho,T);
     return true;
 }
@@ -55,7 +55,7 @@ bool particle_manager::particle_inlet(double m, double r, double u, double x, do
 bool particle_manager::particle_inlet(double m, double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T)
 {
     double r = 0.5*(r_from+r_to);
-    int N = m/(4*3.14159*r*r*r*rho/3);
+    int N = m/(4*M_PI*pow(r,3)*rho/3);
     spawn_particles(1,N,r_from,r_to,u_from,u_to,x_from,x_to,rho,T);
     return true;
 }
@@ -63,7 +63,7 @@ bool particle_manager::particle_inlet(double m, double r_from, double r_to, doub
 bool particle_manager::spawn_particles(int n_groups, int n_particles, double r, double u, double x, double rho, double T)
 {
     int n = 0;
-    int n_par_group = n_particles/n_groups;
+    int n_par_group = n_particles;
 
     for(auto& par : particles)
     {

@@ -22,7 +22,11 @@ inline double lagrange_solver::radius_change(double D, double r, double rho, dou
 {
     // return std::min(0.0,-D/4/3.14159/((r*r)*rho));   
     return std::min(0.0,-D*log(1+1e-3*dT)/r);
-    
+}
+
+inline double lagrange_solver::mass_flux(double r, double dT)
+{
+    return std::min(0.0,3*r*log(1 + 1e-3*std::max(0.0,dT)));
 }
 
 double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<std::vector<double>>& res)
@@ -52,15 +56,23 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     // K4 = dt*ap;
     // P.u += K1/6+K2/3+K3/3+K4/6;
 
-    P.u = uf;
+    // if(P.x <= 0.006)
+    // {
+    //     P.u = uf;
+    //     P.x += P.u*dt;
+    //     return 0.0;
+    // }
 
-    // Position
+    P.u = uf;   
     P.x += P.u*dt;
+
+    if(P.x <= 0.005)
+    {
+        return 0.0;
+    }
 
     // Temperature
     // P.T += alfa*dt*(Tf - P.T);
-
-    if(P.last_cell_idx == 0) return 0;
 
     // radius
     K1 = dt*radius_change(D,P.r,P.rho,Tf-200);
@@ -75,25 +87,28 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     // mass
     double m0 = P.M;
     double md;
-    P.m = 4/3*3.14159*P.r*P.r*P.r*P.rho;
-    P.M = P.N*P.m;
 
     if(P.r < 0)
     {
-        md = (m0)/dt/V;
+        md = m0/dt/V;
+
         res[P.last_cell_idx][0] += md;
         res[P.last_cell_idx][2] += md;
-        // md = m0*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
-        // res[P.last_cell_idx][4] += md;
+        res[P.last_cell_idx][4] += md*thermo::enthalpy(Tf,std::vector<double>{0,0,1});
+
         P.reset();
         return md;
     }
 
+    P.m = 4*M_PI*pow(P.r,3)*P.rho/3;
+
+    P.M = P.N*P.m;
+
     md = (m0 - P.M)/dt/V;
+
     res[P.last_cell_idx][0] += md;
     res[P.last_cell_idx][2] += md;
-    // md = (m0 - P.M)*thermo::enthalpy(Tf,std::vector<double>{0,0,1})/dt/V;
-    // res[P.last_cell_idx][4] += md;
+    res[P.last_cell_idx][4] += md*thermo::enthalpy(Tf,std::vector<double>{0,0,1});
 
     return md;
 }
@@ -111,7 +126,6 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
             // find where is particle located in mesh
             for(int i = particles[j].last_cell_idx; i < msh.N; i++)
             {
-                if(particles[j].x < msh.xf[0]) break;
                 if(particles[j].x > msh.xf[i-1] && particles[j].x <= msh.xf[i])
                 {
                     particles[j].last_cell_idx = i;

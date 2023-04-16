@@ -12,4 +12,5 @@ namespace lagrange_solver
     inline double acceleration(double Cd, double r, double du);
     inline double heat_flux(double alfa, double C, double dT);
     inline double radius_change(double D, double r, double rho, double dT);
+    inline double mass_flux(double r, double dT);
 };

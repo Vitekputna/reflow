@@ -6,8 +6,11 @@ struct specie
     double r;
     double kappa;
     double Mm;
-    double a,b,c,d,e,f;
-    double a1,b1,c1,d1,e1,f1;
+
+    double a,b,c,d,e,f;         //cp coeffs
+    double a1,b1,c1,d1,e1,f1;   //cp coeffs divided
+
+    double a2,b2,c2,d2,e2,f2;   //k coeffs
 
     specie(double _r, double _kappa, double _Mm, std::vector<double> cp_coeff) : r{_r}, kappa{_kappa}, Mm{_Mm} 
     {
@@ -26,10 +29,19 @@ struct specie
         f1 = f/6;
     };
 
+    specie(double _r, double _kappa, double _Mm, std::vector<double> cp_coeff, std::vector<double> k_coeff) : specie(_r,_kappa,_Mm,cp_coeff)
+    {
+        a2 = k_coeff[0];
+        b2 = k_coeff[1];
+        c2 = k_coeff[2];
+        d2 = k_coeff[3];
+        e2 = k_coeff[4];
+        f2 = k_coeff[5];
+    };
+
     inline double cp(double T)
     {
         T = std::min(T,5000.0);
-        // return a + b*T + c*pow(T,2) + d*pow(T,3) + e*pow(T,4) + f*pow(T,5);
 
         double result = f*T;
         result = (result + e)*T;
@@ -37,6 +49,19 @@ struct specie
         result = (result + c)*T;
         result = (result + b)*T;
         result += a;
+        return result;
+    }
+
+    inline double k(double T)
+    {
+        T = std::min(T,5000.0);
+
+        double result = f2*T;
+        result = (result + e2)*T;
+        result = (result + d2)*T;
+        result = (result + c2)*T;
+        result = (result + b2)*T;
+        result += a2;
         return result;
     }
 

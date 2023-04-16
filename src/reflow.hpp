@@ -34,7 +34,7 @@ class reflow
     // Constatnts
     int n_dt = 2;
     int n_res = 200;
-    int n_exp = 5000;
+    int n_exp = 500;
 
     int N, N_var;
     int n_comp = 0;
