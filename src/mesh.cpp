@@ -50,6 +50,7 @@ mesh::mesh(int _N) : N{_N+2}
     {
         Af[i] = (A[i+1] + A[i])/2;
     }
+    compute_volumes();
 }
 
 mesh::mesh(int _N, double from, double to) : N{_N+2}, x_from{from}, x_to{to}
@@ -73,6 +74,7 @@ mesh::mesh(int _N, double from, double to) : N{_N+2}, x_from{from}, x_to{to}
     x[N-1] = x[N-2] + (x[N-2] - x[N-3]);
 
     construct_mesh();
+    compute_volumes();
 }
 
 void mesh::refine(std::vector<std::vector<double>> ref)
@@ -119,6 +121,7 @@ void mesh::refine(std::vector<std::vector<double>> ref)
 
     construct_mesh();
     smooth_mesh();
+    compute_volumes();
 }
 
 void mesh::construct_mesh()
@@ -146,6 +149,19 @@ void mesh::construct_mesh()
     {
         Af[i] = (A[i+1] + A[i])/2;
     }
+}
+
+void mesh::compute_volumes()
+{
+    V.resize(N);
+
+    for(int i = 1; i < N-1; i++)
+    {
+        V[i] = A[i]*(xf[i] - xf[i-1]);
+    }
+
+    V[0] = V[1];
+    V.back() = V.rbegin()[1];
 }
 
 void mesh::fix_cell_centroids()
@@ -183,6 +199,18 @@ void mesh::bump()
     {
         Af[i] = (A[i+1] + A[i])/2;
     }
+
+
+    compute_volumes();
+}
+
+void mesh::constant_area(double Area)
+{
+    A = std::vector<double>(N,Area);
+
+    construct_mesh();
+    smooth_mesh();
+    compute_volumes();
 }
 
 void mesh::cubic(std::vector<std::vector<std::vector<double>>> curves, int n)
@@ -234,6 +262,7 @@ void mesh::cubic(std::vector<std::vector<std::vector<double>>> curves, int n)
     {
         Af[i] = (A[i+1] + A[i])/2;
     }
+    compute_volumes();
 }
 
 void mesh::export_to_file()
@@ -269,4 +298,14 @@ void mesh::export_to_file()
 
     stream << "\n";
     stream.close();
+
+    // stream =  std::ofstream("out/V.txt");
+
+    // for(int i = 0; i < N; i++)
+    // {
+    //     stream << x[i] << " " << V[i] << "\n";
+    // }
+
+    // stream << "\n";
+    // stream.close();
 }

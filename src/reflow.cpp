@@ -143,7 +143,7 @@ void reflow::add_reaction(reaction& R)
 
 void reflow::export_particles(std::vector<particle>& particles)
 {
-    auto p_stream = std::ofstream("out/Lagr.txt");
+    auto p_stream = std::ofstream("out/Lagrangian.txt");
 
     for(auto& P : particles)
     {
@@ -157,21 +157,46 @@ void reflow::init_particles(int N_max, int N_particles, int N_per_group)
     run_w_particles = true;
 }
 
-void reflow::solve()
+void reflow::add_lagrangian_mono_particles(double specie_idx, double mass_flux, double rho, double r, double x,
+                                           double u, double T, double T_boil, double vap_heat, double C)
 {
+    auto parameters = std::vector<double>{specie_idx,mass_flux,rho,r,x,u,T,T_boil,vap_heat,C};
+    boundary_values_lagrange.push_back(parameters);
+}
+
+void reflow::apply_lagrangian_particle_inlet(double dt)
+{
+    for(auto val : boundary_values_lagrange)
+    {
+        par_man.particle_inlet(dt*val[1],val[3],val[5],val[4],val[2],val[6]);
+    }
+}
+
+bool reflow::maximum_time(double T, double res)
+{
+    return T < t_end;
+}
+
+void reflow::solve(double _t_end, double _max_residual, double _CFL)
+{
+    t_end = _t_end;
+    max_res = _max_residual;
+    CFL = _CFL;
+
     std::vector<std::vector<double>> res(var.N+2,std::vector<double>(var.N_var,0.0));
 
     int n = 1;
     double t = 0;
     double dt = 2e-8;
-    double t_end = 0.1;
     double residual = 2*max_res;
-    double CFL = 0.2;
+    bool RUN_FLAG = true;
 
     auto stream = std::ofstream("out/res.txt");
     stream << "Time [s]\tResidual[...]\n";
     stream.close();
 
+    std::cout << "Starting simulation...\n";
+    std::cout << "##########################################\n";
     std::cout << "time[s]\ttime step[s]\tresidual[]\n";
     std::cout << "##########################################\n";
 
@@ -181,22 +206,23 @@ void reflow::solve()
         thermo::update(var.W);
 
         // flow field part 
-        // solver::reconstruct(var,msh);
+        solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
 
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         solver::chemical_reactions(dt,res,var,msh);
-        // solver::droplet_transport(res,var,msh);
+        solver::droplet_transport(res,var,msh);
 
         // lagrangian particles part
         if(run_w_particles)
         {
-            par_man.particle_inlet(dt*0.176316,1e-4,15,msh.x[0],700,300);
-            // if(!(n % 1)) par_man.particle_inlet(dt*0.176,1e-4,1e-4,20,30,msh.x[0],msh.x[1],700,300);
-            // par_man.particle_inlet(dt*0.18,1e-4,1.1e-4,60,70,0,0,1000,300);
+            // par_man.particle_inlet(dt*20,1e-4,15,msh.x[0],700,300);
+            // par_man.particle_inlet(dt*20,1e-4,1e-4,15,15,msh.x[0],msh.x[1],700,300);
+
+            apply_lagrangian_particle_inlet(dt);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
 
@@ -208,9 +234,14 @@ void reflow::solve()
         {
             stream = std::ofstream("out/res.txt",std::ios_base::app);
             residual = solver::max_residual(res,var,var.eng_idx);
-            std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << "              \r" << std::flush; 
-            stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,1) << "\t" << residual << "\n";
+
+            std::cout << "\b\b\r";
+            std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
+
+            stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
             stream.close();
+
+            RUN_FLAG = maximum_time(t,residual);
         }
 
         // Runtime export
@@ -229,15 +260,14 @@ void reflow::solve()
         t += dt;
         n++;
 
-    // } while (n < 3);
-    } while (t < t_end && residual > max_res);
+    } while (RUN_FLAG);
 
-    std::cout << "\r" << std::flush;
-    std::cout << "Computation done...                    \n";
-    std::cout << "///////////////////////////////////////\n";
+    std::cout << "\r\n" << std::flush;
+    std::cout << "Simulation done...\n";
+    std::cout << "##########################################\n";
     std::cout << "total steps[/] \t|end time[s] \t|final residual[/]\n";
     std::cout << n << "\t\t " << t << "\t\t " << residual << "\n";
-    std::cout << "///////////////////////////////////////\n";
+    std::cout << "##########################################\n";
     std::cout << "Number of particles: " << par_man.particles.size() << "\n";
 
     var.export_to_file(msh,par_man.particles);

@@ -8,6 +8,8 @@ struct particle
     double x = 0; // poloha grupy
     unsigned int N ; // počet kapiček v grupě
 
+    unsigned int specie_idx = 0;
+
     double x_0, r_0, u_0, T_0, rho_0; //počáteční hodnoty grupy
 
     int last_cell_idx = 0;
@@ -32,6 +34,7 @@ class particle_manager
 
     bool particle_inlet(double m, double r, double u, double x, double rho, double T);
     bool particle_inlet(double m, double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T);
+
     bool spawn_particles(int n_groups, int n_particles, double r, double u, double x, double rho, double T);
     bool spawn_particles(int n_groups, int n_particles, double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T);
 };

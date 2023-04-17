@@ -4,7 +4,9 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include "omp.h"
+
 
 // extern double kappa, r;
 
@@ -29,7 +31,7 @@ inline double lagrange_solver::mass_flux(double r, double dT)
     return std::min(0.0,3*r*log(1 + 1e-3*std::max(0.0,dT)));
 }
 
-double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<std::vector<double>>& res)
+double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<double>& res)
 {
     static double K1,K2,K3,K4;
     static double ap,up,rp;
@@ -92,9 +94,10 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     {
         md = m0/dt/V;
 
-        res[P.last_cell_idx][0] += md;
-        res[P.last_cell_idx][2] += md;
-        res[P.last_cell_idx][4] += md*thermo::enthalpy(Tf,std::vector<double>{0,0,1});
+        res[0] += md;
+        res[2] += md;
+        res[3] += md*P.u;
+        res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + thermo::density(W)*pow(P.u,2)/2);
 
         P.reset();
         return md;
@@ -106,9 +109,10 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     md = (m0 - P.M)/dt/V;
 
-    res[P.last_cell_idx][0] += md;
-    res[P.last_cell_idx][2] += md;
-    res[P.last_cell_idx][4] += md*thermo::enthalpy(Tf,std::vector<double>{0,0,1});
+    res[0] += md;
+    res[2] += md;
+    res[3] += md*P.u;
+    res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + thermo::density(W)*pow(P.u,2)/2);
 
     return md;
 }
@@ -117,7 +121,7 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
 {
     double V;
 
-    omp_set_num_threads(12);
+    omp_set_num_threads(6);
     #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
     for(int j = 0; j < particles.size();j++)
     {
@@ -139,8 +143,9 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
             }
 
             // update particle speed, mass, temp...
-            V = msh.A[particles[j].last_cell_idx]*(msh.xf[particles[j].last_cell_idx] - msh.xf[particles[j].last_cell_idx-1]);
-            var.md[particles[j].last_cell_idx][2] += integrate_particle(dt,V,particles[j],var.W[particles[j].last_cell_idx],res);
+            // V = msh.A[particles[j].last_cell_idx]*(msh.xf[particles[j].last_cell_idx] - msh.xf[particles[j].last_cell_idx-1]);
+            V = msh.V[particles[j].last_cell_idx];
+            var.md[particles[j].last_cell_idx][2] += integrate_particle(dt,V,particles[j],var.W[particles[j].last_cell_idx],res[particles[j].last_cell_idx]);
         }
     }
 }

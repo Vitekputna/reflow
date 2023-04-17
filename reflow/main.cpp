@@ -65,7 +65,7 @@ int main(int argc, char** argv)
     // S.set_boundary(boundary::subsonic_inlet,std::vector<double>{m_OX,300,0,1,0}
     //               ,boundary::subsonic_outlet,std::vector<double>{p_0});
 
-    S.solve();
+    S.solve(0.1,1000,0.9);
 
 
 

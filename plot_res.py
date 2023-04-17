@@ -1,6 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def first_nonzero(data):
+    
+    for number in data:
+
+        if number != 0:
+            return number
+
 def load_comp(filename):
     with open(filename, "r") as txt_file:
         lines = txt_file.readlines()
@@ -22,9 +29,9 @@ def load_comp(filename):
 data = load_comp("out/res.txt")
 
 plt.yscale("log")
-plt.plot(data[:,0],data[:,1]/data[0,1],label = "Density residual")
-plt.plot(data[:,0],data[:,2]/data[0,2],label = "Momentum residual")
-plt.plot(data[:,0],data[:,3]/data[0,3],label = "Energy residual")
+plt.plot(data[:,0],data[:,1]/first_nonzero(data[:,1]),label = "Density residual")
+plt.plot(data[:,0],data[:,2]/first_nonzero(data[:,2]),label = "Momentum residual")
+plt.plot(data[:,0],data[:,3]/first_nonzero(data[:,3]),label = "Energy residual")
 plt.grid()
 plt.legend()
 plt.show()

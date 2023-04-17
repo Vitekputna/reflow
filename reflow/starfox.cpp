@@ -47,9 +47,9 @@ int main(int argc, char** argv)
     S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{md,3200,1,0,0});
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{101325});
 
-    S.var.export_to_file(S.msh);
+    S.var.export_to_file(S.msh,S.par_man.particles);
 
-    S.solve();
+    S.solve(0.1,1000,0.9);
 
     return 0;
 }

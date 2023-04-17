@@ -3,10 +3,12 @@
 
 struct mesh
 {
-    std::vector<double> x;
     std::vector<double> xf;
-    std::vector<double> A;
     std::vector<double> Af;
+
+    std::vector<double> x;
+    std::vector<double> A;
+    std::vector<double> V;
 
     double dx_min = 1e15;
     
@@ -29,12 +31,14 @@ struct mesh
     void refine(std::vector<std::vector<double>> ref);
 
     void construct_mesh();
+    void compute_volumes();
 
     void fix_cell_centroids();
     void smooth_mesh();
 
     void bump();
     void cubic(std::vector<std::vector<std::vector<double>>> curves, int n);
+    void constant_area(double Area);
 
     void export_to_file();
 };

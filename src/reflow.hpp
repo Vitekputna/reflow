@@ -22,19 +22,16 @@ class reflow
     chem_solver chemistry;
 
     // Boundary 
-    void(*left_boundary)(variables&,mesh&,std::vector<double>&);
-    void(*right_boundary)(variables&,mesh&,std::vector<double>&);
-
-    std::vector<double> left_values;
-    std::vector<double> right_values;
-
     std::vector<Boundary_func> boundary_func_vec;
     std::vector<std::vector<double>> boundary_values_vec;
+
+    // Lagrangian boundary parameters (inlet)
+    std::vector<std::vector<double>> boundary_values_lagrange;
 
     // Constatnts
     int n_dt = 2;
     int n_res = 200;
-    int n_exp = 500;
+    int n_exp = 1000;
 
     int N, N_var;
     int n_comp = 0;
@@ -45,7 +42,9 @@ class reflow
 
     bool run_w_particles = false;
 
-    volatile double max_res = 1000;
+    double max_res = 1000;
+    double t_end = 1;
+    double CFL = 0.1;
     
     // Constructors
     reflow();
@@ -77,6 +76,12 @@ class reflow
     // Chemistry
     void add_reaction(reaction& R);
 
+    // Lagrangian
+    void add_lagrangian_mono_particles(double specie_idx, double mass_flux, double rho, double r, double x,
+                                       double u, double T, double T_boil, double vap_heat, double C);
+
+    void apply_lagrangian_particle_inlet(double dt);
+
     // Boundary
     void add_boundary_function(Boundary_func,std::vector<double> values);
     void apply_boundary_conditions();
@@ -85,5 +90,10 @@ class reflow
     void export_particles(std::vector<particle>& particles);
     void init_particles(int N_max, int N_particles, int N_per_group);
 
-    void solve();
+    // run criteria
+    bool maximum_time(double T, double res);
+    bool maximum_res(double T, double res);
+    bool maximum_time_res(double T, double res);
+
+    void solve(double t_end, double max_residual, double CFL);
 };

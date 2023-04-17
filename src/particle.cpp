@@ -19,7 +19,6 @@ particle::particle(unsigned int _N, double _x, double _r, double _u, double _rho
 
     last_cell_idx = 0;
 
-    // std::cout << N << " " << r << "\n";
     m = 4*M_PI*pow(r,3)*rho/3; // hmotnost jedne kapičky
     M = N*m; // hmotnost grupy
 }
@@ -27,15 +26,6 @@ particle::particle(unsigned int _N, double _x, double _r, double _u, double _rho
 void particle::reset()
 {
     in_use = false;
-
-    // x = x_0;
-    // r = r_0;
-    // u = u_0;
-    // T = T_0;
-    // rho = rho_0;
-    // last_cell_idx = 0;
-    // m = 4/3*3.14159*r*r*r*rho; // hmotnost jedne kapičky
-    // M = N*m; // hmotnost grupy
 }
 
 particle_manager::particle_manager(){}
@@ -63,7 +53,7 @@ bool particle_manager::particle_inlet(double m, double r_from, double r_to, doub
 bool particle_manager::spawn_particles(int n_groups, int n_particles, double r, double u, double x, double rho, double T)
 {
     int n = 0;
-    int n_par_group = n_particles;
+    int n_par_group = n_particles/n_groups;
 
     for(auto& par : particles)
     {

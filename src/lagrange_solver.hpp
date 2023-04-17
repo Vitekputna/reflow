@@ -6,7 +6,7 @@
 
 namespace lagrange_solver
 {
-    double integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<std::vector<double>>& res);
+    double integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<double>& res);
     void update_particles(double dt, std::vector<particle>& particles, variables& var, mesh const& msh, std::vector<std::vector<double>>& res);
 
     inline double acceleration(double Cd, double r, double du);
