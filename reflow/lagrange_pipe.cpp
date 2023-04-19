@@ -21,13 +21,13 @@ int main(int argc, char** argv)
     reflow Simulation;
 
     // Mesh generation
-    Simulation.refine_mesh(std::vector<std::vector<double>>{{0,0.5,1000}});
+    Simulation.refine_mesh(std::vector<std::vector<double>>{{0,0.5,500}});
     Simulation.msh.constant_area(0.002);
 
     // Species
-    Simulation.add_specie(311.39,1.30,26.7,prod_cp);     //Products
-    Simulation.add_specie(188,1.31,44,oxi_cp);           //Oxydizer
-    Simulation.add_specie(138,1.13,60,fuel_cp);          //Fuel
+    Simulation.add_specie(311.39,1.30,26.7,prod_cp);        //Products
+    Simulation.add_specie(188,1.31,44,oxi_cp);              //Oxydizer
+    Simulation.add_specie(138,1.13,60,fuel_cp);             //Fuel
 
     // Initial conditions
     double rho = p2/(thermo::r_mix_comp(init_comp)*T0);

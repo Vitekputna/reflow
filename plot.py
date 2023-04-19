@@ -88,9 +88,9 @@ def radius(X,N,rho):
     
 
 
-x,A = load_file("out/A.txt")
+_,A = load_file("out/A.txt")
 _,r = load_file("out/r.txt")
-_,p = load_file("out/p.txt")
+x,p = load_file("out/p.txt")
 _,u = load_file("out/u.txt")
 _,T = load_file("out/T.txt")
 _,rho = load_file("out/W0.txt")

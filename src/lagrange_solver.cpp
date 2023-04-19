@@ -40,23 +40,22 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     Tf = thermo::T[P.last_cell_idx];
     uf = W[W.size()-2]/W[0];
 
-    double C = 1; // momentum transfer constant
-    double D = 1e-5; // mass transfer constant
-    double alfa = 10; // heat transfer constant
-
+    double C = 1e-3;           // momentum transfer constant
+    double D = 1e-5;        // mass transfer constant
+    double alfa = 10;       // heat transfer constant
 
     // Velocity
-    // K1 = dt*acceleration(C,P.r,uf - P.u);
-    // up = P.u + K1/2;
-    // ap = acceleration(C,P.r,uf - up);
-    // K2 = dt*ap;
-    // up = P.u + K2/2;
-    // ap = acceleration(C,P.r,uf - up);
-    // K3 = dt*ap;
-    // up = P.u + K3;
-    // ap = acceleration(C,P.r,uf - up);
-    // K4 = dt*ap;
-    // P.u += K1/6+K2/3+K3/3+K4/6;
+    K1 = dt*acceleration(C,P.r,uf - P.u);
+    up = P.u + K1/2;
+    ap = acceleration(C,P.r,uf - up);
+    K2 = dt*ap;
+    up = P.u + K2/2;
+    ap = acceleration(C,P.r,uf - up);
+    K3 = dt*ap;
+    up = P.u + K3;
+    ap = acceleration(C,P.r,uf - up);
+    K4 = dt*ap;
+    P.u += K1/6+K2/3+K3/3+K4/6;
 
     // if(P.x <= 0.006)
     // {
@@ -65,7 +64,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     //     return 0.0;
     // }
 
-    P.u = uf;   
+    // P.u = uf;   
     P.x += P.u*dt;
 
     if(P.x <= 0.005)
@@ -96,7 +95,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
         res[0] += md;
         res[2] += md;
-        res[3] += md*P.u;
+        // res[3] += md*P.u;
         res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + thermo::density(W)*pow(P.u,2)/2);
 
         P.reset();
@@ -111,7 +110,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     res[0] += md;
     res[2] += md;
-    res[3] += md*P.u;
+    // res[3] += md*P.u;
     res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + thermo::density(W)*pow(P.u,2)/2);
 
     return md;

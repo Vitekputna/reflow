@@ -21,7 +21,6 @@ void thermo::init(int n)
 }
 
 // Using ideal gas law
-
 double thermo::density(std::vector<double> const& W)
 {
     static double chi;
