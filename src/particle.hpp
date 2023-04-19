@@ -20,6 +20,8 @@ struct particle
     void reset();
 };
 
+
+
 class particle_manager
 {
     public:
@@ -29,12 +31,23 @@ class particle_manager
     public:
     std::vector<particle> particles; // holds particle objects
 
+    // boundary/inlets
+    using lagrange_func = void (particle_manager::*)(double, std::vector<double>&);
+
+    std::vector<lagrange_func> boundary_functions;
+    std::vector<std::vector<double>> boundary_parameters;
+
     particle_manager();
     particle_manager(int _N_max, int _max_per_group, int _N);
+    
+    void apply_boundary(double dt);
+    void add_monodispersion(std::vector<double> parameters);
+    void add_uniform(std::vector<double> parameters);
 
-    bool particle_inlet(double m, double r, double u, double x, double rho, double T);
-    bool particle_inlet(double m, double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T);
+    void monodispersion_particle_inlet(double dt, std::vector<double>& parameters);
+    void uniform_particle_inlet(double dt, std::vector<double>& parameters);
 
-    bool spawn_particles(int n_groups, int n_particles, double r, double u, double x, double rho, double T);
-    bool spawn_particles(int n_groups, int n_particles, double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T);
+    bool spawn_particles_monodispersion(int n_groups, int n_particles, std::vector<double>& parameters);
+    bool spawn_particles_uniform(int n_groups, int n_particles, std::vector<double>& parameters);
 };
+

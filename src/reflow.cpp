@@ -10,42 +10,67 @@ extern double kappa;
 
 reflow::reflow(variables& _var, mesh& _msh) : var{_var}, msh{_msh} 
 {
-    thermo::init(N);    
+    thermo::init(N);  
+
+    variable_init();  
 }
 
 reflow::reflow(int _N, int _N_var) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N);
     thermo::init(N);
+
+    variable_init();
 }
 
 reflow::reflow()
 {
     msh = mesh();
     var = variables();
+
+    variable_init();
 }
 
 reflow::reflow(int _N, int _N_var, std::vector<double> const& init) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N);
     var = variables(N_var,N,init);
+
+    variable_init();
 }
 
 reflow::reflow(int _N, int _N_var, std::vector<std::vector<double>> const& init) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N);
     var = variables(N_var,N,init);
+
+    variable_init();
 }
 
 reflow::reflow(int _N, int _N_var, double from, double to, std::vector<double> const& init) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N,from,to);
     var = variables(N_var,N,init);
+
+    variable_init();
 }
 
 reflow::reflow(int _N, int _N_var, double from, double to) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N,from,to);
+
+    variable_init();
+}
+
+void reflow::variable_init()
+{
+    n_dt = 2;
+    n_res = 500;
+    n_exp = 2000;
+
+    max_res = 1000;
+    t_end = 1;
+    CFL = 0.1;
 }
 
 void reflow::initial_conditions(std::vector<double> const& init)
@@ -160,16 +185,20 @@ void reflow::init_particles(int N_max, int N_particles, int N_per_group)
 void reflow::add_lagrangian_mono_particles(double specie_idx, double mass_flux, double rho, double r, double x,
                                            double u, double T, double T_boil, double vap_heat, double C)
 {
-    auto parameters = std::vector<double>{specie_idx,mass_flux,rho,r,x,u,T,T_boil,vap_heat,C};
-    boundary_values_lagrange.push_back(parameters);
+    auto parameters = std::vector<double>{mass_flux,r,u,x,rho,T,T_boil,vap_heat,C,specie_idx};
+    par_man.add_monodispersion(parameters);
+}
+
+void reflow::add_lagrangian_unif_particles(double specie_idx, double mass_flux, double rho, double r_from, double r_to, 
+                                           double x, double u, double T, double T_boil, double vap_heat, double C)
+{
+    // auto parameters = std::vector<double>{mass_flux,rhor,x,u,T,T_boil,vap_heat,C};
+    
 }
 
 void reflow::apply_lagrangian_particle_inlet(double dt)
 {
-    for(auto val : boundary_values_lagrange)
-    {
-        par_man.particle_inlet(dt*val[1],val[3],val[5],val[4],val[2],val[6]);
-    }
+    par_man.apply_boundary(dt);
 }
 
 bool reflow::maximum_time(double T, double res)
@@ -219,9 +248,6 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // lagrangian particles part
         if(run_w_particles)
         {
-            // par_man.particle_inlet(dt*20,1e-4,15,msh.x[0],700,300);
-            // par_man.particle_inlet(dt*20,1e-4,1e-4,15,15,msh.x[0],msh.x[1],700,300);
-
             apply_lagrangian_particle_inlet(dt);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }

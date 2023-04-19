@@ -35,23 +35,59 @@ particle_manager::particle_manager(int _N_max, int _max_per_group, int _N) : N_m
     particles.resize(N);
 }
 
-bool particle_manager::particle_inlet(double m, double r, double u, double x, double rho, double T)
+void particle_manager::apply_boundary(double dt)
 {
-    int N = m/(4*M_PI*pow(r,3)*rho/3);
-    spawn_particles(1,N,r,u,x,rho,T);
-    return true;
+    int i = 0;
+    for(auto ptr : boundary_functions)
+    {
+        (this->*ptr)(dt,boundary_parameters[i]);
+        i++;
+    }
 }
 
-bool particle_manager::particle_inlet(double m, double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T)
+void particle_manager::add_monodispersion(std::vector<double> parameters)
 {
-    double r = 0.5*(r_from+r_to);
-    int N = m/(4*M_PI*pow(r,3)*rho/3);
-    spawn_particles(1,N,r_from,r_to,u_from,u_to,x_from,x_to,rho,T);
-    return true;
+    boundary_functions.push_back(&particle_manager::monodispersion_particle_inlet);
+    boundary_parameters.push_back(parameters);
 }
 
-bool particle_manager::spawn_particles(int n_groups, int n_particles, double r, double u, double x, double rho, double T)
+void particle_manager::add_uniform(std::vector<double> parameters)
 {
+    boundary_functions.push_back(&particle_manager::uniform_particle_inlet);
+    boundary_parameters.push_back(parameters);
+}
+
+// mass, r, u, x, rho, T
+void particle_manager::monodispersion_particle_inlet(double dt, std::vector<double>& parameters)
+{
+    const double m = parameters[0];
+    const double r = parameters[1];
+    const double rho = parameters[4];
+
+    int N = dt*m/(4*M_PI*pow(r,3)*rho/3);
+
+    spawn_particles_monodispersion(1,N,parameters);
+}
+
+// mass, r_mean, r_var, u, x, rho, T
+void particle_manager::uniform_particle_inlet(double dt, std::vector<double>& parameters)
+{
+    const double m = parameters[0];
+    const double r_mean = parameters[1];
+    const double rho = parameters[5];
+
+    int N = dt*m/(4*M_PI*pow(r_mean,3)*rho/3);
+    spawn_particles_uniform(1,N,parameters);
+}
+
+bool particle_manager::spawn_particles_monodispersion(int n_groups, int n_particles, std::vector<double>& parameters)
+{
+    const double r = parameters[1];
+    const double u = parameters[2];
+    const double x = parameters[3];
+    const double rho = parameters[4];
+    const double T = parameters[5];
+
     int n = 0;
     int n_par_group = n_particles/n_groups;
 
@@ -72,14 +108,19 @@ bool particle_manager::spawn_particles(int n_groups, int n_particles, double r, 
     return false;
 }
 
-bool particle_manager::spawn_particles(int n_groups, int n_particles,double r_from, double r_to, double u_from, double u_to, double x_from, double x_to, double rho, double T)
+bool particle_manager::spawn_particles_uniform(int n_groups, int n_particles, std::vector<double>& parameters)
 {
-    //randomizer for velocity
+    const double r_mean = parameters[1];
+    const double r_var = parameters[2];
+    const double u = parameters[3];
+    const double x = parameters[4];
+    const double rho = parameters[5];
+    const double T = parameters[6];
+
+    //randomizer for radii
     std::random_device rnd;
     std::mt19937 gen(rnd());
-    std::uniform_real_distribution<double> r_dist(r_from,r_to);
-    std::uniform_real_distribution<double> u_dist(u_from,u_to);
-    std::uniform_real_distribution<double> x_dist(x_from,x_to);
+    std::uniform_real_distribution<double> r_dist(r_mean-r_var,r_mean+r_var);
 
     int n = 0;
     int n_par_group = n_particles/n_groups;
@@ -91,8 +132,6 @@ bool particle_manager::spawn_particles(int n_groups, int n_particles,double r_fr
         if(!par.in_use)
         {
             dr = r_dist(gen);
-            du = u_dist(gen);
-            dx = x_dist(gen);
             par = particle(n_par_group,dx,dr,du,rho,T);
             n++;
         }

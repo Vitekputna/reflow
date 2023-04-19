@@ -324,6 +324,8 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
+
+
     std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
 
     for(auto const& P : particles)

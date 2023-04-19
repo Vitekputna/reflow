@@ -40,31 +40,31 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     Tf = thermo::T[P.last_cell_idx];
     uf = W[W.size()-2]/W[0];
 
-    double C = 1e-3;           // momentum transfer constant
+    double C = 1e-2;        // momentum transfer constant
     double D = 1e-5;        // mass transfer constant
     double alfa = 10;       // heat transfer constant
 
     // Velocity
-    K1 = dt*acceleration(C,P.r,uf - P.u);
-    up = P.u + K1/2;
-    ap = acceleration(C,P.r,uf - up);
-    K2 = dt*ap;
-    up = P.u + K2/2;
-    ap = acceleration(C,P.r,uf - up);
-    K3 = dt*ap;
-    up = P.u + K3;
-    ap = acceleration(C,P.r,uf - up);
-    K4 = dt*ap;
-    P.u += K1/6+K2/3+K3/3+K4/6;
 
-    // if(P.x <= 0.006)
-    // {
-    //     P.u = uf;
-    //     P.x += P.u*dt;
-    //     return 0.0;
-    // }
-
-    // P.u = uf;   
+    if(P.r > 2e-6)
+    {
+        K1 = dt*acceleration(C,P.r,uf - P.u);
+        up = P.u + K1/2;
+        ap = acceleration(C,P.r,uf - up);
+        K2 = dt*ap;
+        up = P.u + K2/2;
+        ap = acceleration(C,P.r,uf - up);
+        K3 = dt*ap;
+        up = P.u + K3;
+        ap = acceleration(C,P.r,uf - up);
+        K4 = dt*ap;
+        P.u += K1/6+K2/3+K3/3+K4/6;
+    }
+    else
+    {
+        P.u = uf;   
+    }
+    
     P.x += P.u*dt;
 
     if(P.x <= 0.005)
@@ -72,8 +72,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
         return 0.0;
     }
 
-    // Temperature
-    // P.T += alfa*dt*(Tf - P.T);
+    P.T += alfa*dt*(Tf - P.T);
 
     // radius
     K1 = dt*radius_change(D,P.r,P.rho,Tf-200);
@@ -95,8 +94,8 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
         res[0] += md;
         res[2] += md;
-        // res[3] += md*P.u;
-        res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + thermo::density(W)*pow(P.u,2)/2);
+        res[3] += md*P.u;
+        res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
         P.reset();
         return md;
@@ -110,8 +109,8 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     res[0] += md;
     res[2] += md;
-    // res[3] += md*P.u;
-    res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + thermo::density(W)*pow(P.u,2)/2);
+    res[3] += md*P.u;
+    res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
     return md;
 }

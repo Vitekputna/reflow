@@ -25,13 +25,10 @@ class reflow
     std::vector<Boundary_func> boundary_func_vec;
     std::vector<std::vector<double>> boundary_values_vec;
 
-    // Lagrangian boundary parameters (inlet)
-    std::vector<std::vector<double>> boundary_values_lagrange;
-
     // Constatnts
-    int n_dt = 2;
-    int n_res = 200;
-    int n_exp = 500;
+    int n_dt;
+    int n_res;
+    int n_exp;
 
     int N, N_var;
     int n_comp = 0;
@@ -42,9 +39,9 @@ class reflow
 
     bool run_w_particles = false;
 
-    double max_res = 1000;
-    double t_end = 1;
-    double CFL = 0.1;
+    double max_res;
+    double t_end;
+    double CFL;
     
     // Constructors
     reflow();
@@ -54,6 +51,8 @@ class reflow
     reflow(int N, int N_var, double from, double to);
     reflow(int N, int N_var, double from, double to, std::vector<double> const& init);
     reflow(int N, int N_var, std::vector<std::vector<double>> const& init);
+
+    void variable_init();
 
     // Sources
     void apply_heat_source(double Q, double x_from, double x_to);
@@ -80,11 +79,14 @@ class reflow
     void add_lagrangian_mono_particles(double specie_idx, double mass_flux, double rho, double r, double x,
                                        double u, double T, double T_boil, double vap_heat, double C);
 
+    void add_lagrangian_unif_particles(double specie_idx, double mass_flux, double rho, double r_from, double r_to, 
+                                       double x, double u, double T, double T_boil, double vap_heat, double C);
+
     void apply_lagrangian_particle_inlet(double dt);
 
     // Boundary
     void add_boundary_function(Boundary_func,std::vector<double> values);
-    void apply_boundary_conditions();
+    void apply_boundary_conditions(); 
 
     // Export
     void export_particles(std::vector<particle>& particles);

@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     reflow Simulation;
 
     // Mesh generation
-    Simulation.refine_mesh(std::vector<std::vector<double>>{{0,0.5,500}});
+    Simulation.refine_mesh(std::vector<std::vector<double>>{{0,0.5,1000}});
     Simulation.msh.constant_area(0.002);
 
     // Species
@@ -40,7 +40,8 @@ int main(int argc, char** argv)
 
     // Lagrangian particles manager and specie init
     Simulation.init_particles(1e6,1e3,1000);
-    Simulation.add_lagrangian_mono_particles(2,20,700,1e-4,0,15,300,300,1e5,1e3);
+    // Simulation.add_lagrangian_mono_particles(2,20,700,1e-4,0,15,300,300,1e5,1e3);
+    Simulation.add_lagrangian_unif_particles(2,20,700,1e-4,1.5e-4,0,15,300,300,1e5,1e-3);
 
     // Boundary functions and values
     Simulation.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{md,300,0,0,1});
