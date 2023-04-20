@@ -79,7 +79,10 @@ class reflow
     void add_lagrangian_mono_particles(double specie_idx, double mass_flux, double rho, double r, double x,
                                        double u, double T, double T_boil, double vap_heat, double C);
 
-    void add_lagrangian_unif_particles(double specie_idx, double mass_flux, double rho, double r_from, double r_to, 
+    void add_lagrangian_unif_particles(double specie_idx, double mass_flux, double rho, double r_mean, double r_var, 
+                                       double x, double u, double T, double T_boil, double vap_heat, double C);
+
+    void add_lagrangian_norm_particles(double specie_idx, double mass_flux, double rho, double r_mean, double r_var, 
                                        double x, double u, double T, double T_boil, double vap_heat, double C);
 
     void apply_lagrangian_particle_inlet(double dt);

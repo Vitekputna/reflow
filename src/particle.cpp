@@ -57,6 +57,12 @@ void particle_manager::add_uniform(std::vector<double> parameters)
     boundary_parameters.push_back(parameters);
 }
 
+void particle_manager::add_normal(std::vector<double> parameters)
+{
+    boundary_functions.push_back(&particle_manager::normal_particle_inlet);
+    boundary_parameters.push_back(parameters);
+}
+
 // mass, r, u, x, rho, T
 void particle_manager::monodispersion_particle_inlet(double dt, std::vector<double>& parameters)
 {
@@ -77,7 +83,19 @@ void particle_manager::uniform_particle_inlet(double dt, std::vector<double>& pa
     const double rho = parameters[5];
 
     int N = dt*m/(4*M_PI*pow(r_mean,3)*rho/3);
-    spawn_particles_uniform(1,N,parameters);
+
+    spawn_particles_uniform(10,N,parameters);
+}
+
+void particle_manager::normal_particle_inlet(double dt, std::vector<double>& parameters)
+{
+    const double m = parameters[0];
+    const double r_mean = parameters[1];
+    const double rho = parameters[5];
+
+    int N = dt*m/(4*M_PI*pow(r_mean,3)*rho/3);
+
+    spawn_particles_normal(1,N,parameters);
 }
 
 bool particle_manager::spawn_particles_monodispersion(int n_groups, int n_particles, std::vector<double>& parameters)
@@ -125,14 +143,51 @@ bool particle_manager::spawn_particles_uniform(int n_groups, int n_particles, st
     int n = 0;
     int n_par_group = n_particles/n_groups;
 
-    double dr, du, dx;
+    double dr;
 
     for(auto& par : particles)
     {
         if(!par.in_use)
         {
             dr = r_dist(gen);
-            par = particle(n_par_group,dx,dr,du,rho,T);
+            par = particle(n_par_group,x,dr,u,rho,T);
+            n++;
+        }
+
+        if(n == n_groups) return true;
+    }
+
+    if(N+n_add > N_max) throw std::overflow_error("Number of particles is too big");
+    particles.resize(N+n_add);
+    N+=n_add;
+    return false;
+}
+
+bool particle_manager::spawn_particles_normal(int n_groups, int n_particles, std::vector<double>& parameters)
+{
+    const double r_mean = parameters[1];
+    const double r_var = parameters[2];
+    const double u = parameters[3];
+    const double x = parameters[4];
+    const double rho = parameters[5];
+    const double T = parameters[6];
+
+    //randomizer for radii
+    std::random_device rnd;
+    std::mt19937 gen(rnd());
+    std::normal_distribution<double> r_dist(r_mean,r_var);
+
+    int n = 0;
+    int n_par_group = n_particles/n_groups;
+
+    double dr;
+
+    for(auto& par : particles)
+    {
+        if(!par.in_use)
+        {
+            dr = r_dist(gen);
+            par = particle(n_par_group,x,dr,u,rho,T);
             n++;
         }
 

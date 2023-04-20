@@ -41,13 +41,17 @@ class particle_manager
     particle_manager(int _N_max, int _max_per_group, int _N);
     
     void apply_boundary(double dt);
+
     void add_monodispersion(std::vector<double> parameters);
     void add_uniform(std::vector<double> parameters);
+    void add_normal(std::vector<double> parameters);
 
     void monodispersion_particle_inlet(double dt, std::vector<double>& parameters);
     void uniform_particle_inlet(double dt, std::vector<double>& parameters);
+    void normal_particle_inlet(double dt, std::vector<double>& parameters);
 
     bool spawn_particles_monodispersion(int n_groups, int n_particles, std::vector<double>& parameters);
     bool spawn_particles_uniform(int n_groups, int n_particles, std::vector<double>& parameters);
+    bool spawn_particles_normal(int n_groups, int n_particles, std::vector<double>& parameters);
 };
 

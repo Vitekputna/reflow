@@ -41,14 +41,15 @@ int main(int argc, char** argv)
     // Lagrangian particles manager and specie init
     Simulation.init_particles(1e6,1e3,1000);
     // Simulation.add_lagrangian_mono_particles(2,20,700,1e-4,0,15,300,300,1e5,1e3);
-    Simulation.add_lagrangian_unif_particles(2,20,700,1e-4,1.5e-4,0,15,300,300,1e5,1e-3);
+    // Simulation.add_lagrangian_unif_particles(2,20,700,1e-4,1e-6,0,15,300,300,1e5,1e-3);
+    Simulation.add_lagrangian_norm_particles(2,20,700,1e-4,1e-6,0,15,300,300,1e5,1e-3);
 
     // Boundary functions and values
     Simulation.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{md,300,0,0,1});
     Simulation.add_boundary_function(boundary::subsonic_outlet,std::vector<double>{p2});
 
     // Solving
-    Simulation.solve(0.1,1000,0.9);
+    Simulation.solve(1,1000,0.1);
 
     // Exporting all lagrangian particles
     Simulation.export_particles(Simulation.par_man.particles);

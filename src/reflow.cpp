@@ -189,11 +189,18 @@ void reflow::add_lagrangian_mono_particles(double specie_idx, double mass_flux, 
     par_man.add_monodispersion(parameters);
 }
 
-void reflow::add_lagrangian_unif_particles(double specie_idx, double mass_flux, double rho, double r_from, double r_to, 
+void reflow::add_lagrangian_unif_particles(double specie_idx, double mass_flux, double rho, double r_mean, double r_var, 
                                            double x, double u, double T, double T_boil, double vap_heat, double C)
 {
-    // auto parameters = std::vector<double>{mass_flux,rhor,x,u,T,T_boil,vap_heat,C};
-    
+    auto parameters = std::vector<double>{mass_flux,r_mean,r_var,u,x,rho,T,T_boil,vap_heat,C};
+    par_man.add_uniform(parameters);
+}
+
+void reflow::add_lagrangian_norm_particles(double specie_idx, double mass_flux, double rho, double r_mean, double r_var, 
+                                           double x, double u, double T, double T_boil, double vap_heat, double C)
+{
+    auto parameters = std::vector<double>{mass_flux,r_mean,r_var,u,x,rho,T,T_boil,vap_heat,C};
+    par_man.add_normal(parameters);
 }
 
 void reflow::apply_lagrangian_particle_inlet(double dt)
