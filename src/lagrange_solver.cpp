@@ -41,30 +41,31 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     uf = W[W.size()-2]/W[0];
 
     double C = 1e-2;        // momentum transfer constant
-    double D = 1e-5;        // mass transfer constant
+    double D = 4e-6;        // mass transfer constant
     double alfa = 10;       // heat transfer constant
 
     // Velocity
 
-    if(P.r > 2e-6)
-    {
-        K1 = dt*acceleration(C,P.r,uf - P.u);
-        up = P.u + K1/2;
-        ap = acceleration(C,P.r,uf - up);
-        K2 = dt*ap;
-        up = P.u + K2/2;
-        ap = acceleration(C,P.r,uf - up);
-        K3 = dt*ap;
-        up = P.u + K3;
-        ap = acceleration(C,P.r,uf - up);
-        K4 = dt*ap;
-        P.u += K1/6+K2/3+K3/3+K4/6;
-    }
-    else
-    {
-        P.u = uf;   
-    }
+    // if(P.r > 2e-6)
+    // {
+    //     K1 = dt*acceleration(C,P.r,uf - P.u);
+    //     up = P.u + K1/2;
+    //     ap = acceleration(C,P.r,uf - up);
+    //     K2 = dt*ap;
+    //     up = P.u + K2/2;
+    //     ap = acceleration(C,P.r,uf - up);
+    //     K3 = dt*ap;
+    //     up = P.u + K3;
+    //     ap = acceleration(C,P.r,uf - up);
+    //     K4 = dt*ap;
+    //     P.u += K1/6+K2/3+K3/3+K4/6;
+    // }
+    // else
+    // {
+    //     P.u = uf;   
+    // }
     
+    P.u = uf;   
     P.x += P.u*dt;
 
     if(P.x <= 0.005)
@@ -72,7 +73,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
         return 0.0;
     }
 
-    P.T += alfa*dt*(Tf - P.T);
+    // P.T += alfa*dt*(Tf - P.T);
 
     // radius
     K1 = dt*radius_change(D,P.r,P.rho,Tf-200);

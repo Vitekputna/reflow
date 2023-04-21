@@ -174,6 +174,44 @@ double thermo::cp_mix_comp(std::vector<double> const& comp, double T)
     return cp;
 }
 
+std::vector<double> thermo::molar_fraction(std::vector<double>& mass_fraction)
+{
+    double M = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        M += mass_fraction[i]/species[i].Mm;
+    }
+
+    auto molar_fraction = std::vector<double>(n_comp,0.0);
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        molar_fraction[i] = molar_fraction[i]*M/species[i].Mm;
+    }
+
+    return molar_fraction;
+}
+
+std::vector<double> thermo::mass_fraction(std::vector<double>& molar_fraction)
+{
+    double M = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        M += species[i].Mm*molar_fraction[i];
+    }
+
+    auto mass_fraction = std::vector<double>(n_comp,0.0);
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        mass_fraction[i] = molar_fraction[i]*species[i].Mm/M;
+    }
+
+    return mass_fraction;
+}
+
 double thermo::dF(std::vector<double> const& comp, double r, double T)
 {
     double df = 0;

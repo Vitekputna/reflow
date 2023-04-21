@@ -84,7 +84,7 @@ void particle_manager::uniform_particle_inlet(double dt, std::vector<double>& pa
 
     int N = dt*m/(4*M_PI*pow(r_mean,3)*rho/3);
 
-    spawn_particles_uniform(10,N,parameters);
+    spawn_particles_uniform(1,N,parameters);
 }
 
 void particle_manager::normal_particle_inlet(double dt, std::vector<double>& parameters)

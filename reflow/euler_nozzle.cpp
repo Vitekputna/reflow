@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
-    S.solve(0.1,1000,0.9);
+    S.solve(0.1,1000,0.3);
 
     return 0;
 }

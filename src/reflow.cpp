@@ -242,10 +242,10 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         thermo::update(var.W);
 
         // flow field part 
-        // solver::reconstruct(var,msh);
+        solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
+        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
 
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
@@ -255,7 +255,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // lagrangian particles part
         if(run_w_particles)
         {
-            apply_lagrangian_particle_inlet(dt);
+            if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
 
