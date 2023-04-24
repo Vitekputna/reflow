@@ -25,7 +25,7 @@ struct particle
 class particle_manager
 {
     public:
-    int N_max, max_per_group, N; // max. number of particles, max num, of real particles per group, current number of usable paricles
+    int N_max, max_per_group, N = 0; // max. number of particles, max num, of real particles per group, current number of usable paricles
     int n_add = 1000; // number of particles to add if not enough
 
     public:

@@ -69,8 +69,16 @@ class reflow
     void initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init);
     void initial_conditions(int N_drop, int N_drop_mom, std::vector<std::vector<double>> const& init);
 
+    // Loading old data
+
+    std::vector<std::vector<double>> read_files(std::string path);
+    void load_old_data(std::string path, int n_comp);
+    void load_old_data(std::string path, int n_comp, int n_drop_frac, int n_drop_mom);
+
     // Thermodynamics
     void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);
+    void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff, std::vector<double> k_coeff, std::vector<double> mu_coeff);
+
 
     // Chemistry
     void add_reaction(reaction& R);

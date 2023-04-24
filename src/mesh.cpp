@@ -267,8 +267,6 @@ void mesh::cubic(std::vector<std::vector<std::vector<double>>> curves, int n)
 
 void mesh::export_to_file()
 {
-    std::cout << dx_min << " " << N << "\n";
-
     auto stream =  std::ofstream("out/A.txt");
 
     for(int i = 0; i < N; i++)

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <random>
+#include <string>
 #include "lagrange_solver.hpp"
 #include "particle.hpp"
 
@@ -161,6 +162,13 @@ void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> c
     n_comp++;
 }
 
+void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff, std::vector<double> k_coeff, std::vector<double> mu_coeff)
+{
+    specie spec(r,kappa,Mm,cp_coeff,k_coeff,mu_coeff);
+    thermo_manager.load_specie(spec);
+    n_comp++;
+}
+
 void reflow::add_reaction(reaction& R)
 {
     chemistry.add_reaction(R);
@@ -206,6 +214,88 @@ void reflow::add_lagrangian_norm_particles(double specie_idx, double mass_flux, 
 void reflow::apply_lagrangian_particle_inlet(double dt)
 {
     par_man.apply_boundary(dt);
+}
+
+std::vector<std::vector<double>> reflow::read_files(std::string path)
+{
+    std::cout << "Reading external data...\n";
+
+    std::vector<double> x_data;
+    std::vector<std::vector<double>> y_data;
+
+    for (int i = 0; true; ++i) {
+        std::string filename = path + "W" + std::to_string(i) + ".txt";
+
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            break; // exit loop if file doesn't exist
+        }
+
+        y_data.push_back(std::vector<double>{});
+
+        double x, y;
+        while (file >> x >> y) {
+            
+            if(i == 0) x_data.push_back(x);             // only read first column for the first file
+            y_data[i].push_back(y);                     // read data
+        }
+    }
+
+    int N_var_data = y_data.size();
+    int N_data = x_data.size();
+
+    std::cout << "Read " << N_var_data << " datafiles of " << N_data << " elements.\n";
+
+    if(N != N_data)
+    {
+        std::cout << "Loaded data is not compatible with defined mesh.\n";
+        std::cout << "exiting...\n";
+
+        return std::vector<std::vector<double>>{{}};
+    }
+
+    N_var = N_var_data;
+
+    // transpose data
+    std::vector<std::vector<double>> data(N,std::vector<double>(N_var,0.0));
+
+    for(int i = 0; i < N; i++)
+    {
+        for(int j = 0; j < N_var; j++)
+        {
+            data[i][j] = y_data[j][i];
+        }
+    }
+
+    return data;
+}
+
+void reflow::load_old_data(std::string path, int _n_comp)
+{
+    std::cout << "##########################################\n";
+    std::cout << "Loading old data for initialization...\n";
+    std::cout << "Path to data: " << path << "\n";
+    std::cout << "Declared number of components: " << _n_comp << "\n";
+
+    auto init_data = read_files(path);
+
+    var = variables(N_var,N,init_data);
+
+    n_comp = _n_comp;
+    std::cout << "##########################################\n";
+}
+
+void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, int _n_drop_mom)
+{
+    auto init_data = read_files(path);
+
+    n_comp = _n_comp;
+    n_drop_frac = _n_drop_frac;
+    n_drop_mom = _n_drop_mom;
+
+    std::cout << N_var << " " << N << " " << n_drop_frac << " " << n_drop_mom << "\n";
+
+    var = variables(N_var,N,n_drop_frac,n_drop_mom,init_data);
 }
 
 bool reflow::maximum_time(double T, double res)

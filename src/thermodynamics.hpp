@@ -32,14 +32,19 @@ public:
 
     static double kappa_mix(std::vector<double> const& W);
     static double kappa_mix_comp(std::vector<double> const& comp);
+
     static double r_mix(std::vector<double> const& W);
     static double r_mix_comp(std::vector<double> const& comp);
 
     static double cp_mix(std::vector<double> const& W);
     static double cp_mix_comp(std::vector<double> const& comp, double T);
 
-    static std::vector<double> molar_fraction(std::vector<double>& mass_fraction);
-    static std::vector<double> mass_fraction(std::vector<double>& molar_fraction);
+    static std::vector<double> molar_fraction(std::vector<double> const& mass_fraction);
+    static std::vector<double> mass_fraction(std::vector<double> const& molar_fraction);
+
+    static double viscosity(std::vector<double> const& comp, double T);
+
+    static double thermal_conductivity(std::vector<double> const& comp, double T);
 
     private:
     static double temp_new(int i, std::vector<double> const& comp, std::vector<double> const& W);

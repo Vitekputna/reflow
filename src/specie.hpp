@@ -11,6 +11,7 @@ struct specie
     double a1,b1,c1,d1,e1,f1;   //cp coeffs divided
 
     double a2,b2,c2,d2,e2,f2;   //k coeffs
+    double a3,b3,c3,d3,e3,f3;   //mu coeffs
 
     specie(double _r, double _kappa, double _Mm, std::vector<double> cp_coeff) : r{_r}, kappa{_kappa}, Mm{_Mm} 
     {
@@ -37,6 +38,16 @@ struct specie
         d2 = k_coeff[3];
         e2 = k_coeff[4];
         f2 = k_coeff[5];
+    };
+
+    specie(double _r, double _kappa, double _Mm, std::vector<double> cp_coeff, std::vector<double> k_coeff, std::vector<double> mu_coeff) : specie(_r,_kappa,_Mm,cp_coeff,k_coeff)
+    {
+        a3 = mu_coeff[0];
+        b3 = mu_coeff[1];
+        c3 = mu_coeff[2];
+        d3 = mu_coeff[3];
+        e3 = mu_coeff[4];
+        f3 = mu_coeff[5];
     };
 
     inline double cp(double T)
@@ -68,7 +79,6 @@ struct specie
     inline double h(double T)
     {
         T = std::min(T,5000.0);
-        // return a*T + b*pow(T,2)/2 + c*pow(T,3)/3 + d*pow(T,4)/4 + e*pow(T,5)/5 + f*pow(T,6)/6;
 
         double result = f1*T;
         result = (result + e1)*T;
@@ -76,6 +86,19 @@ struct specie
         result = (result + c1)*T;
         result = (result + b1)*T;
         result = (result + a1)*T;
+        return result;
+    }
+
+    inline double mu(double T)
+    {
+        T = std::min(T,5000.0);
+
+        double result = f3*T;
+        result = (result + e3)*T;
+        result = (result + d3)*T;
+        result = (result + c3)*T;
+        result = (result + b3)*T;
+        result += a3;
         return result;
     }
 };

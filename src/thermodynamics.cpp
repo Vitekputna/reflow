@@ -174,7 +174,7 @@ double thermo::cp_mix_comp(std::vector<double> const& comp, double T)
     return cp;
 }
 
-std::vector<double> thermo::molar_fraction(std::vector<double>& mass_fraction)
+std::vector<double> thermo::molar_fraction(std::vector<double> const& mass_fraction)
 {
     double M = 0;
 
@@ -187,13 +187,13 @@ std::vector<double> thermo::molar_fraction(std::vector<double>& mass_fraction)
 
     for(int i = 0; i < n_comp; i++)
     {
-        molar_fraction[i] = molar_fraction[i]*M/species[i].Mm;
+        molar_fraction[i] = mass_fraction[i]/(species[i].Mm*M);
     }
 
     return molar_fraction;
 }
 
-std::vector<double> thermo::mass_fraction(std::vector<double>& molar_fraction)
+std::vector<double> thermo::mass_fraction(std::vector<double> const& molar_fraction)
 {
     double M = 0;
 
@@ -210,6 +210,34 @@ std::vector<double> thermo::mass_fraction(std::vector<double>& molar_fraction)
     }
 
     return mass_fraction;
+}
+
+double thermo::viscosity(std::vector<double> const& comp, double T)
+{
+    auto molar_frac = molar_fraction(comp);
+
+    double viscosity = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        viscosity += comp[i]*species[i].mu(T);
+    }
+
+    return viscosity;
+}
+
+double thermo::thermal_conductivity(std::vector<double> const& comp, double T)
+{
+    auto molar_frac = molar_fraction(comp);
+
+    double conductivity = 0;
+
+    for(int i = 0; i < n_comp; i++)
+    {
+        conductivity += comp[i]*species[i].k(T);
+    }
+
+    return conductivity;
 }
 
 double thermo::dF(std::vector<double> const& comp, double r, double T)

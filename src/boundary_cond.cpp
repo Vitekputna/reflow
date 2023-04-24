@@ -49,15 +49,7 @@ void boundary::set_value_l(variables& var, mesh& msh, std::vector<double>& value
     }
 }
 
-// values = (md,p,T,r,kappa,composition_vector)
-void boundary::mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& values) 
-{
-    var.W[0][0] = values[1]/(values[2]*values[3]);
-    var.W[0][1] = values[0]/msh.A[0];
-    var.W[0][2] = values[1]/(values[4]-1) + 0.5*(var.W[0][1]*var.W[0][1])/var.W[0][0];
-}
-
-// values = (p,kappa)
+// values = (p)
 void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     for(auto idx = 0; idx < var.N_var-1; idx++)

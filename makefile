@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -O3 -ffast-math 
+CXXFLAGS = -std=c++17 -O3 -ffast-math 
 SRC_DIR = src
 MAIN_DIR = reflow
 LIB_FLAGS = -fopenmp
