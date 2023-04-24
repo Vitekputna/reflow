@@ -70,11 +70,19 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     
     N_comp = var.N_comp;
 
+    auto comp = std::vector<double>{0,0,0};
+
     for(int i = 1; i < var.N-1; i++)
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        const double T_coeff = log(1 + 1e-3*std::max(0.0,thermo::T[i] - 200));
+        thermo::composition(comp,var.W[i]);
+
+        const double T_ref = (thermo::T[i] + 200)/2;
+
+        const double T_coeff = log(1 + (thermo::cp_mix_comp(comp,T_ref)/(7e5))*std::max(0.0,thermo::T[i] - 200));
+
+        const double R_coeff = 4*M_PI*thermo::thermal_conductivity(comp,T_ref)/thermo::cp_mix_comp(comp,T_ref);
 
         var.md[i][2] = 0;
 
@@ -86,7 +94,7 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
             r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
             if(var.W[i][N_idx] == 0) r = 0;
 
-            dm = std::max(0.0,3*var.W[i][N_idx]*r*T_coeff);
+            dm = std::max(0.0,var.W[i][N_idx]*(R_coeff)*T_coeff);
 
             res[i][Frac_idx] -= dm;
             res[i][2] += dm;

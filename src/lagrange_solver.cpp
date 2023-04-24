@@ -77,7 +77,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     // radius
     K1 = dt*radius_change(D,P.r,P.rho,Tf-200);
-    rp = P.r + K1/2;
+    rp = P.r + K1/2;    
     K2 = dt*radius_change(D,rp,P.rho,Tf-200);
     rp = P.r + K2/2;
     K3 = dt*radius_change(D,rp,P.rho,Tf-200);
