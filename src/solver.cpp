@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include "omp.h"
+#include "evaporation.hpp"
 
 void solver::compute_wall_flux(double dt, variables& var, mesh const& msh,
                                void(*flux)(variables&,mesh const&,parameters const&))
@@ -56,7 +57,6 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][2] += -dm/dt;        // Fuel
 
         res[i][var.eng_idx] += dm*33.326e6/dt;
-        // res[i][var.eng_idx] += dm*5e6/dt;
     }
 }
 
@@ -76,31 +76,40 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        thermo::composition(comp,var.W[i]);
+        dm = evaporation::drop_combustion(i,var.W[i]);
 
-        const double T_ref = (thermo::T[i] + 200)/2;
+        // res[i][Frac_idx] -= dm;
+        // res[i][2] += dm;
+        var.md[i][2] += dm;
+        // res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
 
-        const double T_coeff = log(1 + (thermo::cp_mix_comp(comp,T_ref)/(7e5))*std::max(0.0,thermo::T[i] - 200));
+        // thermo::composition(comp,var.W[i]);
 
-        const double R_coeff = 4*M_PI*thermo::thermal_conductivity(comp,T_ref)/thermo::cp_mix_comp(comp,T_ref);
+        // const double T_ref = (thermo::T[i] + 200)/2;
+        // // const double T_ref = 200;
 
-        var.md[i][2] = 0;
+        // const double T_coeff = log(1 + (thermo::cp_mix_comp(comp,T_ref)/(7e5))*std::max(0.0,thermo::T[i] - 200));
 
-        for(int j = 0; j < var.N_drop_frac; j += 2)
-        {
-            N_idx = N_comp + j;
-            Frac_idx = N_comp + j + 1;
+        // const double R_coeff = 4*M_PI*thermo::thermal_conductivity(comp,T_ref)/thermo::cp_mix_comp(comp,T_ref);
 
-            r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
-            if(var.W[i][N_idx] == 0) r = 0;
+        // var.md[i][2] = 0;
 
-            dm = std::max(0.0,var.W[i][N_idx]*(R_coeff)*T_coeff);
+        // for(int j = 0; j < var.N_drop_frac; j += 2)
+        // {
+        //     N_idx = N_comp + j;
+        //     Frac_idx = N_comp + j + 1;
 
-            res[i][Frac_idx] -= dm;
-            res[i][2] += dm;
-            var.md[i][2] += dm;
-            res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
-        }
+        //     r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
+
+        //     if(var.W[i][N_idx] == 0) r = 0;
+
+        //     dm = std::max(0.0,var.W[i][N_idx]*(R_coeff*r)*T_coeff);
+
+        //     res[i][Frac_idx] -= dm;
+        //     res[i][2] += dm;
+        //     var.md[i][2] += dm;
+        //     res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
+        // }
     }
 }
 
@@ -282,6 +291,81 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
 
             var.flux[i][k] = 0.5*(fr[k]+fl[k]) - std::max(std::abs(ar.back()),std::abs(al.back()))/2*(ur-ul);
         }
+    }
+}
+
+double solver::AUSM_wall_mach_number(double M_left, double M_right)
+{
+    // M+
+    double M_wall = 0;
+
+    if(M_left < -1) M_wall += 0;
+    else if(M_left > 1) M_wall += M_left;
+    else M_wall += 0.25*pow(M_left+1,2);
+
+    //M-
+    if(M_right < -1) M_wall += M_right;
+    else if(M_right > 1) M_wall += 0;
+    else M_wall += -0.25*pow(M_left-1,2);
+
+    return M_wall;
+}
+
+double solver::AUSM_wall_pressure(double M_left, double M_right, double p_left, double p_right)
+{
+    // P+
+    double P_wall = 0;
+
+    if(M_left < -1) P_wall += 0;
+    else if(M_left > 1) P_wall += p_left;
+    else P_wall += 0.25*pow(M_left+1,2)*(2-M_left)*p_left;
+
+    //P-
+    if(M_right < -1) P_wall += p_right;
+    else if(M_right > 1) P_wall += 0;
+    else P_wall += 0.25*pow(M_right-1,2)*(2+M_right)*p_right;
+
+    return P_wall;
+}
+
+void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
+{
+    double M_right, M_left;
+    double p_right, p_left;
+    double M_wall, p_wall;
+    double c;
+
+    M_left = thermo::mach_number(0,var.W[0]);
+    p_left = thermo::p[0];
+
+    int cell_idx;
+
+    for(int i = 0; i < var.N_walls; i++)
+    {
+        M_right = thermo::mach_number(i+1,var.W[i+1]);
+        p_right = thermo::p[i+1];
+
+        M_wall = AUSM_wall_mach_number(M_left,M_right);
+        p_wall = AUSM_wall_pressure(M_left,M_right,p_left,p_right);
+
+
+        if(M_wall > 0) cell_idx = i;
+        else cell_idx = i+1;
+
+        c = thermo::speed_of_sound(cell_idx,var.W[cell_idx]);
+
+        for(int k = 0; k < thermo::n_comp + var.N_drop_frac; k++)
+        {
+            var.flux[i][k] = M_wall*c*var.W[cell_idx][k];
+        }
+
+
+        var.flux[i][var.mom_idx] = M_wall*c*var.W[cell_idx][var.mom_idx] + p_wall;
+        var.flux[i][var.eng_idx] = M_wall*c*(var.W[cell_idx][var.eng_idx] + thermo::p[cell_idx]);
+
+
+        M_left = M_right;       //old right is the new left
+        p_left = p_right;
     }
 }
 

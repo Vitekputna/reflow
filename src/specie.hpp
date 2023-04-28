@@ -7,6 +7,9 @@ struct specie
     double kappa;
     double Mm;
     double h_vap;
+    double T_ref;
+    double p_ref;
+    double rho_liq;
 
     double a,b,c,d,e,f;         //cp coeffs
     double a1,b1,c1,d1,e1,f1;   //cp coeffs divided

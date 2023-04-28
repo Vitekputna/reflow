@@ -24,6 +24,7 @@ public:
     static double density(std::vector<double> const& W);
     static double pressure(std::vector<double> const& W);
     static double speed_of_sound(int i, std::vector<double> const& W);
+    static double mach_number(int i, std::vector<double> const& W);
     static double temperature(std::vector<double> const& W);
     static double enthalpy(double T, std::vector<double> const& comp);
     static double enthalpy(int i, std::vector<double> const& W);

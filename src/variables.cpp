@@ -249,11 +249,11 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/a.txt");
+    stream =  std::ofstream("out/M.txt");
 
     for(int i = 0; i < N; i++)
     {
-        stream << msh.x[i] << " " << thermo::speed_of_sound(i,W[i]) << "\n";
+        stream << msh.x[i] << " " << thermo::mach_number(i,W[i]) << "\n";
     }
 
     stream << "\n";

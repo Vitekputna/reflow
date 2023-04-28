@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
     S.var.export_to_file(S.msh,S.par_man.particles);
 
-    S.solve(0.1,1000,0.9);
+    S.solve(0.02,1000,0.8);
 
     return 0;
 }

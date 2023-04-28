@@ -37,8 +37,13 @@ double thermo::density(std::vector<double> const& W)
 double thermo::speed_of_sound(int i, std::vector<double> const& W)
 {
     double kappa = thermo::kappa_mix(W);
-    // return sqrt(kappa*thermo::p[i]/W[0]);
     return sqrt(kappa*thermo::p[i]/density(W));
+}
+
+double thermo::mach_number(int i, std::vector<double> const& W)
+{
+    double c = speed_of_sound(i,W);
+    return (W[variables::mom_idx]/W[0])/c;
 }
 
 double thermo::enthalpy(int i, std::vector<double> const& W)
@@ -257,22 +262,19 @@ double thermo::dF(std::vector<double> const& comp, double r, double T)
 
 double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<double> const& W)
 {
+    static double T, T_last, F, rho, C, r, h;
+
     int n = W.size()-1;
-    static double rho;
     rho = density(W);
-    double C = W[n]/rho - 0.5*W[n-1]*W[n-1]/W[0]/rho;
-    static double T;
-    static double T_last;
-    static double F;
 
-    // T = thermo::T[idx];
-    T = 300;
+    C = W[n]/rho - 0.5*W[n-1]*W[n-1]/W[0]/rho;
+    
+    r = thermo::r_mix_comp(comp);
+    
+    T = thermo::T[idx];
+    // T = 300;
 
-    double r = thermo::r_mix_comp(comp);
-
-    double h;
-
-    static int counter;
+    int counter;
 
     counter = 0;
     do
@@ -302,27 +304,21 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 
 double thermo::pressure(int i, std::vector<double> const& W, std::vector<double> const& comp)
 {
-    static int mom_idx = W.size()-2;
-    static double rho_g;
-    static double rho;
+    int mom_idx = W.size()-2;
+    double rho_g;
+    double rho;
     rho_g = density(W);
     rho = W[0];
 
-    // return (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/W[0]/W[0])*W[0] - W.back();
-    // return (thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/rho/rho)*rho - W.back();
     return rho_g*thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/rho - W.back();
 }
 
 void thermo::update(std::vector<std::vector<double>> const& W)
 {
-    // napocitat tlaky a teploty
-
-    static std::vector<double> comp(n_comp);
-
+    std::vector<double> comp(n_comp);
 
     for(int i = 0; i < int(W.size()); i++)
     {
-        // std::cout << i << "\n";
         thermo::composition(comp,W[i]);
         thermo::T[i] = thermo::temp_new(i,comp,W[i]);
         thermo::p[i] = thermo::pressure(i,W[i],comp);

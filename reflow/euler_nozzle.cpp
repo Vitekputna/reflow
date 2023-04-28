@@ -6,6 +6,7 @@
 #include "../src/boundary_cond.hpp"
 #include "../src/initial_cond.hpp"
 #include "../src/params.hpp"
+#include "../src/evaporation.hpp"
 
 const auto init_comp = std::vector<double>{0,1,0};
 double p0 = 25e5;
@@ -36,7 +37,6 @@ int main(int argc, char** argv)
     S.spline_geometry(curves,100);
 
     // S.load_old_data("out/",3,2*N_frac,0);
-    // S.load_old_data("out/",3);
 
     S.msh.export_to_file();
 
@@ -45,15 +45,24 @@ int main(int argc, char** argv)
     S.add_specie(188,1.31,44,oxi_cp,oxi_k,oxi_mu);                  //Oxydizer
     S.add_specie(138,1.13,60,fuel_cp,fuel_k,fuel_mu);               //Fuel
 
+    // set the fuel properties
+    thermo::species[2].h_vap = 666e3;
+    thermo::species[2].T_ref = 350;
+    thermo::species[2].p_ref = 101325;
+
+    // std::cout << evaporation::fuel_mass_fraction(101325,400) << "\n";
+
     S.initial_conditions(2*N_frac,0,init::nozzle(S.msh.N,2*N_frac+5,md,300,p0,p2,0.15,init_comp,S.msh));
+
+    // S.apply_heat_source(1e6,0.01,0.05);
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,boundary::flow_with_droplets(m_OX,300,init_comp,N_frac,m_F,700,1e-3,3e-5));
+    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,boundary::flow_with_droplets(m_OX,3200,init_comp,N_frac,m_F,700,0.5e-4,3e-6));
 
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
-    S.solve(0.1,1000,0.2);
+    S.solve(0.02,1000,0.3);
 
     return 0;
 }

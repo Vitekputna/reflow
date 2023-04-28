@@ -32,6 +32,9 @@ namespace solver
     void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par);
     void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par);
     void HLL_flux(variables& var, mesh const& msh, parameters const& par);
+    void AUSM_flux(variables& var, mesh const& msh, parameters const& par);
+    double AUSM_wall_mach_number(double M_left, double M_right);
+    double AUSM_wall_pressure(double M_left, double M_right, double p_left, double p_right);
 
     // droplet transport
     void droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh);
