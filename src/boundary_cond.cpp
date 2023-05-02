@@ -150,6 +150,13 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
     // total momentum
     double u = md_gas/msh.A[0]/rho_gas;
 
+    for(int i = 0; i < variables::N_drop_mom_eq; i++)
+    {
+        const int frac_idx = variables::N_comp + 1 + i*2;
+
+        var.W[0][variables::drop_mom_idx[i]] = u*var.W[0][frac_idx];
+    }
+
     var.W[0][var.mom_idx] = (rho_gas+droplet_total_mf)*u;
 
     // total energy

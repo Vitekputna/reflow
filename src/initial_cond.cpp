@@ -194,34 +194,3 @@ std::vector<std::vector<double>> init::nozzle(int N, int N_var,double md, double
 
     return res;
 }
-
-// std::vector<std::vector<double>> init::nozzle_droplets(int N, int N_var,double md, double T0, double p0, double p2, double L_chamber,
-//                                          std::vector<double> const comp, mesh const& msh,
-//                                          std::vector<double> drp_frac,
-//                                          std::vector<double> drp_count,
-//                                          std::vector<double> drp_mom)
-// {
-//     // number of components and droplet variables
-//     int n_comp = thermo::n_comp;
-//     int n_drop_frac = drp_frac.size();
-//     int n_drop_mom = drp_mom.size();
-
-//     // variables indices
-//     int rho_idx = 0;
-//     int Y_idx = 1;
-//     int drp_num_idx = n_comp;
-//     int drp_frac_idx = n_comp+n_drop_frac;
-//     int drp_mom_idx = drp_frac_idx + n_drop_frac;
-//     int mom_idx = drp_mom_idx + n_drop_mom;
-//     int eng_idx = mom_idx + 1;
-
-//     std::cout << eng_idx << "\n";
-
-//     // Initial conditions wo droplets
-//     auto no_drop_init = nozzle(N,N_var,md,T0,p0,p2,L_chamber,comp,msh);
-
-//     //
-//     auto drop_init = 
-
-    
-// }

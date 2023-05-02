@@ -27,6 +27,7 @@ struct variables
     static int N_drop_mom_eq;                   // number of drop. momenta eq.
     static int N_drop_eng_eq;                   // number of drop. energt eq.
     static std::vector<int> drop_mom_idx;       // momentum eq. idx for all droplet fractions
+    static std::vector<int> quisc_drop_idx;     // quiscent droplet fractions idx
 
     static int mom_idx;
     static int eng_idx;   // indices for fluid momentum and energy equation

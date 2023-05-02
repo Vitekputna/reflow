@@ -8,6 +8,7 @@
 #include <exception>
 
 std::vector<int> variables::drop_mom_idx;
+std::vector<int> variables::quisc_drop_idx;
 
 int variables::mom_idx;
 int variables::eng_idx;
@@ -81,7 +82,6 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta,
         for(int i = 0; i < _N_drop_frac; i++)
         {
             variables::drop_mom_idx[i] = N_comp + 2*N_drop_frac + i;
-            std::cout << i << "\n";
         }
     }
     else
@@ -91,6 +91,13 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta,
         variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
 
         variables::N_comp = (N_var-2) - 2*N_drop_frac;
+
+        variables::quisc_drop_idx = std::vector<int>(N_drop_frac,0.0);
+
+        for(int i = 0; i < N_drop_frac; i++)
+        {
+            quisc_drop_idx[i] = N_comp + 1 + 2*i;
+        }
     }
 
     variables::N_drop_eq = 2*N_drop_frac + N_drop_mom_eq + N_drop_eng_eq;
@@ -101,6 +108,7 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta,
     std::cout << "Number of droplet fractions:\t" << N_drop_frac << "\n";
     std::cout << "Number of droplet momenta:\t" << N_drop_mom_eq << "\n\n";
     std::cout << "Total number of droplet equations:\t" << N_drop_eq << "\n\n";
+    std::cout << "Total number of equations:\t" << N_drop_eq + N_comp + 2 << "\n\n";
     std::cout << "##########################################\n";
 }
 
@@ -125,7 +133,6 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta,
         for(int i = 0; i < _N_drop_frac; i++)
         {
             variables::drop_mom_idx[i] = N_comp + 2*N_drop_frac + i;
-            std::cout << i << "\n";
         }
     }
     else
@@ -135,6 +142,13 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta,
         variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
 
         variables::N_comp = (N_var-2) - 2*N_drop_frac;
+
+        variables::quisc_drop_idx = std::vector<int>(N_drop_frac,0.0);
+
+        for(int i = 0; i < N_drop_frac; i++)
+        {
+            quisc_drop_idx[i] = N_comp + 1 + 2*i;
+        }
     }
 
     variables::N_drop_eq = 2*N_drop_frac + N_drop_mom_eq + N_drop_eng_eq;
@@ -144,7 +158,8 @@ variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta,
     std::cout << "Number of compounds:\t\t" << N_comp << "\n";
     std::cout << "Number of droplet fractions:\t" << N_drop_frac << "\n";
     std::cout << "Number of droplet momenta:\t" << N_drop_mom_eq << "\n\n";
-    std::cout << "Total number of droplet equations:\t" << N_drop_eq << "\n\n";
+    std::cout << "Total number of droplet equations:\t" << N_drop_eq << "\n";
+    std::cout << "Total number of equations:\t" << N_drop_eq + N_comp + 2 << "\n\n";
     std::cout << "##########################################\n";
 }
 

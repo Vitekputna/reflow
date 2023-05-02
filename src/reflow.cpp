@@ -335,8 +335,8 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
 
         // flow field part 
         // solver::reconstruct(var,msh);
-        // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
+        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
         // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
         // solver::compute_wall_flux(dt,var,msh,solver::AUSM_flux);
 
@@ -387,6 +387,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         n++;
 
     } while (RUN_FLAG);
+    // } while (n < 4);
 
     std::cout << "\r\n" << std::flush;
     std::cout << "Simulation done...\n";

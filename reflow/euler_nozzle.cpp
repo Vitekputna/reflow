@@ -16,6 +16,10 @@ double md = 1.34;
 double OF = 6.6;
 
 int N_frac = 5;
+int N_comp = 3;
+bool droplet_momentum = true;
+
+int N_var = N_comp+2*N_frac+droplet_momentum*N_frac+2;
 
 double m_F = md/(OF+1);
 double m_OX = md-m_F;
@@ -51,9 +55,7 @@ int main(int argc, char** argv)
     thermo::species[2].p_ref = 101325;
     thermo::species[2].rho_liq = 700;
 
-    S.initial_conditions(N_frac,false,init::nozzle(S.msh.N,2*N_frac+5,md,400,p0,p2,0.15,init_comp,S.msh));
-
-    S.var.export_to_file(S.msh,S.par_man.particles);
+    S.initial_conditions(N_frac,droplet_momentum,init::nozzle(S.msh.N,N_var,md,400,p0,p2,0.15,init_comp,S.msh));
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
@@ -61,7 +63,9 @@ int main(int argc, char** argv)
 
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
-    S.solve(0.5,1000,0.2);
+    S.apply_boundary_conditions();
 
+    S.solve(0.5,1000,0.2);
+    S.var.export_to_file(S.msh,S.par_man.particles);
     return 0;
 }

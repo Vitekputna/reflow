@@ -359,13 +359,14 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
         flux[frac_idx+variables::N_comp] = W[frac_idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
     }
 
-
     for(auto idx = 0; idx < variables::N_drop_mom_eq; idx++)
     {
-        mom_idx = idx + variables::N_comp + 2*variables::N_drop_frac;
+        // mom_idx = variables::mom_idx;
+        // mom_idx = idx + variables::N_comp + 2*variables::N_drop_frac;
+        mom_idx = variables::drop_mom_idx[idx];
         frac_idx = idx*2+1+variables::N_comp;
 
-        flux[mom_idx] = W[mom_idx]*W[mom_idx]/W[frac_idx];
+        flux[mom_idx] = W[mom_idx]*W[mom_idx]/(W[frac_idx] + 1e-12);
     }
 
     flux[n_var] = W[n_var]*W[n_var]/W[0] + p;
