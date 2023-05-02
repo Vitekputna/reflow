@@ -56,7 +56,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt;    // Oxydizer
         res[i][2] += -dm/dt;        // Fuel
 
-        res[i][var.eng_idx] += dm*33.326e6/dt;
+        // res[i][var.eng_idx] += dm*33.326e6/dt;
+        res[i][var.eng_idx] += dm*30e6/dt;
     }
 }
 
@@ -76,40 +77,8 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        dm = evaporation::drop_combustion(i,var.W[i]);
-
-        // res[i][Frac_idx] -= dm;
-        // res[i][2] += dm;
+        dm = evaporation::drop_combustion_steady(i,var.W[i],res[i]);
         var.md[i][2] += dm;
-        // res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
-
-        // thermo::composition(comp,var.W[i]);
-
-        // const double T_ref = (thermo::T[i] + 200)/2;
-        // // const double T_ref = 200;
-
-        // const double T_coeff = log(1 + (thermo::cp_mix_comp(comp,T_ref)/(7e5))*std::max(0.0,thermo::T[i] - 200));
-
-        // const double R_coeff = 4*M_PI*thermo::thermal_conductivity(comp,T_ref)/thermo::cp_mix_comp(comp,T_ref);
-
-        // var.md[i][2] = 0;
-
-        // for(int j = 0; j < var.N_drop_frac; j += 2)
-        // {
-        //     N_idx = N_comp + j;
-        //     Frac_idx = N_comp + j + 1;
-
-        //     r = std::pow(3*var.W[i][Frac_idx]/(4*var.W[i][N_idx]*3.14159*700),0.3333);
-
-        //     if(var.W[i][N_idx] == 0) r = 0;
-
-        //     dm = std::max(0.0,var.W[i][N_idx]*(R_coeff*r)*T_coeff);
-
-        //     res[i][Frac_idx] -= dm;
-        //     res[i][2] += dm;
-        //     var.md[i][2] += dm;
-        //     res[i][var.eng_idx] += dm*thermo::enthalpy(thermo::T[i],std::vector<double>{0,0,1});
-        // }
     }
 }
 
@@ -255,8 +224,6 @@ void solver::reconstructed_wave_speed(int i, std::vector<double>& a, std::vector
         W[i] += grad[i]*dx;
     }
 
-    // c = thermo::speed_of_sound(i,W);
-
     a[0] = W[size-2]/W[0] - c;
 
     for(auto i = 1; i < size-2; i++)
@@ -348,23 +315,20 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
         M_wall = AUSM_wall_mach_number(M_left,M_right);
         p_wall = AUSM_wall_pressure(M_left,M_right,p_left,p_right);
 
-
         if(M_wall > 0) cell_idx = i;
         else cell_idx = i+1;
 
         c = thermo::speed_of_sound(cell_idx,var.W[cell_idx]);
 
-        for(int k = 0; k < thermo::n_comp + var.N_drop_frac; k++)
+        for(int k = 0; k < variables::N_comp + variables::N_drop_eq; k++)
         {
             var.flux[i][k] = M_wall*c*var.W[cell_idx][k];
         }
 
-
         var.flux[i][var.mom_idx] = M_wall*c*var.W[cell_idx][var.mom_idx] + p_wall;
         var.flux[i][var.eng_idx] = M_wall*c*(var.W[cell_idx][var.eng_idx] + thermo::p[cell_idx]);
 
-
-        M_left = M_right;       //old right is the new left
+        M_left = M_right;       // old right is the new left
         p_left = p_right;
     }
 }
@@ -372,7 +336,8 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
 inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W)
 {
     static double p;
-    static int n_var = flux.size()-2;
+    // static int n_var = flux.size()-2;
+    const int n_var = variables::mom_idx;
 
     p = thermo::p[i];
 
@@ -383,9 +348,24 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
         flux[idx] = W[n_var]*W[idx]/W[0];
     }
 
+    int frac_idx, num_idx, mom_idx;
+
     for(auto idx = 0; idx < variables::N_drop_frac; idx++)
     {
-        flux[idx+variables::N_comp] = W[idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
+        frac_idx = idx*2+1;
+        num_idx = idx*2;
+
+        flux[num_idx+variables::N_comp] = W[num_idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
+        flux[frac_idx+variables::N_comp] = W[frac_idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
+    }
+
+
+    for(auto idx = 0; idx < variables::N_drop_mom_eq; idx++)
+    {
+        mom_idx = idx + variables::N_comp + 2*variables::N_drop_frac;
+        frac_idx = idx*2+1+variables::N_comp;
+
+        flux[mom_idx] = W[mom_idx]*W[mom_idx]/W[frac_idx];
     }
 
     flux[n_var] = W[n_var]*W[n_var]/W[0] + p;

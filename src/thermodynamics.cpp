@@ -26,9 +26,9 @@ double thermo::density(std::vector<double> const& W)
     static double chi;
     chi = 0;
 
-    for(int idx = 1; idx < variables::N_drop_frac; idx+=2)
+    for(int idx = 0; idx < variables::N_drop_frac; idx++)
     {
-        chi += W[idx + n_comp];
+        chi += W[(2*idx + 1) + n_comp];
     }
 
     return W[0]-chi;

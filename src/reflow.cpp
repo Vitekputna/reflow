@@ -86,22 +86,24 @@ void reflow::initial_conditions(std::vector<std::vector<double>> const& init)
     var = variables(N_var,N,init);
 }
 
-void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<double> const& init)
+void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<double> const& init)
 {
     N_var = init.size();
-    n_drop_frac = N_drop;
-    n_drop_mom = N_drop_mom;
 
-    var = variables(N_var,N,N_drop,N_drop_mom,init);
+    var = variables(N_var,N,N_drop,drop_momenta,init);
+
+    n_drop_frac = variables::N_drop_frac;
+    n_drop_mom = variables::N_drop_mom_eq;
 }
 
-void reflow::initial_conditions(int N_drop, int N_drop_mom, std::vector<std::vector<double>> const& init)
+void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::vector<double>> const& init)
 {
     N_var = init[0].size();
-    n_drop_frac = N_drop;
-    n_drop_mom = N_drop_mom;
+    
+    var = variables(N_var,N,N_drop,drop_momenta,init);
 
-    var = variables(N_var,N,N_drop,N_drop_mom,init);
+    n_drop_frac = variables::N_drop_frac;
+    n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
@@ -285,12 +287,12 @@ void reflow::load_old_data(std::string path, int _n_comp)
     std::cout << "##########################################\n";
 }
 
-void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, int _n_drop_mom)
+void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_equations, int _n_drop_mom)
 {
     auto init_data = read_files(path);
 
     n_comp = _n_comp;
-    n_drop_frac = _n_drop_frac;
+    n_drop_frac = _n_drop_equations;
     n_drop_mom = _n_drop_mom;
 
     std::cout << N_var << " " << N << " " << n_drop_frac << " " << n_drop_mom << "\n";
@@ -334,13 +336,13 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // flow field part 
         // solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
         // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
-        solver::compute_wall_flux(dt,var,msh,solver::AUSM_flux);
+        // solver::compute_wall_flux(dt,var,msh,solver::AUSM_flux);
 
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
-        solver::chemical_reactions(dt,res,var,msh);
+        // solver::chemical_reactions(dt,res,var,msh);
         solver::droplet_transport(res,var,msh);
 
         // lagrangian particles part

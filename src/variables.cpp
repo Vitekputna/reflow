@@ -12,7 +12,10 @@ std::vector<int> variables::drop_mom_idx;
 int variables::mom_idx;
 int variables::eng_idx;
 int variables::N_comp;
+int variables::N_drop_eq = 0;
 int variables::N_drop_frac = 0;
+int variables::N_drop_eng_eq = 0;
+int variables::N_drop_mom_eq = 0;
 
 variables::variables(){}
 
@@ -57,51 +60,92 @@ variables::variables(int _N_var, int _N, std::vector<std::vector<double>> const&
     }
 }
 
-variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<double> const& W_0) : variables(_N_var, _N, W_0)
+variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<double> const& W_0) : variables(_N_var, _N, W_0)
 {
     variables::N_drop_frac = _N_drop_frac;
 
-    variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
-    variables::N_comp = (N_var-2) - N_drop_frac;
+    if(droplet_momenta) // if true init droplet momenta equations
+    {
+        variables::N_drop_eng_eq = 0;
+        variables::N_drop_mom_eq = _N_drop_frac;
+        variables::drop_mom_idx = std::vector<int>(_N_drop_frac,0); // init vector
+
+        variables::N_comp = (N_var-2) - 3*N_drop_frac;
+
+        if(N_comp < 0)
+        {
+            std::cout << "Error number of components is negative...\n";
+            exit(0);
+        }
+
+        for(int i = 0; i < _N_drop_frac; i++)
+        {
+            variables::drop_mom_idx[i] = N_comp + 2*N_drop_frac + i;
+            std::cout << i << "\n";
+        }
+    }
+    else
+    {
+        variables::N_drop_eng_eq = 0;
+        variables::N_drop_mom_eq = 0;
+        variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
+
+        variables::N_comp = (N_var-2) - 2*N_drop_frac;
+    }
+
+    variables::N_drop_eq = 2*N_drop_frac + N_drop_mom_eq + N_drop_eng_eq;
 
     std::cout << "##########################################\n";
     std::cout << "Variables:\n";
     std::cout << "Number of compounds:\t\t" << N_comp << "\n";
     std::cout << "Number of droplet fractions:\t" << N_drop_frac << "\n";
-    std::cout << "Number of droplet momenta:\t" << _N_drop_mom << "\n\n";
+    std::cout << "Number of droplet momenta:\t" << N_drop_mom_eq << "\n\n";
+    std::cout << "Total number of droplet equations:\t" << N_drop_eq << "\n\n";
     std::cout << "##########################################\n";
-
-
-    // if(_N_drop_mom == _N_drop_frac)
-    // {
-    //     for(int i = 0; i < N_drop_frac; i++)
-    //     {
-    //         drop_mom_idx[i] = i+N_comp+N_drop_frac;
-    //         std::cout << drop_mom_idx[i] << "\n";
-    //     }
-
-    // }
-    // else
-    // {
-
-    // }
 }
 
-variables::variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N, W_0)
+variables::variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<std::vector<double>> const& W_0) : variables(_N_var, _N, W_0)
 {
     variables::N_drop_frac = _N_drop_frac;
 
-    variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
-    variables::N_comp = (N_var-2) - N_drop_frac;
+    if(droplet_momenta) // if true init droplet momenta equations
+    {
+        variables::N_drop_eng_eq = 0;
+        variables::N_drop_mom_eq = _N_drop_frac;
+        variables::drop_mom_idx = std::vector<int>(_N_drop_frac,0); // init vector
+
+        variables::N_comp = (N_var-2) - 3*N_drop_frac;
+
+        if(N_comp < 0)
+        {
+            std::cout << "Error number of components is negative...\n";
+            exit(0);
+        }
+
+        for(int i = 0; i < _N_drop_frac; i++)
+        {
+            variables::drop_mom_idx[i] = N_comp + 2*N_drop_frac + i;
+            std::cout << i << "\n";
+        }
+    }
+    else
+    {
+        variables::N_drop_eng_eq = 0;
+        variables::N_drop_mom_eq = 0;
+        variables::drop_mom_idx = std::vector<int>(_N_drop_frac,mom_idx);
+
+        variables::N_comp = (N_var-2) - 2*N_drop_frac;
+    }
+
+    variables::N_drop_eq = 2*N_drop_frac + N_drop_mom_eq + N_drop_eng_eq;
 
     std::cout << "##########################################\n";
     std::cout << "Variables:\n";
     std::cout << "Number of compounds:\t\t" << N_comp << "\n";
     std::cout << "Number of droplet fractions:\t" << N_drop_frac << "\n";
-    std::cout << "Number of droplet momenta:\t" << _N_drop_mom << "\n\n";
+    std::cout << "Number of droplet momenta:\t" << N_drop_mom_eq << "\n\n";
+    std::cout << "Total number of droplet equations:\t" << N_drop_eq << "\n\n";
     std::cout << "##########################################\n";
-
-    
 }
 
 void variables::apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh)
@@ -273,9 +317,9 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i];
-        for(int k = 1; k < N_drop_frac; k += 2)
+        for(int k = 0; k < N_drop_frac; k++)
         {
-            stream << "\t" << W[i][N_comp+k];
+            stream << "\t" << W[i][N_comp+(k*2+1)];
         }
         stream << "\n";   
     }
@@ -285,9 +329,9 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i];
-        for(int k = 0; k < N_drop_frac; k += 2)
+        for(int k = 0; k < N_drop_frac; k++)
         {
-            stream << "\t" << W[i][N_comp+k];
+            stream << "\t" << W[i][N_comp+k*2];
         }
         stream << "\n";   
     }

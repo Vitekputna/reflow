@@ -19,10 +19,14 @@ struct variables
     int N;              // number of cells
     int N_walls;        // number of walls
     int N_ghosts = 2;   // number of ghost cells
-    static int N_comp;         // number of components
-    static int N_drop_frac;    // number of drop. fractions
     
-    static std::vector<int> drop_mom_idx;     //momentum eq. idx for all droplet fractions
+    static int N_comp;         // number of components
+
+    static int N_drop_eq;                       // total number of droplet eq.
+    static int N_drop_frac;                     // number of drop. fractions
+    static int N_drop_mom_eq;                   // number of drop. momenta eq.
+    static int N_drop_eng_eq;                   // number of drop. energt eq.
+    static std::vector<int> drop_mom_idx;       // momentum eq. idx for all droplet fractions
 
     static int mom_idx;
     static int eng_idx;   // indices for fluid momentum and energy equation
@@ -36,8 +40,8 @@ struct variables
     variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0);
 
     // w droplets
-    variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<double> const& W_0);
-    variables(int _N_var, int _N, int _N_drop_frac, int _N_drop_mom, std::vector<std::vector<double>> const& W_0);
+    variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<double> const& W_0);
+    variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<std::vector<double>> const& W_0);
 
 
     void apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh);

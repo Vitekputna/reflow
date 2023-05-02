@@ -46,23 +46,22 @@ int main(int argc, char** argv)
     S.add_specie(138,1.13,60,fuel_cp,fuel_k,fuel_mu);               //Fuel
 
     // set the fuel properties
-    thermo::species[2].h_vap = 666e3;
+    thermo::species[2].h_vap = 300e3;
     thermo::species[2].T_ref = 350;
     thermo::species[2].p_ref = 101325;
+    thermo::species[2].rho_liq = 700;
 
-    // std::cout << evaporation::fuel_mass_fraction(101325,400) << "\n";
+    S.initial_conditions(N_frac,false,init::nozzle(S.msh.N,2*N_frac+5,md,400,p0,p2,0.15,init_comp,S.msh));
 
-    S.initial_conditions(2*N_frac,0,init::nozzle(S.msh.N,2*N_frac+5,md,300,p0,p2,0.15,init_comp,S.msh));
-
-    // S.apply_heat_source(1e6,0.01,0.05);
+    S.var.export_to_file(S.msh,S.par_man.particles);
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,boundary::flow_with_droplets(m_OX,3200,init_comp,N_frac,m_F,700,0.5e-4,3e-6));
+    S.add_boundary_function(boundary::mass_flow_inlet_with_droplets,boundary::flow_with_droplets(m_OX,400,init_comp,N_frac,m_F,700,200e-6,3e-6));
 
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
-    S.solve(0.02,1000,0.3);
+    S.solve(0.5,1000,0.2);
 
     return 0;
 }
