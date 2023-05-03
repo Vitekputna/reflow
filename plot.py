@@ -84,10 +84,6 @@ def radius(X,N,rho):
     else:
         return r
 
-
-    
-
-
 _,A = load_file("out/A.txt")
 _,r = load_file("out/r.txt")
 x,p = load_file("out/p.txt")
@@ -96,13 +92,13 @@ _,T = load_file("out/T.txt")
 _,rho = load_file("out/W0.txt")
 _,md = load_file("out/md.txt")
 _,md_add = load_file("out/md_add.txt")
-# _,a = load_file("out/a.txt")
 _,Y1,Y2,Y3 = load_comp("out/Y.txt")
 _,H = load_file("out/H.txt")
 _,H0 = load_file("out/H0.txt")
 md_add = load("out/md_add.txt")
 X = load("out/X.txt")
 N = load("out/N.txt")
+Ue = load("out/Ue.txt")
 particles = load("out/particles.txt")
 
 # plt.figure(1)
@@ -122,11 +118,13 @@ plt.ylabel("P[bar]")
 plt.grid()
 
 plt.figure(3)
-plt.plot(x,u,label = "Eulerian")
-plt.plot(particles[:,0],particles[:,2],'r',label = "Lagrangian")
+plt.plot(x,u,'k',label = "Eulerian")
+plt.plot(x,Ue,'b',label = "Eulerian droplets")
+plt.plot(particles[:,0],particles[:,2],'r',label = "Lagrangian droplets")
 plt.title("Rychlost v komoře")
 plt.xlabel("x[m]")
 plt.ylabel(r"$u[ms^{-1}]$")
+plt.legend()
 plt.grid()
 
 plt.figure(4)

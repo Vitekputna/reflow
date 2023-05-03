@@ -343,7 +343,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);
         // solver::chemical_reactions(dt,res,var,msh);
-        solver::droplet_transport(res,var,msh);
+        // solver::droplet_transport(res,var,msh);
 
         // lagrangian particles part
         if(run_w_particles)
@@ -387,7 +387,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         n++;
 
     } while (RUN_FLAG);
-    // } while (n < 4);
+    // } while (n < 10);
 
     std::cout << "\r\n" << std::flush;
     std::cout << "Simulation done...\n";

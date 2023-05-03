@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.02,200},{0.02,0.319,500}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
     S.spline_geometry(curves,100);
 
     // S.load_old_data("out/",3,2*N_frac,0);
@@ -67,5 +67,6 @@ int main(int argc, char** argv)
 
     S.solve(0.5,1000,0.2);
     S.var.export_to_file(S.msh,S.par_man.particles);
+
     return 0;
 }

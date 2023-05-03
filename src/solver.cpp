@@ -335,11 +335,8 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
 
 inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<double> const& W)
 {
-    static double p;
-    // static int n_var = flux.size()-2;
     const int n_var = variables::mom_idx;
-
-    p = thermo::p[i];
+    const double p = thermo::p[i];
 
     flux[0] = W[n_var];
 
@@ -350,19 +347,28 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
 
     int frac_idx, num_idx, mom_idx;
 
-    for(auto idx = 0; idx < variables::N_drop_frac; idx++)
+    // quiscent droplet fluxes
+    for(auto idx = 0; idx < variables::quisc_drop_idx.size(); idx++)
     {
-        frac_idx = idx*2+1;
-        num_idx = idx*2;
+        frac_idx = variables::quisc_drop_idx[idx];
+        num_idx = variables::quisc_drop_idx[idx]-1;
 
-        flux[num_idx+variables::N_comp] = W[num_idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
-        flux[frac_idx+variables::N_comp] = W[frac_idx+variables::N_comp]*(W[variables::drop_mom_idx[idx]]/W[0]);
-    }
+        flux[num_idx] = W[num_idx]*(W[variables::mom_idx]/W[0]);
+        flux[frac_idx] = W[frac_idx]*(W[variables::mom_idx]/W[0]);
+    } 
+
+    // active droplet fluxes
+    for(auto idx = 0; idx < variables::active_drop_idx.size(); idx++)
+    {
+        frac_idx = variables::active_drop_idx[idx];
+        num_idx = variables::active_drop_idx[idx]-1;
+
+        flux[num_idx] = W[num_idx]*(W[variables::drop_mom_idx[idx]]/(W[frac_idx] + 1e-12));
+        flux[frac_idx] = W[frac_idx]*(W[variables::drop_mom_idx[idx]]/(W[frac_idx] + 1e-12));
+    } 
 
     for(auto idx = 0; idx < variables::N_drop_mom_eq; idx++)
     {
-        // mom_idx = variables::mom_idx;
-        // mom_idx = idx + variables::N_comp + 2*variables::N_drop_frac;
         mom_idx = variables::drop_mom_idx[idx];
         frac_idx = idx*2+1+variables::N_comp;
 

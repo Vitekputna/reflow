@@ -7,13 +7,13 @@
 
 struct variables
 {
-    std::vector<std::vector<double>> W;
-    std::vector<std::vector<double>> flux;
-    std::vector<std::vector<double>> exact_flux;
-    std::vector<std::vector<double>> grad;
+    std::vector<std::vector<double>> W;                 // vector of variables
+    std::vector<std::vector<double>> flux;              // vector of numeric fluxes
+    std::vector<std::vector<double>> exact_flux;        // vector of exact fluxes
+    std::vector<std::vector<double>> grad;              // vector of variable gradients
 
-    std::vector<double> q;
-    std::vector<std::vector<double>> md;
+    std::vector<double> q;                              // vector of energy sources
+    std::vector<std::vector<double>> md;                // vector of mass sources
 
     int N_var;          // number of variables
     int N;              // number of cells
@@ -28,6 +28,7 @@ struct variables
     static int N_drop_eng_eq;                   // number of drop. energt eq.
     static std::vector<int> drop_mom_idx;       // momentum eq. idx for all droplet fractions
     static std::vector<int> quisc_drop_idx;     // quiscent droplet fractions idx
+    static std::vector<int> active_drop_idx;    // active droplet fractions idx (drops that have mom. eq.)
 
     static int mom_idx;
     static int eng_idx;   // indices for fluid momentum and energy equation
@@ -41,6 +42,7 @@ struct variables
     variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0);
 
     // w droplets
+    void drop_init(int _N_drop_frac, bool droplet_momenta);
     variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<double> const& W_0);
     variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<std::vector<double>> const& W_0);
 

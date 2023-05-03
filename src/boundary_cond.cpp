@@ -107,7 +107,6 @@ void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>&
 // values = (md_gas,T,Y0,Y1,Y2,N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
 void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vector<double>& values)
 {
-    // double p = (thermo::p[1] + thermo::p[2])/2;
     double p = 2*thermo::p[1] - thermo::p[2]; // linear extrapolation
 
     const std::vector<double> comp = {values[2],values[3],values[4]};
@@ -138,7 +137,7 @@ void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vec
 
         dm = 4*M_PI*pow(r_drop,3)*rho_cond/3;
 
-        droplet_total_mf += rho_gas*md_frac/md_gas;
+        // droplet_total_mf += rho_gas*md_frac/md_gas;
 
         var.W[0][var.N_comp+i*2+1] = rho_gas*md_frac/md_gas;
         var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/dm;
