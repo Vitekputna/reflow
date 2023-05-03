@@ -101,6 +101,8 @@ N = load("out/N.txt")
 Ue = load("out/Ue.txt")
 particles = load("out/particles.txt")
 
+Ue = Ue[:,1:]
+
 # plt.figure(1)
 # plt.axes().set_aspect('equal')
 # plt.ylim([0,0.06])
@@ -119,8 +121,8 @@ plt.grid()
 
 plt.figure(3)
 plt.plot(x,u,'k',label = "Eulerian")
-plt.plot(x,Ue,'b',label = "Eulerian droplets")
-plt.plot(particles[:,0],particles[:,2],'r',label = "Lagrangian droplets")
+plt.plot(x,Ue,'b--',label = "Eulerian droplets")
+plt.plot(particles[:,0],particles[:,2],'r-.',label = "Lagrangian droplets")
 plt.title("Rychlost v komoře")
 plt.xlabel("x[m]")
 plt.ylabel(r"$u[ms^{-1}]$")

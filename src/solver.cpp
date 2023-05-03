@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include "omp.h"
-#include "evaporation.hpp"
+#include "euler_droplets.hpp"
 
 void solver::compute_wall_flux(double dt, variables& var, mesh const& msh,
                                void(*flux)(variables&,mesh const&,parameters const&))
@@ -77,7 +77,8 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        dm = evaporation::drop_combustion_steady(i,var.W[i],res[i]);
+        // dm = euler_droplets::drop_combustion_steady(i,var.W[i],res[i]);
+        euler_droplets::droplet_drag(i,var.W[i],res[i]);
         var.md[i][2] += dm;
     }
 }
