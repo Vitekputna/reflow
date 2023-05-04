@@ -114,29 +114,43 @@ double euler_droplets::drop_combustion_convective(const int i, std::vector<doubl
     return dm_total;
 }
 
+double euler_droplets::Kelbaliyev_Ceylan(const double Re)
+{
+    return (24/Re)*pow(1 + 18.5*pow(Re,3.6) + pow(Re/2,11),1/30) + (4/9)*pow(Re,4.5)/(330+pow(Re,4/5));
+}
+
 void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std::vector<double>& res)
 {
     int mom_idx, frac_idx, num_idx;
-    double C = 1e4;
-    double A,r,u_drop,u_gas;
+    double A,r,u_drop,u_gas,Cd,Re;
 
     const double rho_l = thermo::species[2].rho_liq;
+    const double rho_gas = thermo::density(W);
+
+    std::vector<double> comp = std::vector<double>(variables::N_comp,0);
+    thermo::composition(comp,W);
+
+    const double mu = thermo::viscosity(comp,thermo::T[i]);
 
     for(int idx = 0; idx < variables::active_drop_idx.size(); idx++)
     {
         num_idx = variables::active_drop_idx[idx]-1;
+
+        if(W[num_idx] == 0) continue;
+
         frac_idx = variables::active_drop_idx[idx];
         mom_idx = variables::drop_mom_idx[idx];
 
         r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
-        if(W[num_idx] == 0) r = 0;
-
-        C = C*r;
 
         A = M_PI*pow(r,2);
         u_drop = W[mom_idx]/(W[frac_idx]+1e-12);
         u_gas = W[variables::mom_idx]/W[0];
 
-        res[mom_idx] += C*W[num_idx]*thermo::density(W)*A*abs(u_gas-u_drop)*(u_gas-u_drop);
+        Re = (rho_gas*abs(u_gas-u_drop)*r)/mu + 1e-12;
+
+        Cd = Kelbaliyev_Ceylan(Re);
+
+        res[mom_idx] += Cd*W[num_idx]*thermo::density(W)*A*abs(u_gas-u_drop)*(u_gas-u_drop);
     }
 }

@@ -6,7 +6,7 @@
 #include "../src/boundary_cond.hpp"
 #include "../src/initial_cond.hpp"
 #include "../src/params.hpp"
-#include "../src/evaporation.hpp"
+#include "../src/euler_droplets.hpp"
 
 const auto init_comp = std::vector<double>{0,1,0};
 double p0 = 25e5;
