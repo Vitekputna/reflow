@@ -106,6 +106,26 @@ void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::
     n_drop_mom = variables::N_drop_mom_eq;
 }
 
+void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<double> const& init)
+{
+    N_var = init.size();
+
+    var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
+
+    n_drop_frac = variables::N_drop_frac;
+    n_drop_mom = variables::N_drop_mom_eq;
+}
+
+void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<std::vector<double>> const& init)
+{
+    N_var = init[0].size();
+    
+    var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
+
+    n_drop_frac = variables::N_drop_frac;
+    n_drop_mom = variables::N_drop_mom_eq;
+}
+
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
 {
     var.apply_heat_source(Q,x_from,x_to,msh);

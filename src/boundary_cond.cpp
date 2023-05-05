@@ -5,50 +5,6 @@
 #include <cmath>
 #include <vector>
 
-void boundary::_set_value_l(variables& var, int idx, double value)
-{
-    var.W[0][idx] = value;
-}
-
-void boundary::_set_value_r(variables& var, int idx, double value)
-{
-    var.W.back()[idx] = value;
-}
-
-void boundary::_zero_gradient_l(variables& var, int idx, double value)
-{
-    var.W[0][idx] = var.W[1][idx];
-}
-
-void boundary::_zero_gradient_r(variables& var, int idx, double value)
-{
-    var.W.back()[idx] = var.W.rbegin()[1][idx];
-}
-
-void boundary::zero_gradient_l(variables& var, mesh& msh, std::vector<double>& values)
-{
-    for(int k = 0; k < var.N_var; k++)
-    {
-        _zero_gradient_l(var,k,0);
-    }
-}
-
-void boundary::zero_gradient_r(variables& var, mesh& msh, std::vector<double>& values)
-{
-    for(int k = 0; k < var.N_var; k++)
-    {
-        _zero_gradient_r(var,k,0);
-    }
-}
-
-void boundary::set_value_l(variables& var, mesh& msh, std::vector<double>& values)
-{
-    for(int k = 0; k < var.N_var; k++)
-    {
-        _set_value_l(var,k,values[k]);
-    }
-}
-
 // values = (p)
 void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& values)
 {
@@ -70,7 +26,7 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
 }
 
 // values = (md,T,Y0,Y1...)
-void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& values)
+void boundary::mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     // přenos tlaku
     // double p1 = thermo::p[1];
@@ -94,6 +50,68 @@ void boundary::subsonic_inlet(variables& var, mesh& msh, std::vector<double>& va
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
 
     var.W[0][var.eng_idx] = (thermo::enthalpy(values[1],comp) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0]/var.W[0][0])*var.W[0][0] - p;
+}
+// (N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
+void boundary::quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<double>& values)
+{
+    const int N = values[0];
+    const double md_gas = var.W[0][variables::mom_idx]*msh.A[0];
+    const double rho_gas = var.W[0][0];
+    const double rho_cond = values.back();
+    const double u_gas = var.W[0][variables::mom_idx]/rho_gas;
+
+    double m,r_drop,md_frac;
+    double droplet_total_mf = 0;
+    
+    for(int i = 0; i < N; i++)
+    {  
+        r_drop = values[2*i+2];
+        md_frac = values[2*i+1];
+
+        m = 4*M_PI*pow(r_drop,3)*rho_cond/3;
+
+        droplet_total_mf += rho_gas*md_frac/md_gas;
+
+        var.W[0][var.N_comp+i*2+1] = rho_gas*md_frac/md_gas;
+        var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/m;
+    }
+
+    var.W[0][0] += droplet_total_mf;
+    var.W[0][variables::mom_idx] += droplet_total_mf*u_gas;
+    var.W[0][variables::eng_idx] += 0.5*droplet_total_mf*u_gas*u_gas;
+
+}
+
+// (N,md1,r1,md2,r2...,u,rho) N = number of {md,r} pairs
+void boundary::active_drop_inlet(variables& var, mesh& msh, std::vector<double>& values)
+{
+    const int N = values[0];
+    const double md_gas = var.W[0][variables::mom_idx]*msh.A[0];
+    const double rho_gas = var.W[0][0];
+    const double rho_cond = values.back();
+    const double u_cond = values.rbegin()[1];
+    const double u_gas = var.W[0][variables::mom_idx]/rho_gas;
+
+    double m,r_drop,md_frac;
+    double droplet_total_mf = 0;
+    
+    for(int i = 0; i < N; i++)
+    {  
+        r_drop = values[2*i+2];
+        md_frac = values[2*i+1];
+
+        m = 4*M_PI*pow(r_drop,3)*rho_cond/3;
+
+        droplet_total_mf += rho_gas*md_frac/md_gas;
+
+        var.W[0][variables::drop_mom_idx[i]] = md_frac*u_cond;
+        var.W[0][var.N_comp+i*2+1] = rho_gas*md_frac/md_gas;
+        var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/m;
+    }
+
+    var.W[0][0] += droplet_total_mf;
+    var.W[0][variables::mom_idx] += droplet_total_mf*u_gas;
+    var.W[0][variables::eng_idx] += 0.5*droplet_total_mf*u_gas*u_gas;
 }
 
 void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>& values)
@@ -175,7 +193,8 @@ std::vector<double> boundary::flow_with_droplets(double md_gas, double T, std::v
 
     return_vec.insert(return_vec.end(),drop_vec.begin(),drop_vec.end());
 
-    return return_vec;
+    // return return_vec;
+    return drop_vec;
 }
 
 // (mean,var)

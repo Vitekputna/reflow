@@ -68,6 +68,8 @@ class reflow
     void initial_conditions(std::vector<std::vector<double>> const& init);
     void initial_conditions(int N_drop, bool drop_momenta, std::vector<double> const& init);
     void initial_conditions(int N_drop, bool drop_momenta, std::vector<std::vector<double>> const& init);
+    void initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<double> const& init);
+    void initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<std::vector<double>> const& init);
 
     // Loading old data
 

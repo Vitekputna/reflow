@@ -114,6 +114,7 @@ double euler_droplets::drop_combustion_convective(const int i, std::vector<doubl
     return dm_total;
 }
 
+// Handbook of atomization and sprays
 double euler_droplets::Kelbaliyev_Ceylan(const double Re)
 {
     return (24/Re)*pow(1 + 18.5*pow(Re,3.6) + pow(Re/2,11),1/30) + (4/9)*pow(Re,4.5)/(330+pow(Re,4/5));

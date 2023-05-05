@@ -42,9 +42,13 @@ struct variables
     variables(int _N_var, int _N, std::vector<std::vector<double>> const& W_0);
 
     // w droplets
-    void drop_init(int _N_drop_frac, bool droplet_momenta);
+    void drop_init(int _N_drop_frac, bool droplet_momenta, bool droplet_energy);
+
     variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<double> const& W_0);
     variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, std::vector<std::vector<double>> const& W_0);
+
+    variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, bool droplet_energy, std::vector<double> const& W_0);
+    variables(int _N_var, int _N, int _N_drop_frac, bool droplet_momenta, bool droplet_energy, std::vector<std::vector<double>> const& W_0);
 
 
     void apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh);

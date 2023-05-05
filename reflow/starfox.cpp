@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     // S.initial_conditions(init::flow(5,p_0,T_0,0,init_comp));
     S.initial_conditions(init::nozzle(S.msh.N,5,md,T0,p0,p2,0.15,init_comp,S.msh));
 
-    S.add_boundary_function(boundary::subsonic_inlet,std::vector<double>{md,3200,1,0,0});
+    S.add_boundary_function(boundary::mass_flow_inlet,std::vector<double>{md,3200,1,0,0});
     S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{101325});
 
     S.var.export_to_file(S.msh,S.par_man.particles);
