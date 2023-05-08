@@ -348,6 +348,24 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
+    stream =  std::ofstream("out/Te.txt");
+    for(int i = 0; i < N; i++)
+    {
+        int frac_idx, mom_idx, eng_idx;
+
+        stream << msh.x[i];
+        for(int k = 0; k < N_drop_eng_eq; k++)
+        {
+            frac_idx = N_comp + 2*k +1;
+            mom_idx = N_comp+2*N_drop_frac + k;
+            eng_idx = mom_idx + N_drop_frac;
+
+            stream << "\t" << (W[i][eng_idx])/W[i][frac_idx]/thermo::species[2].C;
+        }
+        stream << "\n";   
+    }
+    stream.close();
+
     stream =  std::ofstream("out/grad.txt");
     for(int i = 0; i < N; i++)
     {

@@ -92,8 +92,8 @@ void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<doubl
 
     var = variables(N_var,N,N_drop,drop_momenta,init);
 
-    n_drop_frac = variables::N_drop_frac;
-    n_drop_mom = variables::N_drop_mom_eq;
+    // n_drop_frac = variables::N_drop_frac;
+    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::vector<double>> const& init)
@@ -102,8 +102,8 @@ void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::
     
     var = variables(N_var,N,N_drop,drop_momenta,init);
 
-    n_drop_frac = variables::N_drop_frac;
-    n_drop_mom = variables::N_drop_mom_eq;
+    // n_drop_frac = variables::N_drop_frac;
+    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<double> const& init)
@@ -112,8 +112,8 @@ void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy,
 
     var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
 
-    n_drop_frac = variables::N_drop_frac;
-    n_drop_mom = variables::N_drop_mom_eq;
+    // n_drop_frac = variables::N_drop_frac;
+    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<std::vector<double>> const& init)
@@ -122,8 +122,8 @@ void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy,
     
     var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
 
-    n_drop_frac = variables::N_drop_frac;
-    n_drop_mom = variables::N_drop_mom_eq;
+    // n_drop_frac = variables::N_drop_frac;
+    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
@@ -181,14 +181,14 @@ void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> c
 {
     specie spec(r,kappa,Mm,cp_coeff);
     thermo_manager.load_specie(spec);
-    n_comp++;
+    // n_comp++;
 }
 
 void reflow::add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff, std::vector<double> k_coeff, std::vector<double> mu_coeff)
 {
     specie spec(r,kappa,Mm,cp_coeff,k_coeff,mu_coeff);
     thermo_manager.load_specie(spec);
-    n_comp++;
+    // n_comp++;
 }
 
 void reflow::add_reaction(reaction& R)
@@ -294,7 +294,7 @@ std::vector<std::vector<double>> reflow::read_files(std::string path)
 
 void reflow::load_old_data(std::string path, int _n_comp)
 {
-    std::cout << "##########################################\n";
+    std::cout << "#########################################\n";
     std::cout << "Loading old data for initialization...\n";
     std::cout << "Path to data: " << path << "\n";
     std::cout << "Declared number of components: " << _n_comp << "\n";
@@ -303,21 +303,35 @@ void reflow::load_old_data(std::string path, int _n_comp)
 
     var = variables(N_var,N,init_data);
 
-    n_comp = _n_comp;
+    // n_comp = _n_comp;
     std::cout << "##########################################\n";
 }
 
-void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_equations, int _n_drop_mom)
+void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool droplet_momenta)
 {
     auto init_data = read_files(path);
 
-    n_comp = _n_comp;
-    n_drop_frac = _n_drop_equations;
-    n_drop_mom = _n_drop_mom;
+    int n_comp = _n_comp;
+    int n_drop_frac = _n_drop_frac;
+    int n_drop_mom = n_drop_frac;
 
     std::cout << N_var << " " << N << " " << n_drop_frac << " " << n_drop_mom << "\n";
 
-    var = variables(N_var,N,n_drop_frac,n_drop_mom,init_data);
+    var = variables(N_var,N,n_drop_frac,true,init_data);
+}
+
+void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool droplet_momenta, bool droplet_energy)
+{
+    auto init_data = read_files(path);
+
+    int n_comp = _n_comp;
+    int n_drop_frac = _n_drop_frac;
+    int n_drop_mom = n_drop_frac;
+    int n_drop_eng = n_drop_frac;
+
+    std::cout << N_var << " " << N << " " << n_drop_frac << " " << n_drop_mom << "\n";
+
+    var = variables(N_var,N,n_drop_frac,true,true,init_data);
 }
 
 bool reflow::maximum_time(double T, double res)

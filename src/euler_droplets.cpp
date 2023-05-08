@@ -120,6 +120,12 @@ double euler_droplets::Kelbaliyev_Ceylan(const double Re)
     return (24/Re)*pow(1 + 18.5*pow(Re,3.6) + pow(Re/2,11),1/30) + (4/9)*pow(Re,4.5)/(330+pow(Re,4/5));
 }
 
+
+double euler_droplets::Ranz_Marshall(const double Re, const double Pr)
+{
+    return 2+0.6*pow(Re,0.5)*pow(Pr,1/3);
+}
+
 void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std::vector<double>& res)
 {
     int mom_idx, frac_idx, num_idx;
@@ -150,8 +156,51 @@ void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std
 
         Re = (rho_gas*abs(u_gas-u_drop)*r)/mu + 1e-12;
 
-        Cd = Kelbaliyev_Ceylan(Re);
+        // Cd = Kelbaliyev_Ceylan(Re);
+        Cd = 0.45;
 
-        res[mom_idx] += Cd*W[num_idx]*thermo::density(W)*A*abs(u_gas-u_drop)*(u_gas-u_drop);
+        res[mom_idx] += 0.5*Cd*W[num_idx]*thermo::density(W)*A*abs(u_gas-u_drop)*(u_gas-u_drop);
+    }
+}
+
+void euler_droplets::droplet_heat(const int i, std::vector<double> const& W, std::vector<double>& res)
+{
+    int mom_idx, frac_idx, num_idx, eng_idx;
+    double r,u_drop,T_drop,Nu,Re,Pr;
+
+    const double rho_l = thermo::species[2].rho_liq;
+    const double rho_gas = thermo::density(W);
+
+    const double T_gas = thermo::T[i];
+    const double u_gas = W[variables::mom_idx]/W[0];
+
+    std::vector<double> comp = std::vector<double>(variables::N_comp,0);
+    thermo::composition(comp,W);
+
+    const double mu = thermo::viscosity(comp,thermo::T[i]);
+    const double cp = thermo::cp_mix_comp(comp,thermo::T[i]);
+    const double k = thermo::thermal_conductivity(comp,thermo::T[i]);
+
+    for(int idx = 0; idx < variables::active_drop_idx.size(); idx++)
+    {
+        num_idx = variables::active_drop_idx[idx]-1;
+
+        if(W[num_idx] == 0) continue;
+
+        frac_idx = variables::active_drop_idx[idx];
+        mom_idx = variables::drop_mom_idx[idx];
+        eng_idx = variables::N_comp+2*variables::N_drop_frac+variables::N_drop_eng_eq+idx;
+
+        r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
+
+        T_drop = W[eng_idx]/(W[frac_idx]*thermo::species[2].C + 1e-12);
+        u_drop = W[mom_idx]/(W[frac_idx]+1e-12);
+
+        Re = (rho_gas*abs(u_gas-u_drop)*r)/mu + 1e-12;
+        Pr = cp*mu/k;
+
+        Nu = Ranz_Marshall(Re,Pr);
+
+        res[eng_idx] += W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop);
     }
 }

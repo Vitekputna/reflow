@@ -99,9 +99,11 @@ md_add = load("out/md_add.txt")
 X = load("out/X.txt")
 N = load("out/N.txt")
 Ue = load("out/Ue.txt")
+Te = load("out/Te.txt")
 particles = load("out/particles.txt")
 
 Ue = Ue[:,1:]
+Te = Te[:,1:]
 
 # plt.figure(1)
 # plt.axes().set_aspect('equal')
@@ -131,6 +133,7 @@ plt.grid()
 
 plt.figure(4)
 plt.plot(x,T)
+plt.plot(x,Te,'b--',label="Euler drop temperature")
 plt.plot(particles[:,0],particles[:,3],'r',label = "Lagrangian")
 plt.title("Teplota v komoře")
 plt.xlabel("x[m]")

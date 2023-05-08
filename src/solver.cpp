@@ -75,10 +75,11 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
 
     for(int i = 1; i < var.N-1; i++)
     {
-        if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
+        // if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
         // dm = euler_droplets::drop_combustion_steady(i,var.W[i],res[i]);
         euler_droplets::droplet_drag(i,var.W[i],res[i]);
+        euler_droplets::droplet_heat(i,var.W[i],res[i]);
         var.md[i][2] += dm;
     }
 }
@@ -346,7 +347,7 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
         flux[idx] = W[n_var]*W[idx]/W[0];
     }
 
-    int frac_idx, num_idx, mom_idx;
+    int frac_idx, num_idx, mom_idx, eng_idx;
 
     // quiscent droplet fluxes
     for(auto idx = 0; idx < variables::quisc_drop_idx.size(); idx++)
@@ -374,6 +375,15 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
         frac_idx = idx*2+1+variables::N_comp;
 
         flux[mom_idx] = W[mom_idx]*W[mom_idx]/(W[frac_idx] + 1e-12);
+    }
+
+    for(auto idx = 0; idx < variables::N_drop_eng_eq; idx++)
+    {
+        mom_idx = variables::drop_mom_idx[idx];
+        frac_idx = idx*2+1+variables::N_comp;
+        eng_idx = variables::N_comp+2*variables::N_drop_frac+variables::N_drop_eng_eq+idx;
+
+        flux[eng_idx] = W[eng_idx]*W[mom_idx]/(W[frac_idx] + 1e-12);
     }
 
     flux[n_var] = W[n_var]*W[n_var]/W[0] + p;

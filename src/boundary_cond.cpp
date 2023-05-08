@@ -82,14 +82,14 @@ void boundary::quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<dou
 
 }
 
-// (N,md1,r1,md2,r2...,u,rho) N = number of {md,r} pairs
+// (N,md1,r1,md2,r2...,rho,u) N = number of {md,r} pairs
 void boundary::active_drop_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     const int N = values[0];
     const double md_gas = var.W[0][variables::mom_idx]*msh.A[0];
     const double rho_gas = var.W[0][0];
-    const double rho_cond = values.back();
-    const double u_cond = values.rbegin()[1];
+    const double rho_cond = values.rbegin()[1];
+    const double u_cond = values.back();
     const double u_gas = var.W[0][variables::mom_idx]/rho_gas;
 
     double m,r_drop,md_frac;
@@ -104,14 +104,40 @@ void boundary::active_drop_inlet(variables& var, mesh& msh, std::vector<double>&
 
         droplet_total_mf += rho_gas*md_frac/md_gas;
 
-        var.W[0][variables::drop_mom_idx[i]] = md_frac*u_cond;
-        var.W[0][var.N_comp+i*2+1] = rho_gas*md_frac/md_gas;
+        var.W[0][var.N_comp+i*2+1] = md_frac/(msh.A[0]*u_cond);
         var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/m;
+        var.W[0][variables::drop_mom_idx[i]] = var.W[0][var.N_comp+i*2+1]*u_cond;
     }
+}
 
-    var.W[0][0] += droplet_total_mf;
-    var.W[0][variables::mom_idx] += droplet_total_mf*u_gas;
-    var.W[0][variables::eng_idx] += 0.5*droplet_total_mf*u_gas*u_gas;
+// (N,md1,r1,md2,r2...,rho,u,T) N = number of {md,r} pairs
+void boundary::active_thermal_drop_inlet(variables& var, mesh& msh, std::vector<double>& values)
+{
+    const int N = values[0];
+    const double md_gas = var.W[0][variables::mom_idx]*msh.A[0];
+    const double rho_gas = var.W[0][0];
+    const double rho_cond = values.rbegin()[2];
+    const double u_cond = values.rbegin()[1];
+    const double T_cond = values.back();
+    const double u_gas = var.W[0][variables::mom_idx]/rho_gas;
+
+    double m,r_drop,md_frac;
+    double droplet_total_mf = 0;
+    
+    for(int i = 0; i < N; i++)
+    {  
+        r_drop = values[2*i+2];
+        md_frac = values[2*i+1];
+
+        m = 4*M_PI*pow(r_drop,3)*rho_cond/3;
+
+        droplet_total_mf += rho_gas*md_frac/md_gas;
+
+        var.W[0][var.N_comp+i*2+1] = md_frac/(msh.A[0]*u_cond);
+        var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/m;
+        var.W[0][variables::drop_mom_idx[i]] = var.W[0][var.N_comp+i*2+1]*u_cond;
+        var.W[0][var.N_comp + 3*variables::N_drop_frac + i] = var.W[0][var.N_comp+i*2+1]*thermo::species[2].C*T_cond;
+    }
 }
 
 void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>& values)
@@ -122,78 +148,24 @@ void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>&
     }
 }
 
-// values = (md_gas,T,Y0,Y1,Y2,N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
-void boundary::mass_flow_inlet_with_droplets(variables& var, mesh& msh, std::vector<double>& values)
+std::vector<double> boundary::quiscent_droplets(double(*distribution)(double,std::vector<double>),int N_frac, double md_cond, double rho, double mean_r, double var_r)
 {
-    double p = 2*thermo::p[1] - thermo::p[2]; // linear extrapolation
-
-    const std::vector<double> comp = {values[2],values[3],values[4]};
-    double r = thermo::r_mix_comp(comp);
-    double md_gas = values[0];
-    double T_gas = values[1];
-
-    int N = values[5];
-
-    double rho_cond = values.back();
-
-    double rho_gas = p/(r*T_gas);
-
-    // Species fractions
-    for(auto idx = 1; idx <= var.N_comp-1; idx++)
-    {
-        var.W[0][idx] = rho_gas*comp[idx];
-    }
-
-    // Droplet mass fractions
-    double dm,r_drop,md_frac;
-    double droplet_total_mf = 0;
-
-    for(int i = 0; i < N; i++)
-    {  
-        r_drop = values[2*i+2+5];
-        md_frac = values[2*i+1+5];
-
-        dm = 4*M_PI*pow(r_drop,3)*rho_cond/3;
-
-        // droplet_total_mf += rho_gas*md_frac/md_gas;
-
-        var.W[0][var.N_comp+i*2+1] = rho_gas*md_frac/md_gas;
-        var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/dm;
-    }
-
-    // total mass fraction
-    var.W[0][0] = rho_gas+droplet_total_mf;
-
-    // total momentum
-    double u = md_gas/msh.A[0]/rho_gas;
-
-    for(int i = 0; i < variables::N_drop_mom_eq; i++)
-    {
-        const int frac_idx = variables::N_comp + 1 + i*2;
-
-        var.W[0][variables::drop_mom_idx[i]] = u*var.W[0][frac_idx];
-    }
-
-    var.W[0][var.mom_idx] = (rho_gas+droplet_total_mf)*u;
-
-    // total energy
-    var.W[0][var.eng_idx] = rho_gas*thermo::enthalpy(T_gas,comp) + 0.5*u*u*var.W[0][0] - p;
+    std::vector<double> drop_vec = discretize_distribution(normal_distribution,md_cond,rho,mean_r,var_r,N_frac);
+    return drop_vec;
 }
 
-std::vector<double> boundary::flow_with_droplets(double md_gas, double T, std::vector<double> comp, int N_frac, double md_cond, double rho, double mean_r, double var_r)
+std::vector<double> boundary::active_droplets(double(*distribution)(double,std::vector<double>),int N_frac, double md_cond, double rho, double u_drop, double mean_r, double var_r)
 {
-    std::vector<double> return_vec = {md_gas,T};
-
-    for(auto const& Y : comp)
-    {
-        return_vec.push_back(Y);
-    }
-
     std::vector<double> drop_vec = discretize_distribution(normal_distribution,md_cond,rho,mean_r,var_r,N_frac);
+    drop_vec.push_back(u_drop);
+    return drop_vec;
+}
 
-    return_vec.insert(return_vec.end(),drop_vec.begin(),drop_vec.end());
-
-    // return return_vec;
+std::vector<double> boundary::active_thermal_droplets(double(*distribution)(double,std::vector<double>),int N_frac, double md_cond, double rho, double T, double u_drop, double mean_r, double var_r)
+{
+    std::vector<double> drop_vec = discretize_distribution(normal_distribution,md_cond,rho,mean_r,var_r,N_frac);
+    drop_vec.push_back(u_drop);
+    drop_vec.push_back(T);
     return drop_vec;
 }
 

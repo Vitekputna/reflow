@@ -31,9 +31,9 @@ class reflow
     int n_exp;
 
     int N, N_var;
-    int n_comp = 0;
-    int n_drop_frac = 0;
-    int n_drop_mom = 0;
+    // int n_comp = 0;
+    // int n_drop_frac = 0;
+    // int n_drop_mom = 0;
 
     double from, to;
 
@@ -72,10 +72,10 @@ class reflow
     void initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<std::vector<double>> const& init);
 
     // Loading old data
-
     std::vector<std::vector<double>> read_files(std::string path);
     void load_old_data(std::string path, int n_comp);
-    void load_old_data(std::string path, int _n_comp, int _n_drop_equations, int _n_drop_mom);
+    void load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool droplet_momenta);
+    void load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool droplet_momenta, bool droplet_energy);
 
     // Thermodynamics
     void add_specie(double r, double kappa, double Mm, std::vector<double> cp_coeff);

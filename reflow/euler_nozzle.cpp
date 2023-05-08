@@ -17,8 +17,8 @@ double OF = 6.6;
 
 int N_frac = 5;
 int N_comp = 3;
-bool droplet_momentum = false;
-bool droplet_energy = false;
+bool droplet_momentum = true;
+bool droplet_energy = true;
 
 int N_var = N_comp+2*N_frac+droplet_momentum*N_frac+droplet_energy*N_frac+2;
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
     S.spline_geometry(curves,100);
 
-    // S.load_old_data("out/",3,2*N_frac,0);
+    // S.load_old_data("old/",3,N_frac,true,true);
 
     S.msh.export_to_file();
 
@@ -55,16 +55,18 @@ int main(int argc, char** argv)
     thermo::species[2].T_ref = 350;
     thermo::species[2].p_ref = 101325;
     thermo::species[2].rho_liq = 700;
+    thermo::species[2].C = 1000;
 
     S.initial_conditions(N_frac,droplet_momentum,droplet_energy,init::nozzle(S.msh.N,N_var,md,400,p0,p2,0.15,init_comp,S.msh));
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
-    S.add_boundary_function(boundary::mass_flow_inlet,std::vector<double>{m_OX,400,0,1,0});
-    S.add_boundary_function(boundary::quiscent_droplet_inlet,boundary::flow_with_droplets(m_OX,400,init_comp,N_frac,m_F,700,200e-6,3e-6));
+    using namespace boundary;
 
+    S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,400,0,1,0});
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,50,20e-6,1e-6));
 
-    S.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
+    S.add_boundary_function(supersonic_outlet,std::vector<double>{p2});
 
     thermo::update(S.var.W);
     S.apply_boundary_conditions();
