@@ -217,6 +217,11 @@ std::vector<double> thermo::mass_fraction(std::vector<double> const& molar_fract
     return mass_fraction;
 }
 
+double thermo::difusivity(std::vector<double> const& comp, double T)
+{
+    return 1e-5;
+}
+
 // dynamic viscosity [Pas]
 double thermo::viscosity(std::vector<double> const& comp, double T)
 {

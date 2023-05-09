@@ -342,7 +342,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
         stream << msh.x[i];
         for(int k = 0; k < N_drop_mom_eq; k++)
         {
-            stream << "\t" << W[i][drop_mom_idx[k]]/W[i][active_drop_idx[k]];
+            stream << "\t" << W[i][drop_mom_idx[k]]/(W[i][active_drop_idx[k]]+1e-12);
         }
         stream << "\n";   
     }
@@ -360,7 +360,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
             mom_idx = N_comp+2*N_drop_frac + k;
             eng_idx = mom_idx + N_drop_frac;
 
-            stream << "\t" << (W[i][eng_idx])/W[i][frac_idx]/thermo::species[2].C;
+            stream << "\t" << (W[i][eng_idx])/(W[i][frac_idx] + 1e-12)/thermo::species[2].C;
         }
         stream << "\n";   
     }

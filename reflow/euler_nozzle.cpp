@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
     S.spline_geometry(curves,100);
 
-    // S.load_old_data("old/",3,N_frac,true,true);
+    // S.load_old_data("out/",3,N_frac,true,true);
 
     S.msh.export_to_file();
 
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     thermo::species[2].T_ref = 350;
     thermo::species[2].p_ref = 101325;
     thermo::species[2].rho_liq = 700;
-    thermo::species[2].C = 1000;
+    thermo::species[2].C = 2680;
 
     S.initial_conditions(N_frac,droplet_momentum,droplet_energy,init::nozzle(S.msh.N,N_var,md,400,p0,p2,0.15,init_comp,S.msh));
 
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     using namespace boundary;
 
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,400,0,1,0});
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,50,20e-6,1e-6));
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,50,30e-6,1e-6));
 
     S.add_boundary_function(supersonic_outlet,std::vector<double>{p2});
 

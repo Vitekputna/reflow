@@ -75,11 +75,11 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
 
     for(int i = 1; i < var.N-1; i++)
     {
-        // if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
+        if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        // dm = euler_droplets::drop_combustion_steady(i,var.W[i],res[i]);
-        euler_droplets::droplet_drag(i,var.W[i],res[i]);
-        euler_droplets::droplet_heat(i,var.W[i],res[i]);
+        dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
+        // euler_droplets::droplet_drag(i,var.W[i],res[i]);
+        // euler_droplets::droplet_heat(i,var.W[i],res[i]);
         var.md[i][2] += dm;
     }
 }

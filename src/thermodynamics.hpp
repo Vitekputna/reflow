@@ -40,6 +40,8 @@ public:
     static double cp_mix(std::vector<double> const& W);
     static double cp_mix_comp(std::vector<double> const& comp, double T);
 
+    static double difusivity(std::vector<double> const& comp, double T);
+
     static std::vector<double> molar_fraction(std::vector<double> const& mass_fraction);
     static std::vector<double> mass_fraction(std::vector<double> const& molar_fraction);
 
