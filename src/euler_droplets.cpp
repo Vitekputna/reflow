@@ -51,19 +51,16 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
         num_idx = variables::active_drop_idx[idx]-1;
         frac_idx = variables::active_drop_idx[idx];
         mom_idx = variables::drop_mom_idx[idx];
-
-        if(W[num_idx] <= 0 || W[frac_idx] < 1e-12)
-        {
-            continue;
-        }
-
-        
         eng_idx = variables::N_comp+2*variables::N_drop_frac+variables::N_drop_eng_eq+idx;
 
         r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
 
-        // u_drop = W[mom_idx]/(W[frac_idx]+1e-12);
-        u_drop = 50;
+        if(W[num_idx] <= 0 || r < 1e-6)
+        {
+            continue;
+        }
+
+        u_drop = W[mom_idx]/(W[frac_idx]+1e-12);
         u_gas = W[variables::mom_idx]/W[0];
         T_drop = W[eng_idx]/(W[frac_idx]*thermo::species[2].C + 1e-12);
 
@@ -80,8 +77,13 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
 
         res[frac_idx] += -md;
         res[mom_idx] += -md*u_drop;
-        // res[eng_idx] += -md*thermo::species[2].C*T_drop;
+        res[eng_idx] += -md*thermo::species[2].C*T_drop;
+
+        res[0] += md;
+        res[2] += md;
+        res[variables::eng_idx] += md*thermo::species[2].h(thermo::T[i]);
     }
+
     return total_m;
 }
 
@@ -101,13 +103,15 @@ void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std
     for(int idx = 0; idx < variables::active_drop_idx.size(); idx++)
     {
         num_idx = variables::active_drop_idx[idx]-1;
-
-        if(W[num_idx] == 0) continue;
-
         frac_idx = variables::active_drop_idx[idx];
         mom_idx = variables::drop_mom_idx[idx];
 
         r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
+
+        if(W[num_idx] <= 0 || r < 1e-6)
+        {
+            continue;
+        }
 
         A = M_PI*pow(r,2);
         u_drop = W[mom_idx]/(W[frac_idx]+1e-12);
@@ -117,6 +121,7 @@ void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std
 
         Cd = Kelbaliyev_Ceylan(Re);
         // Cd = 0.45;
+        // Cd = 24/Re;
 
         res[mom_idx] += 0.5*Cd*W[num_idx]*thermo::density(W)*A*abs(u_gas-u_drop)*(u_gas-u_drop);
     }
@@ -144,13 +149,16 @@ void euler_droplets::droplet_heat(const int i, std::vector<double> const& W, std
     {
         num_idx = variables::active_drop_idx[idx]-1;
 
-        if(W[num_idx] == 0) continue;
-
         frac_idx = variables::active_drop_idx[idx];
         mom_idx = variables::drop_mom_idx[idx];
         eng_idx = variables::N_comp+2*variables::N_drop_frac+variables::N_drop_eng_eq+idx;
 
         r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
+
+        if(W[num_idx] <= 0 || r < 1e-6)
+        {
+            continue;
+        }
 
         T_drop = W[eng_idx]/(W[frac_idx]*thermo::species[2].C + 1e-12);
         u_drop = W[mom_idx]/(W[frac_idx]+1e-12);

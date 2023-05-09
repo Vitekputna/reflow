@@ -57,30 +57,22 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][2] += -dm/dt;        // Fuel
 
         // res[i][var.eng_idx] += dm*33.326e6/dt;
-        res[i][var.eng_idx] += dm*30e6/dt;
+        // res[i][var.eng_idx] += dm*30e6/dt;
     }
 }
 
 void solver::droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
 {
-    static double r;
-    static double dm,dr;
-
-    static int N_idx, Frac_idx;
-    static int N_comp;
-    
-    N_comp = var.N_comp;
-
-    auto comp = std::vector<double>{0,0,0};
+    double dm;
 
     for(int i = 1; i < var.N-1; i++)
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
         dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
-        // euler_droplets::droplet_drag(i,var.W[i],res[i]);
-        // euler_droplets::droplet_heat(i,var.W[i],res[i]);
-        var.md[i][2] += dm;
+        euler_droplets::droplet_drag(i,var.W[i],res[i]);
+        euler_droplets::droplet_heat(i,var.W[i],res[i]);
+        var.md[i][2] = dm;
     }
 }
 

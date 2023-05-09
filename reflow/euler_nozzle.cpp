@@ -64,14 +64,14 @@ int main(int argc, char** argv)
     using namespace boundary;
 
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,400,0,1,0});
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,50,30e-6,1e-6));
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,60,10e-6,1e-6));
 
     S.add_boundary_function(supersonic_outlet,std::vector<double>{p2});
 
     thermo::update(S.var.W);
     S.apply_boundary_conditions();
 
-    S.solve(0.5,1000,0.2);
+    S.solve(0.5,1000,0.5);
     S.var.export_to_file(S.msh,S.par_man.particles);
 
     return 0;
