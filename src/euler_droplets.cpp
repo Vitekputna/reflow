@@ -108,7 +108,7 @@ void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std
 
         r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
 
-        if(W[num_idx] <= 0 || r < 1e-6)
+        if(W[num_idx] <= 0 || r < 1e-7)
         {
             continue;
         }
@@ -155,7 +155,7 @@ void euler_droplets::droplet_heat(const int i, std::vector<double> const& W, std
 
         r = std::pow(3*W[frac_idx]/(4*W[num_idx]*M_PI*rho_l),0.3333);
 
-        if(W[num_idx] <= 0 || r < 1e-6)
+        if(W[num_idx] <= 0 || r < 1e-7)
         {
             continue;
         }

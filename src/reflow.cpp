@@ -370,9 +370,9 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // flow field part 
         // solver::reconstruct(var,msh);
         // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
+        solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
         // solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
-        solver::compute_wall_flux(dt,var,msh,solver::AUSM_flux);
+        // solver::compute_wall_flux(dt,var,msh,solver::AUSM_flux);
 
         solver::compute_cell_res(res,var,msh);
         solver::apply_source_terms(res,var,msh);

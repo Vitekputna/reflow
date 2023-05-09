@@ -15,7 +15,7 @@ double p2 = 101325;
 double md = 1.34;
 double OF = 6.6;
 
-int N_frac = 5;
+int N_frac = 10;
 int N_comp = 3;
 bool droplet_momentum = true;
 bool droplet_energy = true;
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     using namespace boundary;
 
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,400,0,1,0});
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,60,10e-6,1e-6));
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,60,20e-6,1e-6));
 
     S.add_boundary_function(supersonic_outlet,std::vector<double>{p2});
 
