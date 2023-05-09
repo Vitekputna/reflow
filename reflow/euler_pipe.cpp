@@ -12,7 +12,7 @@ const auto init_comp = std::vector<double>{0,1,0};
 double p0 = 25e5;
 double T0 = 3000;
 double p2 = 101325;
-double md = 1.34;
+double md = 5;
 double OF = 6.6;
 
 int N_frac = 5;
@@ -27,19 +27,10 @@ double m_OX = md-m_F;
 
 int main(int argc, char** argv)
 {
-    // geometrie
-    std::vector<std::vector<std::vector<double>>> curves;
-    std::vector<std::vector<double>> curve = {{0,4.418e-3},{0.15,4.418e-3},{1e-1,0},{1e-2,0}};
-    curves.push_back(curve);
-    curve = {{0.15,4.418e-3},{0.2,8.553e-4},{0.5e-1,0},{0.5e-1,0}};
-    curves.push_back(curve);
-    curve = {{0.2,8.553e-4},{0.319,3e-3},{0.5e-1,0},{2.1e-1,0}};
-    curves.push_back(curve);
-
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
-    S.spline_geometry(curves,100);
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.5,500}});
+    S.msh.constant_area(0.002);
 
     // S.load_old_data("out/",3,N_frac,true,true);
 
@@ -57,21 +48,28 @@ int main(int argc, char** argv)
     thermo::species[2].rho_liq = 700;
     thermo::species[2].C = 2680;
 
-    S.initial_conditions(N_frac,droplet_momentum,droplet_energy,init::nozzle(S.msh.N,N_var,md,400,p0,p2,0.15,init_comp,S.msh));
+    // Initial conditions
+    double rho = p2/(thermo::r_mix_comp(init_comp)*T0);
+    double u = md/(rho*S.msh.A[0]);
+    double momentum = rho*u;
+    double energy = rho*thermo::enthalpy(T0,init_comp) -p2 + rho*u*u/2;
+
+    // Initial conditions
+    S.initial_conditions(std::vector<double>{rho,0,rho,momentum,energy});
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
     using namespace boundary;
 
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,600,0,1,0});
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,60,20e-6,1e-6));
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,60,30e-6,1e-6));
 
-    S.add_boundary_function(supersonic_outlet,std::vector<double>{p2});
+    S.add_boundary_function(subsonic_outlet,std::vector<double>{p2});
 
     thermo::update(S.var.W);
     S.apply_boundary_conditions();
 
-    S.solve(0.5,1000,0.5);
+    S.solve(0.5,1000,0.1);
     S.var.export_to_file(S.msh,S.par_man.particles);
 
     return 0;
