@@ -4,6 +4,7 @@
 #include <fstream>
 #include <random>
 #include <string>
+#include <omp.h>
 #include "lagrange_solver.hpp"
 #include "particle.hpp"
 
@@ -89,11 +90,7 @@ void reflow::initial_conditions(std::vector<std::vector<double>> const& init)
 void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<double> const& init)
 {
     N_var = init.size();
-
     var = variables(N_var,N,N_drop,drop_momenta,init);
-
-    // n_drop_frac = variables::N_drop_frac;
-    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::vector<double>> const& init)
@@ -101,29 +98,18 @@ void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::
     N_var = init[0].size();
     
     var = variables(N_var,N,N_drop,drop_momenta,init);
-
-    // n_drop_frac = variables::N_drop_frac;
-    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<double> const& init)
 {
     N_var = init.size();
-
     var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
-
-    // n_drop_frac = variables::N_drop_frac;
-    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<std::vector<double>> const& init)
 {
     N_var = init[0].size();
-    
     var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
-
-    // n_drop_frac = variables::N_drop_frac;
-    // n_drop_mom = variables::N_drop_mom_eq;
 }
 
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
@@ -339,6 +325,45 @@ bool reflow::maximum_time(double T, double res)
     return T < t_end;
 }
 
+void reflow::set_numThreads(const int _numThreads)
+{
+    numThreads = _numThreads;
+}
+
+void reflow::divide_data_parallel()
+{
+    std::cout << "##########################################\n";
+    std::cout << "Running on: " << numThreads << " threads.\n";
+
+
+    // divide data into threads
+    cell_startIndices = std::vector<int>(numThreads);
+    cell_endIndices = std::vector<int>(numThreads);
+
+    wall_startIndices = std::vector<int>(numThreads);
+    wall_endIndices = std::vector<int>(numThreads);
+
+    int cell_chunkSize = this->var.N / numThreads;
+    int cell_remaining = this->var.N % numThreads;
+
+    int wall_chunkSize = this->var.N_walls / numThreads;
+    int wall_remaining = this->var.N_walls % numThreads;
+
+    // Calculate the start and end indices for each thread
+    for (int i = 0; i < numThreads; ++i) {
+        cell_startIndices[i] = i * cell_chunkSize;
+        cell_endIndices[i] = (i == numThreads - 1) ? (cell_startIndices[i] + cell_chunkSize + cell_remaining - 1) : (cell_startIndices[i] + cell_chunkSize - 1);
+        std::cout << cell_startIndices[i] << " " << cell_endIndices[i] << "\n";
+    }
+
+    for (int i = 0; i < numThreads; ++i) {
+        wall_startIndices[i] = i * wall_chunkSize;
+        wall_endIndices[i] = (i == numThreads - 1) ? (wall_startIndices[i] + wall_chunkSize + wall_remaining - 1) : (wall_startIndices[i] + wall_chunkSize - 1);
+        std::cout << wall_startIndices[i] << " " << wall_endIndices[i] << "\n";
+    }
+    std::cout << "##########################################\n";
+}
+
 void reflow::solve(double _t_end, double _max_residual, double _CFL)
 {
     t_end = _t_end;
@@ -362,66 +387,73 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
     std::cout << "time[s]\ttime step[s]\tresidual[]\n";
     std::cout << "##########################################\n";
 
-    do
+    divide_data_parallel();
+    #pragma omp parallel num_threads(numThreads)
     {
-        // update pressure and temperature
-        thermo::update(var.W);
-
-        // flow field part 
-        solver::reconstruct(var,msh);
-        // solver::compute_wall_flux(dt,var,msh,solver::Lax_Friedrichs_flux);
-        // solver::compute_wall_flux(dt,var,msh,solver::HLL_flux);
-        solver::compute_wall_flux(dt,var,msh,solver::Kurganov_Tadmore);
-        // solver::compute_wall_flux(dt,var,msh,solver::AUSM_flux);
-
-        solver::compute_cell_res(res,var,msh);
-        solver::apply_source_terms(res,var,msh);
-        solver::chemical_reactions(dt,res,var,msh);
-        solver::droplet_transport(res,var,msh);
-
-        // lagrangian particles part
-        if(run_w_particles)
+        int threadID = omp_get_thread_num();
+        do
         {
-            if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
-            lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
-        }
+            // update pressure and temperature
+            thermo::update(var.W);
 
-        // time integration
-        solver::Explicit_Euler(var,res,dt);
+            if(reconstruct)
+            {
+                solver::reconstruct(var,msh);
+                solver::reconstruct_pressure(var,msh);    
+            }
 
-        // Runtime stuff
-        if(!(n % n_res)) 
-        {
-            stream = std::ofstream("out/res.txt",std::ios_base::app);
-            residual = solver::max_residual(res,var,var.eng_idx);
+            solver::compute_wall_flux(dt,var,msh,fluid_flux);
+            solver::compute_wall_flux(dt,var,msh,dispersed_flux);
+            solver::compute_cell_res(res,var,msh);
+            solver::apply_source_terms(res,var,msh);
+            // solver::chemical_reactions(dt,res,var,msh);
+            solver::droplet_transport(res,var,msh);
 
-            std::cout << "\b\b\r";
-            std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
+            // lagrangian particles part
+            if(run_w_particles)
+            {
+                if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
+                lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
+            }
 
-            stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
-            stream.close();
+            // time integration
+            solver::Explicit_Euler(var,res,dt);
 
-            RUN_FLAG = maximum_time(t,residual);
-        }
+            if(threadID == 0)
+                // Runtime stuff
+                if(!(n % n_res)) 
+                {
+                    stream = std::ofstream("out/res.txt",std::ios_base::app);
+                    residual = solver::max_residual(res,var,var.eng_idx);
 
-        // Runtime export
-        if(!(n % n_exp))
-        {
-            var.export_to_file(msh,par_man.particles);
-            export_particles(par_man.particles);
-            // var.export_timestep(t,msh,par_man.particles);
-        }
-    
-        dt = solver::time_step(var,msh,CFL);
+                    std::cout << "\b\b\r";
+                    std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
 
-        // boundary
-        apply_boundary_conditions();
+                    stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
+                    stream.close();
 
-        t += dt;
-        n++;
+                    RUN_FLAG = maximum_time(t,residual);
+                }
 
-    } while (RUN_FLAG);
-    // } while (n < 10);
+                // Runtime export
+                if(!(n % n_exp))
+                {
+                    var.export_to_file(msh,par_man.particles);
+                    if(run_w_particles) export_particles(par_man.particles);
+                    // var.export_timestep(t,msh,par_man.particles);
+                }
+            
+                dt = solver::time_step(var,msh,CFL);
+
+                // boundary
+                apply_boundary_conditions();
+
+                t += dt;
+                n++;
+
+        } while (RUN_FLAG);
+        // } while (n < 100);
+    }
 
     std::cout << "\r\n" << std::flush;
     std::cout << "Simulation done...\n";

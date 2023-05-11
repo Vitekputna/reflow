@@ -31,6 +31,7 @@ variables::variables(int _N_var, int _N) : N_var{_N_var}, N{_N}, N_walls{_N-1}
     flux = std::vector<std::vector<double>>(N_walls,std::vector<double>(N_var,0.0));
     exact_flux = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
     grad = std::vector<std::vector<double>>(N,std::vector<double>(N_var,0.0));
+    grad_p =  std::vector<double>(N,0.0);
 
     q = std::vector<double>(N,0.0);
     md = std::vector<std::vector<double>>(N,std::vector<double>(N_comp,0.0));

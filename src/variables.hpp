@@ -11,6 +11,7 @@ struct variables
     std::vector<std::vector<double>> flux;              // vector of numeric fluxes
     std::vector<std::vector<double>> exact_flux;        // vector of exact fluxes
     std::vector<std::vector<double>> grad;              // vector of variable gradients
+    std::vector<double> grad_p;
 
     std::vector<double> q;                              // vector of energy sources
     std::vector<std::vector<double>> md;                // vector of mass sources

@@ -9,10 +9,10 @@
 #include "../src/euler_droplets.hpp"
 
 const auto init_comp = std::vector<double>{0,1,0};
-double p0 = 25e5;
-double T0 = 3000;
+double p0 = 101325;
+double T0 = 300;
 double p2 = 101325;
-double md = 5;
+double md = 100;
 double OF = 6.6;
 
 int N_frac = 5;
@@ -29,10 +29,11 @@ int main(int argc, char** argv)
 {
     // výpočet motoru
     reflow S;
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.5,500}});
+    S.set_numThreads(2);
+    S.refine_mesh(std::vector<std::vector<double>>{{0,5,1000}});
     S.msh.constant_area(0.002);
 
-    // S.load_old_data("out/",3,N_frac,true,true);
+    // S.load_old_data("out/",N_comp,N_frac,true,true);
 
     S.msh.export_to_file();
 
@@ -50,26 +51,25 @@ int main(int argc, char** argv)
 
     // Initial conditions
     double rho = p2/(thermo::r_mix_comp(init_comp)*T0);
-    double u = md/(rho*S.msh.A[0]);
+    double u = m_OX/(rho*S.msh.A[0]);
     double momentum = rho*u;
     double energy = rho*thermo::enthalpy(T0,init_comp) -p2 + rho*u*u/2;
 
     // Initial conditions
-    S.initial_conditions(std::vector<double>{rho,0,rho,momentum,energy});
+    S.initial_conditions(N_frac,true,true,std::vector<double>{rho,rho,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,momentum,energy});
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
     using namespace boundary;
 
-    S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,600,0,1,0});
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,60,30e-6,1e-6));
-
+    S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,300,0,1,0});
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,40,30e-6,1e-6));
     S.add_boundary_function(subsonic_outlet,std::vector<double>{p2});
 
     thermo::update(S.var.W);
     S.apply_boundary_conditions();
 
-    S.solve(0.5,1000,0.1);
+    S.solve(2,1000,0.2);
     S.var.export_to_file(S.msh,S.par_man.particles);
 
     return 0;

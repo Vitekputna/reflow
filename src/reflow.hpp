@@ -9,7 +9,8 @@
 #include "specie.hpp"
 #include "chem_solver.hpp"
 
-typedef void(*Boundary_func)(variables&,mesh&,std::vector<double>&);
+typedef void(*Boundary_func)(variables&, mesh&, std::vector<double>&);
+typedef void(*flux_func)(variables&, mesh const&, parameters const&);
 
 class reflow
 {
@@ -25,20 +26,30 @@ class reflow
     std::vector<Boundary_func> boundary_func_vec;
     std::vector<std::vector<double>> boundary_values_vec;
 
-    // Constatnts
+    // Run settings
     int n_dt;
     int n_res;
     int n_exp;
 
+    // Parallel settings
+    int numThreads = 1;
+    std::vector<int> cell_startIndices;
+    std::vector<int> cell_endIndices;
+    std::vector<int> wall_startIndices;
+    std::vector<int> wall_endIndices;
+
+    // Variables parameters
     int N, N_var;
-    // int n_comp = 0;
-    // int n_drop_frac = 0;
-    // int n_drop_mom = 0;
 
     double from, to;
 
+    // Solver settings
     bool run_w_particles = false;
+    bool reconstruct = false;
+    flux_func fluid_flux = solver::AUSM2_flux;
+    flux_func dispersed_flux = solver::HLL_flux;
 
+    // Run criteria
     double max_res;
     double t_end;
     double CFL;
@@ -53,6 +64,8 @@ class reflow
     reflow(int N, int N_var, std::vector<std::vector<double>> const& init);
 
     void variable_init();
+    void divide_data_parallel();
+    void set_numThreads(const int _numThreads);
 
     // Sources
     void apply_heat_source(double Q, double x_from, double x_to);
@@ -105,7 +118,7 @@ class reflow
     void export_particles(std::vector<particle>& particles);
     void init_particles(int N_max, int N_particles, int N_per_group);
 
-    // run criteria
+    // run criteria functions
     bool maximum_time(double T, double res);
     bool maximum_res(double T, double res);
     bool maximum_time_res(double T, double res);

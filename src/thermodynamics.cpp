@@ -40,9 +40,21 @@ double thermo::speed_of_sound(int i, std::vector<double> const& W)
     return sqrt(kappa*thermo::p[i]/density(W));
 }
 
+double thermo::speed_of_sound(const double p, std::vector<double> const& W)
+{
+    double kappa = thermo::kappa_mix(W);
+    return sqrt(kappa*p/density(W));
+}
+
 double thermo::mach_number(int i, std::vector<double> const& W)
 {
     double c = speed_of_sound(i,W);
+    return (W[variables::mom_idx]/W[0])/c;
+}
+
+double thermo::mach_number(const double p, std::vector<double> const& W)
+{
+    double c = speed_of_sound(p,W);
     return (W[variables::mom_idx]/W[0])/c;
 }
 
@@ -303,7 +315,7 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
         T = T - ( F )/dF(comp,r,T);
 
     counter++;
-    } while((std::abs(T-T_last) > 1) && counter < 100);
+    } while((std::abs(T-T_last) > 0.1) && counter < 100);
 
     return T;
 }
