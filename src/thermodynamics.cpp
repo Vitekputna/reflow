@@ -342,3 +342,15 @@ void thermo::update(std::vector<std::vector<double>> const& W)
         thermo::p[i] = thermo::pressure(i,W[i],comp);
     }
 }
+
+void thermo::update(std::vector<std::vector<double>> const& W, const int from, const int to)
+{
+    std::vector<double> comp(n_comp);
+
+    for(int i = from; i <= to; i++)
+    {
+        thermo::composition(comp,W[i]);
+        thermo::T[i] = thermo::temp_new(i,comp,W[i]);
+        thermo::p[i] = thermo::pressure(i,W[i],comp);
+    }
+}

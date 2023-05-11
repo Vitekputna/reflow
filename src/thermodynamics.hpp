@@ -20,6 +20,7 @@ public:
     static void load_specie(specie spec);
 
     static void update(std::vector<std::vector<double>> const& W);
+    static void update(std::vector<std::vector<double>> const& W, const int from, const int to);
 
     static double density(std::vector<double> const& W);
     static double pressure(std::vector<double> const& W);

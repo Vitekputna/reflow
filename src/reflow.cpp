@@ -340,6 +340,9 @@ void reflow::divide_data_parallel()
     cell_startIndices = std::vector<int>(numThreads);
     cell_endIndices = std::vector<int>(numThreads);
 
+    cell_startIndices_full = std::vector<int>(numThreads);
+    cell_endIndices_full = std::vector<int>(numThreads);
+
     wall_startIndices = std::vector<int>(numThreads);
     wall_endIndices = std::vector<int>(numThreads);
 
@@ -351,9 +354,9 @@ void reflow::divide_data_parallel()
 
     // Calculate the start and end indices for each thread
     for (int i = 0; i < numThreads; ++i) {
-        cell_startIndices[i] = i * cell_chunkSize;
-        cell_endIndices[i] = (i == numThreads - 1) ? (cell_startIndices[i] + cell_chunkSize + cell_remaining - 1) : (cell_startIndices[i] + cell_chunkSize - 1);
-        std::cout << cell_startIndices[i] << " " << cell_endIndices[i] << "\n";
+        cell_startIndices_full[i] = i * cell_chunkSize;
+        cell_endIndices_full[i] = (i == numThreads - 1) ? (cell_startIndices_full[i] + cell_chunkSize + cell_remaining - 1) : (cell_startIndices_full[i] + cell_chunkSize - 1);
+        std::cout << cell_startIndices_full[i] << " " << cell_endIndices_full[i] << "\n";
     }
 
     for (int i = 0; i < numThreads; ++i) {
@@ -361,6 +364,14 @@ void reflow::divide_data_parallel()
         wall_endIndices[i] = (i == numThreads - 1) ? (wall_startIndices[i] + wall_chunkSize + wall_remaining - 1) : (wall_startIndices[i] + wall_chunkSize - 1);
         std::cout << wall_startIndices[i] << " " << wall_endIndices[i] << "\n";
     }
+
+    cell_startIndices = cell_startIndices_full;
+    cell_endIndices = cell_endIndices_full;
+    cell_startIndices[0] += 1;
+    cell_endIndices.back() -= 1;
+
+    std::cout << cell_startIndices[0] << " " << cell_endIndices.back() << "\n";
+
     std::cout << "##########################################\n";
 }
 
@@ -388,26 +399,33 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
     std::cout << "##########################################\n";
 
     divide_data_parallel();
-    #pragma omp parallel num_threads(numThreads)
+    #pragma omp parallel shared(dt,var,msh,res,t,n,residual,stream,t_end) private(RUN_FLAG) num_threads(numThreads)
     {
         int threadID = omp_get_thread_num();
         do
         {
             // update pressure and temperature
-            thermo::update(var.W);
-
+            thermo::update(var.W,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
+            #pragma omp barrier
             if(reconstruct)
             {
-                solver::reconstruct(var,msh);
-                solver::reconstruct_pressure(var,msh);    
+                solver::reconstruct(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+                solver::reconstruct_pressure(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);    
             }
 
-            solver::compute_wall_flux(dt,var,msh,fluid_flux);
-            solver::compute_wall_flux(dt,var,msh,dispersed_flux);
-            solver::compute_cell_res(res,var,msh);
-            solver::apply_source_terms(res,var,msh);
-            // solver::chemical_reactions(dt,res,var,msh);
-            solver::droplet_transport(res,var,msh);
+            solver::compute_exact_flux(var,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
+
+            #pragma omp barrier
+            
+            solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_startIndices[threadID],wall_endIndices[threadID]);
+            solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_startIndices[threadID],wall_endIndices[threadID]);
+
+            #pragma omp barrier
+
+            solver::compute_cell_res(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+            solver::apply_source_terms(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+            // solver::chemical_reactions(dt,res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+            solver::droplet_transport(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
 
             // lagrangian particles part
             if(run_w_particles)
@@ -417,22 +435,24 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
             }
 
             // time integration
-            solver::Explicit_Euler(var,res,dt);
+            #pragma omp barrier
+            solver::Explicit_Euler(var,res,dt,cell_startIndices[threadID],cell_endIndices[threadID]);
 
             if(threadID == 0)
+            {
                 // Runtime stuff
                 if(!(n % n_res)) 
                 {
                     stream = std::ofstream("out/res.txt",std::ios_base::app);
                     residual = solver::max_residual(res,var,var.eng_idx);
 
-                    std::cout << "\b\b\r";
-                    std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
+                    // std::cout << "\b\b\r";
+                    // std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
 
                     stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
                     stream.close();
 
-                    RUN_FLAG = maximum_time(t,residual);
+                    
                 }
 
                 // Runtime export
@@ -450,6 +470,14 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
 
                 t += dt;
                 n++;
+            }
+
+            RUN_FLAG = maximum_time(t,residual);
+
+            if(!RUN_FLAG)
+            {
+                std::cout << threadID << " done\n";
+            }
 
         } while (RUN_FLAG);
         // } while (n < 100);

@@ -10,7 +10,7 @@
 #include "chem_solver.hpp"
 
 typedef void(*Boundary_func)(variables&, mesh&, std::vector<double>&);
-typedef void(*flux_func)(variables&, mesh const&, parameters const&);
+typedef void(*flux_func)(variables&, mesh const&, parameters const&, const int, const int);
 
 class reflow
 {
@@ -35,6 +35,8 @@ class reflow
     int numThreads = 1;
     std::vector<int> cell_startIndices;
     std::vector<int> cell_endIndices;
+    std::vector<int> cell_startIndices_full;
+    std::vector<int> cell_endIndices_full;
     std::vector<int> wall_startIndices;
     std::vector<int> wall_endIndices;
 

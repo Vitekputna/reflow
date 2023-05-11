@@ -6,22 +6,22 @@
 #include "euler_droplets.hpp"
 
 void solver::compute_wall_flux(double dt, variables& var, mesh const& msh,
-                               void(*flux)(variables&,mesh const&,parameters const&))
+                               void(*flux)(variables&,mesh const&,parameters const&,const int, const int), const int from, const int to)
 {
-    flux(var, msh, parameters(msh.dx_min,dt,0.7));
+    flux(var, msh, parameters(msh.dx_min,dt,0.7),from,to);
 }
 
-void solver::compute_exact_flux(variables& var)
+void solver::compute_exact_flux(variables& var, const int from, const int to)
 {
-    for(int i = 0; i < var.N; i++)
+    for(int i = from; i <= to; i++)
     {
         Euler_flux(i,var.exact_flux[i],var.W[i]);
     }
 }
 
-void solver::compute_cell_res(std::vector<std::vector<double>>& res,variables& var, mesh const& msh)
+void solver::compute_cell_res(std::vector<std::vector<double>>& res,variables& var, mesh const& msh, const int from, const int to)
 {
-    for(int i = 1; i < var.N-1; i++)
+    for(int i = from; i <= to; i++)
     {
         for(int k = 0; k < var.N_var; k++)
         {
@@ -30,11 +30,11 @@ void solver::compute_cell_res(std::vector<std::vector<double>>& res,variables& v
     }
 }
 
-void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
+void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables& var, mesh const& msh, const int from, const int to)
 {
     var.md[0][2] = 0;
 
-    for(int i = 1; i < var.N-1; i++)
+    for(int i = from; i <= to; i++)
     {
         for(int k = 0; k < var.N_comp; k++)
         {
@@ -46,10 +46,10 @@ void solver::apply_source_terms(std::vector<std::vector<double>>& res, variables
     }
 }
 
-void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
+void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res, variables& var, mesh const& msh, const int from, const int to)
 {
     double dm, V;
-    for(int i = 1; i < var.N-1; i++)
+    for(int i = from; i <= to; i++)
     {
         dm = std::max(0.0,std::min(var.W[i][2],var.W[i][1]/6.6));
 
@@ -61,11 +61,11 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
     }
 }
 
-void solver::droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh)
+void solver::droplet_transport(std::vector<std::vector<double>>& res, variables& var, mesh const& msh, const int from, const int to)
 {
     double dm;
 
-    for(int i = 1; i < var.N-1; i++)
+    for(int i = from; i <= to; i++)
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
@@ -76,12 +76,14 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     }
 }
 
-void solver::reconstruct(variables& var, mesh const& msh)
+void solver::reconstruct(variables& var, mesh const& msh, const int from, const int to)
 {
     double phi;
     std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
 
-    for(auto i = 1; i < var.N-1; i++)
+
+
+    for(auto i = from; i <= to; i++)
     {
         // for(auto k = 0; k < var.N_var; k++)
         for(auto const& k : fluid)
@@ -95,10 +97,10 @@ void solver::reconstruct(variables& var, mesh const& msh)
     }
 }   
 
-void solver::reconstruct_pressure(variables& var, mesh const& msh)
+void solver::reconstruct_pressure(variables& var, mesh const& msh, const int from, const int to)
 {
     double phi;
-    for(auto i = 1; i < var.N-1; i++)
+    for(auto i = from; i <= to; i++)
     {
         phi = van_albada(thermo::p[i+1] - thermo::p[i] , thermo::p[i] - thermo::p[i-1]);
         var.grad_p[i] = phi*(thermo::p[i+1] - thermo::p[i-1])/(msh.x[i+1] - msh.x[i-1]);
@@ -167,8 +169,6 @@ inline double solver::van_leer(double a, double b)
 
 void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters const& par)
 {
-    compute_exact_flux(var);
-
     for(int i = 0; i < var.N_walls; i++)
     {
         for(int k = 0; k < var.N_var; k++)
@@ -178,7 +178,7 @@ void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters con
     }
 }
 
-void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par)
+void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
 {
     double sr,sl;
     double cr,cl,ur,ul;
@@ -186,9 +186,7 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par)
 
     std::vector<int> condensed = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
 
-    compute_exact_flux(var);
-
-    for(int i = 0; i < var.N_walls; i++)
+    for(int i = from; i <= to; i++)
     {
         ur = var.W[i+1][var.mom_idx]/var.W[i+1][0];
         ul = var.W[i][var.mom_idx]/var.W[i][0];
@@ -433,7 +431,7 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
     }
 }
 
-void solver::AUSM2_flux(variables& var, mesh const& msh, parameters const& par)
+void solver::AUSM2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
 {
     double M_right, M_left;
     double p_right, p_left;
@@ -449,7 +447,7 @@ void solver::AUSM2_flux(variables& var, mesh const& msh, parameters const& par)
 
     int cell_idx;
 
-    for(int i = 0; i < var.N_walls; i++)
+    for(int i = from; i <= to; i++)
     {
         wall_pressures(i,wall_p_vec,var,msh);
         wall_states(i,W_left,W_right,var,msh);
@@ -588,9 +586,9 @@ inline void solver::Euler_flux(const double p, std::vector<double>& flux, std::v
     flux[n_var+1] = (W[n_var+1] + p)*W[n_var]/W[0];
 }
 
-void solver::Explicit_Euler(variables& var, std::vector<std::vector<double>>& res, double dt)
+void solver::Explicit_Euler(variables& var, std::vector<std::vector<double>>& res, double dt, const int from, const int to)
 {
-    for(int i = 1; i < var.N-1; i++)
+    for(int i = from; i <= to; i++)
     {
         for(int k = 0; k < var.N_var; k++)
         {
