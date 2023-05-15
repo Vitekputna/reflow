@@ -126,4 +126,5 @@ class reflow
     bool maximum_time_res(double T, double res);
 
     void solve(double t_end, double max_residual, double CFL);
+    void solve_parallel(double _t_end, double _max_residual, double _CFL);
 };

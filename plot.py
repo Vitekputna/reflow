@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cmath as mth
+import sys
 
 def load_file(filename):
     with open(filename, "r") as txt_file:
@@ -84,23 +85,25 @@ def radius(X,N,rho):
     else:
         return r
 
-_,A = load_file("out/A.txt")
-_,r = load_file("out/r.txt")
-x,p = load_file("out/p.txt")
-_,u = load_file("out/u.txt")
-_,T = load_file("out/T.txt")
-_,rho = load_file("out/W0.txt")
-_,md = load_file("out/md.txt")
-_,md_add = load_file("out/md_add.txt")
-_,Y1,Y2,Y3 = load_comp("out/Y.txt")
-_,H = load_file("out/H.txt")
-_,H0 = load_file("out/H0.txt")
-md_add = load("out/md_add.txt")
-X = load("out/X.txt")
-N = load("out/N.txt")
-Ue = load("out/Ue.txt")
-Te = load("out/Te.txt")
-particles = load("out/particles.txt")
+path = sys.argv[1]
+
+_,A = load_file(path+"A.txt")
+_,r = load_file(path+"r.txt")
+x,p = load_file(path+"p.txt")
+_,u = load_file(path+"u.txt")
+_,T = load_file(path+"T.txt")
+_,rho = load_file(path+"W0.txt")
+_,md = load_file(path+"md.txt")
+_,md_add = load_file(path+"md_add.txt")
+_,Y1,Y2,Y3 = load_comp(path+"Y.txt")
+_,H = load_file(path+"H.txt")
+_,H0 = load_file(path+"H0.txt")
+md_add = load(path+"md_add.txt")
+X = load(path+"X.txt")
+N = load(path+"N.txt")
+Ue = load(path+"Ue.txt")
+Te = load(path+"Te.txt")
+particles = load(path+"particles.txt")
 
 Ue = Ue[:,1:]
 Te = Te[:,1:]

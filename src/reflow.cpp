@@ -375,7 +375,7 @@ void reflow::divide_data_parallel()
     std::cout << "##########################################\n";
 }
 
-void reflow::solve(double _t_end, double _max_residual, double _CFL)
+void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
 {
     t_end = _t_end;
     max_res = _max_residual;
@@ -446,8 +446,8 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
                     stream = std::ofstream("out/res.txt",std::ios_base::app);
                     residual = solver::max_residual(res,var,var.eng_idx);
 
-                    // std::cout << "\b\b\r";
-                    // std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
+                    std::cout << "\b\b\r";
+                    std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
 
                     stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
                     stream.close();
@@ -480,8 +480,120 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
             }
 
         } while (RUN_FLAG);
-        // } while (n < 100);
+        // } while (n < 100);  
     }
+
+    std::cout << "\r\n" << std::flush;
+    std::cout << "Simulation done...\n";
+    std::cout << "##########################################\n";
+    std::cout << "total steps[/] \t|end time[s] \t|final residual[/]\n";
+    std::cout << n << "\t\t " << t << "\t\t " << residual << "\n";
+    std::cout << "##########################################\n";
+    std::cout << "Number of particles: " << par_man.particles.size() << "\n";
+
+    var.export_to_file(msh,par_man.particles);
+    msh.export_to_file();
+}
+
+void reflow::solve(double _t_end, double _max_residual, double _CFL)
+{
+    t_end = _t_end;
+    max_res = _max_residual;
+    CFL = _CFL;
+
+    std::vector<std::vector<double>> res(var.N+2,std::vector<double>(var.N_var,0.0));
+
+    int n = 1;
+    double t = 0;
+    double dt = 2e-8;
+    double residual = 2*max_res;
+    bool RUN_FLAG = true;
+
+    auto stream = std::ofstream("out/res.txt");
+    stream << "Time [s]\tResidual[...]\n";
+    stream.close();
+
+    std::cout << "Starting simulation...\n";
+    std::cout << "##########################################\n";
+    std::cout << "time[s]\ttime step[s]\tresidual[]\n";
+    std::cout << "##########################################\n";
+
+    divide_data_parallel();
+    
+    int threadID = 0;
+
+    const int cell_from = 0;
+    const int cell_to = var.N-1;
+
+    const int wall_from = 0;
+    const int wall_to = var.N_walls-1;
+
+    do
+    {
+        // update pressure and temperature
+        thermo::update(var.W);
+        
+        if(reconstruct)
+        {
+            solver::reconstruct(var,msh,cell_from+1,cell_to-1);
+            solver::reconstruct_pressure(var,msh,cell_from+1,cell_to-1);    
+        }
+
+        solver::compute_exact_flux(var,0,cell_to);
+        
+        solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_from,wall_to);
+        // solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_from,wall_to);
+
+        solver::compute_cell_res(res,var,msh,cell_from+1,cell_to-1);
+        solver::apply_source_terms(res,var,msh,cell_from+1,cell_to-1);
+        // solver::chemical_reactions(dt,res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+        solver::droplet_transport(res,var,msh,cell_from+1,cell_to-1);
+
+        // lagrangian particles part
+        if(run_w_particles)
+        {
+            if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
+            lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
+        }
+
+        // time integration
+        solver::Explicit_Euler(var,res,dt,cell_from+1,cell_to-1);
+
+        // Runtime stuff
+        if(!(n % n_res)) 
+        {
+            stream = std::ofstream("out/res.txt",std::ios_base::app);
+            residual = solver::max_residual(res,var,var.eng_idx);
+
+            std::cout << "\b\b\r";
+            std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
+
+            stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
+            stream.close();
+
+            
+        }
+
+        // Runtime export
+        if(!(n % n_exp))
+        {
+            var.export_to_file(msh,par_man.particles);
+            if(run_w_particles) export_particles(par_man.particles);
+            // var.export_timestep(t,msh,par_man.particles);
+        }
+    
+        dt = solver::time_step(var,msh,CFL);
+
+        // boundary
+        apply_boundary_conditions();
+
+        t += dt;
+        n++;
+
+        RUN_FLAG = maximum_time(t,residual);
+
+    } while (RUN_FLAG);
+    // } while (n < 100);  
 
     std::cout << "\r\n" << std::flush;
     std::cout << "Simulation done...\n";

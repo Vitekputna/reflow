@@ -466,7 +466,6 @@ void solver::AUSM2_flux(variables& var, mesh const& msh, parameters const& par, 
 
         c = thermo::speed_of_sound(cell_idx,var.W[cell_idx]);
 
-        // for(int k = 0; k < variables::N_comp + variables::N_drop_eq; k++)
         for(int k = 0; k < variables::N_comp; k++)
         {
             var.flux[i][k] = M_wall*c*var.W[cell_idx][k];
