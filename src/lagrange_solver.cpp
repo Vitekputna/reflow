@@ -33,16 +33,15 @@ inline double lagrange_solver::mass_flux(double r, double dT)
 
 double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<double>& res)
 {
-    static double K1,K2,K3,K4;
-    static double ap,up,rp;
-    static double Tf, uf;
+    double K1,K2,K3,K4;
+    double ap,up,rp;
 
-    Tf = thermo::T[P.last_cell_idx];
-    uf = W[W.size()-2]/W[0];
+    const double Tf = thermo::T[P.last_cell_idx];
+    const double uf = W[W.size()-2]/W[0];
 
-    double C = 1e-2;        // momentum transfer constant
-    double D = 4e-6;        // mass transfer constant
-    double alfa = 10;       // heat transfer constant
+    const double C = 1e-2;        // momentum transfer constant
+    const double D = 4e-6;        // mass transfer constant
+    const double alfa = 10;       // heat transfer constant
 
     // Velocity
 
@@ -86,7 +85,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     P.r += K1/6+K2/3+K3/3+K4/6;
 
     // mass
-    double m0 = P.M;
+    const double m0 = P.M;
     double md;
 
     if(P.r < 0)
@@ -120,8 +119,8 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
 {
     double V;
 
-    omp_set_num_threads(6);
-    #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
+    // omp_set_num_threads(6);
+    // #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
     for(int j = 0; j < particles.size();j++)
     {
         if(particles[j].in_use)
@@ -142,7 +141,6 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
             }
 
             // update particle speed, mass, temp...
-            // V = msh.A[particles[j].last_cell_idx]*(msh.xf[particles[j].last_cell_idx] - msh.xf[particles[j].last_cell_idx-1]);
             V = msh.V[particles[j].last_cell_idx];
             var.md[particles[j].last_cell_idx][2] += integrate_particle(dt,V,particles[j],var.W[particles[j].last_cell_idx],res[particles[j].last_cell_idx]);
         }

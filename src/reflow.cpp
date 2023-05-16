@@ -570,8 +570,6 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
 
             stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
             stream.close();
-
-            
         }
 
         // Runtime export

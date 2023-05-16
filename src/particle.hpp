@@ -6,7 +6,7 @@ struct particle
     double r, u, T, rho; // vlastnosti grupy kapiček
     double m, M; // hmotnost jedné kapičky, hmotnost celé grupy
     double x = 0; // poloha grupy
-    unsigned int N ; // počet kapiček v grupě
+    double N ; // počet kapiček v grupě
 
     unsigned int specie_idx = 0;
 
@@ -16,7 +16,7 @@ struct particle
     bool in_use = false;
 
     particle();
-    particle(unsigned int _N, double _x, double _r, double _u, double _rho, double _T);
+    particle(double _N, double _x, double _r, double _u, double _rho, double _T);
     void reset();
 };
 
@@ -50,8 +50,8 @@ class particle_manager
     void uniform_particle_inlet(double dt, std::vector<double>& parameters);
     void normal_particle_inlet(double dt, std::vector<double>& parameters);
 
-    bool spawn_particles_monodispersion(int n_groups, int n_particles, std::vector<double>& parameters);
-    bool spawn_particles_uniform(int n_groups, int n_particles, std::vector<double>& parameters);
-    bool spawn_particles_normal(int n_groups, int n_particles, std::vector<double>& parameters);
+    bool spawn_particles_monodispersion(int n_groups, double n_particles, std::vector<double>& parameters);
+    bool spawn_particles_uniform(int n_groups, double n_particles, std::vector<double>& parameters);
+    bool spawn_particles_normal(int n_groups, double n_particles, std::vector<double>& parameters);
 };
 
