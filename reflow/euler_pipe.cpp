@@ -30,7 +30,8 @@ int main(int argc, char** argv)
     // výpočet motoru
     reflow S;
     S.set_numThreads(1);
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.1,500},{0.1,5,500}});
+    // S.refine_mesh(std::vector<std::vector<double>>{{0,0.1,500},{0.1,5,500}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,5,1000}});
     S.msh.constant_area(0.002);
 
     // S.load_old_data("out/",N_comp,N_frac,true,true);

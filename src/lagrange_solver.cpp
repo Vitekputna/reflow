@@ -6,13 +6,17 @@
 #include <cmath>
 #include <algorithm>
 #include "omp.h"
+#include "euler_droplets.hpp"
 
 
 // extern double kappa, r;
 
-inline double lagrange_solver::acceleration(double Cd, double r, double du)
+inline double lagrange_solver::acceleration(double r, double rho_l, double rho_g, double mu, double du)
 {
-    return 3*Cd*std::abs(du)*du/2/r;
+    const double Re = (rho_g*std::abs(du)*2*r)/mu;
+    const double Cd = euler_droplets::Kelbaliyev_Ceylan(Re);
+
+    return (3*Cd*rho_g*std::abs(du)*du)/(8*r*rho_l);
 }
 
 inline double lagrange_solver::heat_flux(double alfa, double C, double dT)
@@ -20,15 +24,13 @@ inline double lagrange_solver::heat_flux(double alfa, double C, double dT)
     return alfa*dT/C;
 }
 
-inline double lagrange_solver::radius_change(double D, double r, double rho, double dT)
+inline double lagrange_solver::radius_change(double r, double dY, double rho_l, double rho_g, double u_l, double u_g, double mu, double D)
 {
-    // return std::min(0.0,-D/4/3.14159/((r*r)*rho));   
-    return std::min(0.0,-D*log(1+1e-3*dT)/r);
-}
+    const double Re = (rho_g*std::abs(u_g - u_l)*2*r)/mu;
+    const double Sc = mu/(rho_g*D);
+    const double Sh = 2+0.6*pow(Re,0.5)*pow(Sc,0.333);
 
-inline double lagrange_solver::mass_flux(double r, double dT)
-{
-    return std::min(0.0,3*r*log(1 + 1e-3*std::max(0.0,dT)));
+    return (Sh*rho_g*D)/(2*r*rho_l)*dY;
 }
 
 double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<double>& res)
@@ -36,66 +38,95 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     double K1,K2,K3,K4;
     double ap,up,rp;
 
+    const double rho_l = thermo::species[2].rho_liq;
+    const double rho_gas = thermo::density(W);
+
     const double Tf = thermo::T[P.last_cell_idx];
+    const double p = thermo::p[P.last_cell_idx];
     const double uf = W[W.size()-2]/W[0];
 
-    const double C = 1e-2;        // momentum transfer constant
-    const double D = 4e-6;        // mass transfer constant
-    const double alfa = 10;       // heat transfer constant
+    const double u_gas = W[0]/W[variables::mom_idx];
+    const double u_drop = P.u;
+
+    const double r = P.r;
+
+    std::vector<double> comp = std::vector<double>(variables::N_comp,0);
+    thermo::composition(comp,W);
+
+    const double dY = comp[2] - euler_droplets::fuel_mass_fraction(p,P.T);
+
+    const double Df = thermo::difusivity(comp,Tf);
+    const double mu = thermo::viscosity(comp,Tf);
+    const double cp = thermo::cp_mix_comp(comp,Tf);
+    const double k = thermo::thermal_conductivity(comp,Tf);
+    const double h_vap = thermo::species[2].h_vap;
+
+    // const double Re = (rho_gas*std::abs(u_gas - u_drop)*2*r)/mu;
+    const double Pr = cp*mu/k;
+    // const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
+
+    // Drag coefficient
+    // const double C = euler_droplets::Kelbaliyev_Ceylan(Re);
+    // const double C = 0.45;
+
+    // Heat transfer coefficient
+    // const double alfa = euler_droplets::Ranz_Marshall(Re,Pr);
+
+    // Mass transfer coefficient
+
 
     // Velocity
-
-    // if(P.r > 2e-6)
-    // {
-    //     K1 = dt*acceleration(C,P.r,uf - P.u);
-    //     up = P.u + K1/2;
-    //     ap = acceleration(C,P.r,uf - up);
-    //     K2 = dt*ap;
-    //     up = P.u + K2/2;
-    //     ap = acceleration(C,P.r,uf - up);
-    //     K3 = dt*ap;
-    //     up = P.u + K3;
-    //     ap = acceleration(C,P.r,uf - up);
-    //     K4 = dt*ap;
-    //     P.u += K1/6+K2/3+K3/3+K4/6;
-    // }
-    // else
-    // {
-    //     P.u = uf;   
-    // }
+    if(P.r > 1e-6)
+    {
+        K1 = dt*acceleration(P.r,rho_l,rho_gas,mu,uf - P.u);
+        up = P.u + K1/2;
+        ap = acceleration(P.r,rho_l,rho_gas,mu,uf - up);
+        K2 = dt*ap;
+        up = P.u + K2/2;
+        ap = acceleration(P.r,rho_l,rho_gas,mu,uf - up);
+        K3 = dt*ap;
+        up = P.u + K3;
+        ap = acceleration(P.r,rho_l,rho_gas,mu,uf - up);
+        K4 = dt*ap;
+        P.u += K1/6+K2/3+K3/3+K4/6;
+    }
+    else
+    {
+        P.u = uf;   
+    }
     
-    P.u = uf;   
     P.x += P.u*dt;
+
+    // Temperature
+    // P.T += alfa*dt*(Tf - P.T);
 
     if(P.x <= 0.005)
     {
         return 0.0;
     }
 
-    // P.T += alfa*dt*(Tf - P.T);
-
     // radius
-    K1 = dt*radius_change(D,P.r,P.rho,Tf-200);
-    rp = P.r + K1/2;    
-    K2 = dt*radius_change(D,rp,P.rho,Tf-200);
-    rp = P.r + K2/2;
-    K3 = dt*radius_change(D,rp,P.rho,Tf-200);
-    rp = P.r + K3;
-    K4 = dt*radius_change(D,rp,P.rho,Tf-200);
-    P.r += K1/6+K2/3+K3/3+K4/6;
+    // K1 = dt*radius_change(r,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    // rp = P.r + K1/2;    
+    // K2 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    // rp = P.r + K2/2;
+    // K3 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    // rp = P.r + K3;
+    // K4 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    // P.r += K1/6+K2/3+K3/3+K4/6;
 
     // mass
     const double m0 = P.M;
     double md;
 
-    if(P.r < 0)
+    if(P.r < 1e-6)
     {
         md = m0/dt/V;
 
-        res[0] += md;
-        res[2] += md;
-        res[3] += md*P.u;
-        res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
+        // res[0] += md;
+        // res[2] += md;
+        // res[3] += md*P.u;
+        // res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
         P.reset();
         return md;
@@ -107,10 +138,10 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     md = (m0 - P.M)/dt/V;
 
-    res[0] += md;
-    res[2] += md;
-    res[3] += md*P.u;
-    res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
+    // res[0] += md;
+    // res[2] += md;
+    // res[3] += md*P.u;
+    // res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
     return md;
 }
@@ -119,8 +150,8 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
 {
     double V;
 
-    // omp_set_num_threads(6);
-    // #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
+    omp_set_num_threads(6);
+    #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
     for(int j = 0; j < particles.size();j++)
     {
         if(particles[j].in_use)

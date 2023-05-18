@@ -10,6 +10,9 @@ public:
     static std::vector<double> T;
     static std::vector<double> p;
 
+    static std::vector<double> Pr;
+    static std::vector<double> Sc;
+
     static int n_comp;
     static double thershold_comp;
 

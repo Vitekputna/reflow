@@ -69,7 +69,7 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
+        // dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
         euler_droplets::droplet_drag(i,var.W[i],res[i]);
         // euler_droplets::droplet_heat(i,var.W[i],res[i]);
         var.md[i][2] = dm;
@@ -216,8 +216,8 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
             left = false;
         }
 
-        // for(int k = 0; k < var.N_var; k++)
-        for(auto const& k : condensed)
+        for(int k = 0; k < var.N_var; k++)
+        // for(auto const& k : condensed)
         {
             var.flux[i][k] = left*var.exact_flux[i][k] + center*((sr*var.exact_flux[i][k] - sl*var.exact_flux[i+1][k] + sr*sl*(var.W[i+1][k]-var.W[i][k]))/(sr-sl))
                             +right*var.exact_flux[i+1][k];

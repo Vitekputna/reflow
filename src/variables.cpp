@@ -407,7 +407,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
         if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
     }
 
-    int n;
+    double n;
     for(auto const& P : particles)
     {
         if(P.in_use)
