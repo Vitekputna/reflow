@@ -23,7 +23,8 @@ void thermo::init(int n)
 // Using ideal gas law
 double thermo::density(std::vector<double> const& W)
 {
-    static double chi;
+    double chi;
+    const double liq_vol_frac = liquid_fraction(W);
     chi = 0;
 
     for(auto const& idx : variables::quisc_drop_idx)
@@ -31,7 +32,7 @@ double thermo::density(std::vector<double> const& W)
         chi += W[idx];
     }
 
-    return W[0]-chi;
+    return (W[0]-chi)/(1-liq_vol_frac);
 }
 
 double thermo::speed_of_sound(int i, std::vector<double> const& W)
@@ -101,7 +102,7 @@ void thermo::composition(std::vector<double>& comp, std::vector<double> const& W
     sum = 0;
     for(auto idx = 1; idx < n_comp; idx++)
     {
-        comp[idx] = W[idx]/rho;
+        comp[idx] = W[idx]/W[0];
         sum += comp[idx];
     }
     comp[0] = 1-sum;
@@ -229,6 +230,25 @@ std::vector<double> thermo::mass_fraction(std::vector<double> const& molar_fract
     return mass_fraction;
 }
 
+double thermo::liquid_fraction(std::vector<double> const& W)
+{
+    const double liquid_density = thermo::species[2].rho_liq;
+
+    double total_bulk_density = 0;
+
+    for(auto const& frac : variables::quisc_drop_idx)
+    {
+        total_bulk_density += W[frac];
+    }
+
+    for(auto const& frac : variables::active_drop_idx)
+    {
+        total_bulk_density += W[frac];
+    }
+
+    return total_bulk_density/liquid_density;
+}
+
 double thermo::difusivity(std::vector<double> const& comp, double T)
 {
     return 1e-5;
@@ -285,7 +305,9 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
     int n = W.size()-1;
     rho = density(W);
 
-    C = W[n]/rho - 0.5*W[n-1]*W[n-1]/W[0]/rho;
+    const double gas_vol_frac = 1-liquid_fraction(W);
+
+    C = (W[n]/rho - 0.5*W[n-1]*W[n-1]/W[0]/rho)/gas_vol_frac;
     
     r = thermo::r_mix_comp(comp);
     
@@ -322,13 +344,12 @@ double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<do
 
 double thermo::pressure(int i, std::vector<double> const& W, std::vector<double> const& comp)
 {
-    int mom_idx = W.size()-2;
-    double rho_g;
-    double rho;
-    rho_g = density(W);
-    rho = W[0];
+    const double rho = density(W);
+    const double gas_vol_frac = 1-thermo::liquid_fraction(W);
 
-    return rho_g*thermo::enthalpy(i,W) + 0.5*W[mom_idx]*W[mom_idx]/rho - W.back();
+    const double u = W[variables::mom_idx]/W[0];
+
+    return rho*thermo::enthalpy(i,W) + 0.5*rho*u*u - W.back()/gas_vol_frac;
 }
 
 void thermo::update(std::vector<std::vector<double>> const& W)

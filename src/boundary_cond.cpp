@@ -21,15 +21,19 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
     const double p = (1-alfa)*p_flex + alfa*p_fixed;
 
     const double r = thermo::r_mix(var.W.rbegin()[1]);
-    const double T = p/r/var.W.back()[0];
 
-    const double rho_gas = var.W.back()[0];
-    const double u_gas = var.W.back()[var.mom_idx]/rho_gas;
+    const double rho = thermo::density(var.W.rbegin()[1]);
+
+    const double T = p/r/rho;
+
+    const double u_gas = var.W.back()[var.mom_idx]/var.W.back()[0];
 
     static std::vector<double> comp(var.N_comp);
     thermo::composition(comp,var.W.rbegin()[1]);
 
-    double e = (thermo::enthalpy(T,comp) + 0.5*u_gas*u_gas)*rho_gas - p;
+    const double gas_vol_frac = 1-thermo::liquid_fraction(var.W.rbegin()[1]);
+
+    double e = gas_vol_frac*((thermo::enthalpy(T,comp) + 0.5*u_gas*u_gas)*rho - p);
 
     var.W.back()[var.eng_idx] = e;
 }
@@ -44,11 +48,11 @@ void boundary::mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& v
     // double p = 2*p1-p2; //lin extrapolation of 1 and 2
     // double p = 0.5*(p1 + p2); //avg of 1 and 2
     // double p = p2; // val of 1
-    double p = p1; // val of 1
+    const double p = p1; // val of 1
     
     const std::vector<double> comp = {values[2],values[3],values[4]};
 
-    double r = thermo::r_mix_comp(comp);
+    const double r = thermo::r_mix_comp(comp);
 
     var.W[0][0] = p/r/values[1];
 
@@ -59,7 +63,9 @@ void boundary::mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& v
 
     var.W[0][var.mom_idx] = values[0]/msh.A[0];
 
-    var.W[0][var.eng_idx] = (thermo::enthalpy(values[1],comp) + 0.5*var.W[0][var.mom_idx]*var.W[0][var.mom_idx]/var.W[0][0]/var.W[0][0])*var.W[0][0] - p;
+    const double u = var.W[0][var.mom_idx]/var.W[0][0];
+
+    var.W[0][var.eng_idx] = (thermo::enthalpy(values[1],comp) + 0.5*u*u)*var.W[0][0] - p;
 }
 // (N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
 void boundary::quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<double>& values)
@@ -124,13 +130,11 @@ void boundary::active_drop_inlet(variables& var, mesh& msh, std::vector<double>&
 void boundary::active_thermal_drop_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     const int N = values[0];
-    const double md_gas = var.W[0][variables::mom_idx]*msh.A[0];
-    const double rho_gas = var.W[0][0];
     const double rho_cond = values.rbegin()[2];
     const double u_cond = values.rbegin()[1];
     const double T_cond = values.back();
-    const double u_gas = var.W[0][variables::mom_idx]/rho_gas;
 
+    // Dispersed fraction
     double m,r_drop,md_frac;
     double droplet_total_mf = 0;
     
@@ -141,13 +145,38 @@ void boundary::active_thermal_drop_inlet(variables& var, mesh& msh, std::vector<
 
         m = 4*M_PI*pow(r_drop,3)*rho_cond/3;
 
-        droplet_total_mf += rho_gas*md_frac/md_gas;
-
+        //mass concentraion
         var.W[0][var.N_comp+i*2+1] = md_frac/(msh.A[0]*u_cond);
+
+        //number concentration
         var.W[0][var.N_comp+i*2] = var.W[0][var.N_comp+i*2+1]/m;
+
+        //momentum
         var.W[0][variables::drop_mom_idx[i]] = var.W[0][var.N_comp+i*2+1]*u_cond;
+
+        //energy
         var.W[0][var.N_comp + 3*variables::N_drop_frac + i] = var.W[0][var.N_comp+i*2+1]*thermo::species[2].C*T_cond;
     }
+
+    // Continuous phase correction
+    const double gas_vol_frac = 1- thermo::liquid_fraction(var.W[0]);
+
+    const double gas_density = var.W[0][0];
+
+    for(int i = 0; i < variables::N_comp; i++)
+    {
+        var.W[0][i] *= gas_vol_frac; 
+    }
+
+    const double gas_momentum = var.W[0][variables::mom_idx];
+    const double u_gas = gas_momentum/gas_density;
+    const double u_gas_corrected = u_gas/gas_vol_frac;
+
+    var.W[0][variables::mom_idx] = gas_vol_frac*gas_density*u_gas_corrected;
+
+    const double gas_energy = var.W[0][variables::eng_idx];
+
+    var.W[0][variables::eng_idx] = (gas_energy - 0.5*gas_density*u_gas*u_gas + 0.5*gas_density*u_gas_corrected*u_gas_corrected)*gas_vol_frac;
 }
 
 void boundary::supersonic_outlet(variables& var, mesh& msh, std::vector<double>& values)

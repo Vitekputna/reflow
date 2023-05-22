@@ -138,6 +138,8 @@ void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std
 
         res[mom_idx] += 0.5*Cd*W[num_idx]*rho_gas*A*std::abs(u_gas-u_drop)*(u_gas-u_drop);
         res[variables::mom_idx] += 0.5*Cd*W[num_idx]*rho_gas*A*std::abs(u_gas-u_drop)*(u_gas-u_drop);
+
+        
     }
 }
 

@@ -50,6 +50,7 @@ public:
 
     static std::vector<double> molar_fraction(std::vector<double> const& mass_fraction);
     static std::vector<double> mass_fraction(std::vector<double> const& molar_fraction);
+    static double liquid_fraction(std::vector<double> const& W);
 
     static double viscosity(std::vector<double> const& comp, double T);
 

@@ -48,7 +48,7 @@ class reflow
     // Solver settings
     bool run_w_particles = false;
     bool reconstruct = false;
-    flux_func fluid_flux = solver::AUSM2_flux;
+    flux_func fluid_flux = solver::HLL2_flux;
     flux_func dispersed_flux = solver::HLL_flux;
 
     // Run criteria

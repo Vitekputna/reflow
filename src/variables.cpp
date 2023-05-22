@@ -398,7 +398,13 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-
+    stream =  std::ofstream("out/liquid_volume_frac.txt");
+    for(int i = 0; i < N; i++)
+    {
+        stream << msh.x[i] << " ";
+        stream << thermo::liquid_fraction(W[i]) << "\n";
+    }
+    stream.close();
 
     std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
 

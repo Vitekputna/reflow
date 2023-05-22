@@ -234,8 +234,8 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
     double p_right, p_left;
     bool right, left, center;
 
-    // std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
-    std::vector<int> condensed = {3,4,5,6};
+    std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
+    // std::vector<int> condensed = {3,4,5,6};
 
     std::vector<double> W_left(var.N_var);
     std::vector<double> W_right(var.N_var);
@@ -286,8 +286,8 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
         }
 
         // for(int k = 0; k < var.N_var; k++)
-        // for(auto const& k : fluid)
-        for(auto const& k : condensed)
+        for(auto const& k : fluid)
+        // for(auto const& k : condensed)
         {
             var.flux[i][k] = left*F_left[k] + center*((sr*F_left[k] - sl*F_right[k] + sr*sl*(W_right[k]-W_left[k]))/(sr-sl))
                             +right*F_right[k];
@@ -531,8 +531,10 @@ inline void solver::Euler_flux(int i, std::vector<double>& flux, std::vector<dou
         flux[eng_idx] = W[eng_idx]*W[mom_idx]/(W[frac_idx] + 1e-12);
     }
 
-    flux[n_var] = W[n_var]*W[n_var]/W[0] + p;
-    flux[n_var+1] = (W[n_var+1] + p)*W[n_var]/W[0];
+    const double gas_vol_frac = 1-thermo::liquid_fraction(W);
+
+    flux[n_var] = W[n_var]*W[n_var]/W[0] + p*gas_vol_frac;
+    flux[n_var+1] = (W[n_var+1] + p*gas_vol_frac)*W[n_var]/W[0];
 }
 
 inline void solver::Euler_flux(const double p, std::vector<double>& flux, std::vector<double> const& W)
