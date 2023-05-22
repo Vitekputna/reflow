@@ -7,6 +7,8 @@ namespace euler_droplets
     void droplet_heat(const int i, std::vector<double> const& W, std::vector<double>& res);
 
     double Kelbaliyev_Ceylan(const double Re);
+    double Ingebo(const double Re);
+
     double Ranz_Marshall(const double Re, const double Pr);
 
     double droplet_temperature();

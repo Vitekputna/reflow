@@ -287,6 +287,16 @@ void mesh::export_to_file()
     stream << "\n";
     stream.close();
 
+    stream =  std::ofstream("out/V.txt");
+
+    for(int i = 0; i < N; i++)
+    {
+        stream << x[i] << " " << V[i] << "\n";
+    }
+
+    stream << "\n";
+    stream.close();
+
     stream =  std::ofstream("out/Af.txt");
 
     for(int i = 0; i < N-1; i++)

@@ -184,7 +184,8 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
     double cr,cl,ur,ul;
     bool right, left, center;
 
-    std::vector<int> condensed = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
+    // std::vector<int> condensed = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
+    std::vector<int> condensed = {3,4,5,6};
 
     for(int i = from; i <= to; i++)
     {
@@ -216,6 +217,7 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
             left = false;
         }
 
+    
         for(int k = 0; k < var.N_var; k++)
         // for(auto const& k : condensed)
         {
@@ -225,14 +227,15 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
     }
 }
 
-void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par)
+void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
 {
     double sr,sl;
     double cr,cl,ur,ul;
     double p_right, p_left;
     bool right, left, center;
 
-    std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
+    // std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
+    std::vector<int> condensed = {3,4,5,6};
 
     std::vector<double> W_left(var.N_var);
     std::vector<double> W_right(var.N_var);
@@ -283,7 +286,8 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par)
         }
 
         // for(int k = 0; k < var.N_var; k++)
-        for(auto const& k : fluid)
+        // for(auto const& k : fluid)
+        for(auto const& k : condensed)
         {
             var.flux[i][k] = left*F_left[k] + center*((sr*F_left[k] - sl*F_right[k] + sr*sl*(W_right[k]-W_left[k]))/(sr-sl))
                             +right*F_right[k];
@@ -431,7 +435,7 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
     }
 }
 
-void solver::AUSM2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::AUSM2_flux(variables &var, mesh const &msh, parameters const &par, const int from, const int to)
 {
     double M_right, M_left;
     double p_right, p_left;

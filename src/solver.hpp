@@ -36,7 +36,7 @@ namespace solver
     void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par);
     void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par);
     void HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
-    void HLL2_flux(variables& var, mesh const& msh, parameters const& par);
+    void HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
     void AUSM_flux(variables& var, mesh const& msh, parameters const& par);
     void AUSM2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
     void upwind(variables& var, mesh const& msh, parameters const& par);

@@ -13,14 +13,23 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
         var.W.back()[idx] = var.W.rbegin()[1][idx];
     }
 
-    double r = thermo::r_mix(var.W.rbegin()[1]);
+    const double alfa = 1e-6;
 
-    double T = values[0]/r/var.W.back()[0];
+    const double p_flex = 0.5*(thermo::p.rbegin()[1] + thermo::p.rbegin()[2]);
+    const double p_fixed = values[0];
+
+    const double p = (1-alfa)*p_flex + alfa*p_fixed;
+
+    const double r = thermo::r_mix(var.W.rbegin()[1]);
+    const double T = p/r/var.W.back()[0];
+
+    const double rho_gas = var.W.back()[0];
+    const double u_gas = var.W.back()[var.mom_idx]/rho_gas;
 
     static std::vector<double> comp(var.N_comp);
     thermo::composition(comp,var.W.rbegin()[1]);
 
-    double e = (thermo::enthalpy(T,comp) + 0.5*var.W.back()[var.mom_idx]*var.W.back()[var.mom_idx]/var.W.back()[0]/var.W.back()[0])*var.W.back()[0] - values[0]; 
+    double e = (thermo::enthalpy(T,comp) + 0.5*u_gas*u_gas)*rho_gas - p;
 
     var.W.back()[var.eng_idx] = e;
 }
@@ -29,12 +38,13 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
 void boundary::mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
     // přenos tlaku
-    // double p1 = thermo::p[1];
+    double p1 = thermo::p[1];
     double p2 = thermo::p[2];
 
     // double p = 2*p1-p2; //lin extrapolation of 1 and 2
     // double p = 0.5*(p1 + p2); //avg of 1 and 2
-    double p = p2; // val of 1
+    // double p = p2; // val of 1
+    double p = p1; // val of 1
     
     const std::vector<double> comp = {values[2],values[3],values[4]};
 

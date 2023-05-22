@@ -125,7 +125,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
         // res[0] += md;
         // res[2] += md;
-        // res[3] += md*P.u;
+        res[3] += md*P.u;
         // res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
         P.reset();
@@ -140,7 +140,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     // res[0] += md;
     // res[2] += md;
-    // res[3] += md*P.u;
+    res[3] += md*P.u + (P.u-u_drop)*P.M/dt/V;
     // res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
     return md;

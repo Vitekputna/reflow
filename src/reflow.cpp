@@ -517,8 +517,6 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
     std::cout << "##########################################\n";
     std::cout << "time[s]\ttime step[s]\tresidual[]\n";
     std::cout << "##########################################\n";
-
-    divide_data_parallel();
     
     int threadID = 0;
 

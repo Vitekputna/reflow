@@ -12,9 +12,13 @@ double T0 = 300;
 double p2 = 101325;
 double md = 100;
 
-double OF = 6.6;
-double m_F = md/(OF+1);
-double m_OX = md-m_F;
+// double OF = 1;
+// double m_F = md/(OF+1);
+// double m_OX = md-m_F;
+
+double OF = 1;
+double m_OX = 100;
+double m_F = m_OX/OF;
 
 int main(int argc, char** argv)
 {
@@ -24,6 +28,8 @@ int main(int argc, char** argv)
     // Mesh generation
     Simulation.refine_mesh(std::vector<std::vector<double>>{{0,5,1000}});
     Simulation.msh.constant_area(0.002);
+
+    // Simulation.load_old_data("out/",3,0,true,true);
 
     Simulation.msh.export_to_file();
 
@@ -50,16 +56,16 @@ int main(int argc, char** argv)
 
     // Lagrangian particles manager and specie init
     Simulation.init_particles(1e6,1e3,1000);
-    Simulation.add_lagrangian_mono_particles(2,m_F,700,30e-6 ,-0.0004,40,300,300,1e5,1e3);
+    Simulation.add_lagrangian_mono_particles(2,m_F,700,30e-6 ,-0.0004,0.5*u,300,300,1e5,1e3);
     // Simulation.add_lagrangian_unif_particles(2,20,700,1e-4,1e-6,0,15,300,300,1e5,1e-3);
     // Simulation.add_lagrangian_norm_particles(2,m_F,700,30e-6,1e-6,0,40,300,300,1e5,1e-3);
 
     // Boundary functions and values
     Simulation.add_boundary_function(boundary::mass_flow_inlet,std::vector<double>{m_OX,300,0,1,0});
-    Simulation.add_boundary_function(boundary::subsonic_outlet,std::vector<double>{p2});
+    Simulation.add_boundary_function(boundary::supersonic_outlet,std::vector<double>{p2});
 
     // Solving
-    Simulation.solve(1,1000,0.2);
+    Simulation.solve(2,1000,0.2);
 
     // Exporting all lagrangian particles
     Simulation.var.export_to_file(Simulation.msh,Simulation.par_man.particles);

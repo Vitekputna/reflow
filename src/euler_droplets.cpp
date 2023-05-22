@@ -22,6 +22,12 @@ double euler_droplets::Kelbaliyev_Ceylan(const double Re)
     return (24/Re)*pow(1 + 18.5*pow(Re,3.6) + pow(Re/2,11),1/30) + (4/9)*pow(Re,4.5)/(330+pow(Re,4/5));
 }
 
+// Multiphase flows with droplets and particles str. 73
+double euler_droplets::Ingebo(const double Re)
+{
+    return 27*pow(Re,-0.84);
+}
+
 // Multiphase flows with droplets and particles
 double euler_droplets::Ranz_Marshall(const double Re, const double Pr)
 {
@@ -131,7 +137,7 @@ void euler_droplets::droplet_drag(const int i, std::vector<double> const& W, std
         // Cd = 24/Re;
 
         res[mom_idx] += 0.5*Cd*W[num_idx]*rho_gas*A*std::abs(u_gas-u_drop)*(u_gas-u_drop);
-        // res[variables::mom_idx] += -0.5*Cd*W[num_idx]*thermo::density(W)*A*std::abs(u_gas-u_drop)*(u_gas-u_drop);
+        res[variables::mom_idx] += 0.5*Cd*W[num_idx]*rho_gas*A*std::abs(u_gas-u_drop)*(u_gas-u_drop);
     }
 }
 

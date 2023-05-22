@@ -137,7 +137,6 @@ def plot_lagrange(path):
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
-
-plot_euler("tests/euler_drag/")
-plot_lagrange("tests/lagrange_drag/")
+plot_euler("tests/euler2/")
+plot_lagrange("tests/lagrange2/")
 plt.show()
