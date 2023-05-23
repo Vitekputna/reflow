@@ -69,9 +69,9 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
     {
         if(msh.x[i] < 0.005) continue; // not solving for droplet evaporation near inlet boundary
 
-        // dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
+        dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
         euler_droplets::droplet_drag(i,var.W[i],res[i]);
-        // euler_droplets::droplet_heat(i,var.W[i],res[i]);
+        euler_droplets::droplet_heat(i,var.W[i],res[i]);
         var.md[i][2] = dm;
     }
 }
@@ -80,8 +80,6 @@ void solver::reconstruct(variables& var, mesh const& msh, const int from, const 
 {
     double phi;
     std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
-
-
 
     for(auto i = from; i <= to; i++)
     {
@@ -218,8 +216,8 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
         }
 
     
-        for(int k = 0; k < var.N_var; k++)
-        // for(auto const& k : condensed)
+        // for(int k = 0; k < var.N_var; k++)
+        for(auto const& k : condensed)
         {
             var.flux[i][k] = left*var.exact_flux[i][k] + center*((sr*var.exact_flux[i][k] - sl*var.exact_flux[i+1][k] + sr*sl*(var.W[i+1][k]-var.W[i][k]))/(sr-sl))
                             +right*var.exact_flux[i+1][k];
@@ -336,7 +334,7 @@ void solver::reconstructed_wave_speed(int i, std::vector<double>& a, std::vector
     a[size-1] = W[size-2]/W[0] + c;
 }
 
-void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par)
+void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
 {
     std::vector<double> fr(var.N_var,0.0);
     std::vector<double> fl(var.N_var,0.0);
@@ -345,7 +343,9 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
 
     double ul, ur, a;
 
-    for(int i = 0; i < var.N_walls; i++)
+    std::vector<int> condensed = {3,4,5,6};
+
+    for(int i = from; i <= to; i++)
     {
         reconstructed_flux(i,fl,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
         reconstructed_flux(i+1,fr,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
@@ -353,7 +353,8 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
         reconstructed_wave_speed(i,al,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
         reconstructed_wave_speed(i+1,ar,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
 
-        for(int k = 0; k < var.N_var; k++)
+        // for(int k = 0; k < var.N_var; k++)
+        for(auto const& k : condensed)
         {
             ul = var.W[i][k] + var.grad[i][k]*(msh.xf[i]-msh.x[i]);
             ur = var.W[i+1][k] + var.grad[i+1][k]*(msh.xf[i]-msh.x[i+1]);
@@ -397,7 +398,7 @@ double solver::AUSM_wall_pressure(double M_left, double M_right, double p_left, 
     return P_wall;
 }
 
-void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
+void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
 {
     double M_right, M_left;
     double p_right, p_left;
@@ -409,7 +410,7 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par)
 
     int cell_idx;
 
-    for(int i = 0; i < var.N_walls; i++)
+    for(int i = from; i <= to; i++)
     {
         M_right = thermo::mach_number(i+1,var.W[i+1]);
         p_right = thermo::p[i+1];
@@ -447,8 +448,6 @@ void solver::AUSM2_flux(variables &var, mesh const &msh, parameters const &par, 
 
     std::vector<double> wall_p_vec(2,0.0);
 
-    std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
-
     int cell_idx;
 
     for(int i = from; i <= to; i++)
@@ -477,6 +476,28 @@ void solver::AUSM2_flux(variables &var, mesh const &msh, parameters const &par, 
 
         var.flux[i][var.mom_idx] = M_wall*c*var.W[cell_idx][var.mom_idx] + p_wall;
         var.flux[i][var.eng_idx] = M_wall*c*(var.W[cell_idx][var.eng_idx] + thermo::p[cell_idx]);
+    }
+}
+
+void solver::upwind(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+{
+    int frac_idx, num_idx, mom_idx, eng_idx;
+
+    double u_wall;
+
+
+    for(int i = from; i <= to; i++)
+    {
+        
+
+
+        for(auto const& idx : variables::active_drop_idx)
+        {
+            frac_idx = variables::active_drop_idx[idx];
+            num_idx = variables::active_drop_idx[idx]-1;
+            mom_idx = variables::N_comp + 2*variables::N_drop_frac + idx;
+            eng_idx = variables::N_comp + 2*variables::N_drop_frac + variables::N_drop_mom_eq + idx;
+        }
     }
 }
 
@@ -587,8 +608,10 @@ inline void solver::Euler_flux(const double p, std::vector<double>& flux, std::v
         flux[eng_idx] = W[eng_idx]*W[mom_idx]/(W[frac_idx] + 1e-12);
     }
 
-    flux[n_var] = W[n_var]*W[n_var]/W[0] + p;
-    flux[n_var+1] = (W[n_var+1] + p)*W[n_var]/W[0];
+    const double gas_vol_frac = 1-thermo::liquid_fraction(W);
+
+    flux[n_var] = W[n_var]*W[n_var]/W[0] + p*gas_vol_frac;
+    flux[n_var+1] = (W[n_var+1] + p*gas_vol_frac)*W[n_var]/W[0];
 }
 
 void solver::Explicit_Euler(variables& var, std::vector<std::vector<double>>& res, double dt, const int from, const int to)
