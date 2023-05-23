@@ -33,7 +33,7 @@ namespace solver
     inline double van_leer(double a, double b);
 
     // explicit fluxes
-    void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par);
+    void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par, const int from, const int to);
     void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
     void HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
     void HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);

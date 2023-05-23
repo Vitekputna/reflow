@@ -540,7 +540,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         solver::compute_exact_flux(var,0,cell_to);
         
         solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_from,wall_to);
-        solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_from,wall_to);
+        // solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_from,wall_to);
 
         solver::compute_cell_res(res,var,msh,cell_from+1,cell_to-1);
         solver::apply_source_terms(res,var,msh,cell_from+1,cell_to-1);

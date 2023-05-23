@@ -13,7 +13,7 @@ void boundary::subsonic_outlet(variables& var, mesh& msh, std::vector<double>& v
         var.W.back()[idx] = var.W.rbegin()[1][idx];
     }
 
-    const double alfa = 1e-6;
+    const double alfa = 1;
 
     const double p_flex = 0.5*(thermo::p.rbegin()[1] + thermo::p.rbegin()[2]);
     const double p_fixed = values[0];

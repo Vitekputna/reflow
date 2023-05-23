@@ -425,6 +425,10 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
         }
     }
 
+    //set boundary elements
+    
+
+
     stream =  std::ofstream("out/particles.txt");
     for(int i = 0; i < N; i++)
     {

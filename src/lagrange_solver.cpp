@@ -14,7 +14,7 @@
 inline double lagrange_solver::acceleration(double r, double rho_l, double rho_g, double mu, double du)
 {
     const double Re = (rho_g*std::abs(du)*2*r)/mu;
-    const double Cd = euler_droplets::Kelbaliyev_Ceylan(Re);
+    const double Cd = euler_droplets::Ingebo(Re);
 
     return (3*Cd*rho_g*std::abs(du)*du)/(8*r*rho_l);
 }

@@ -71,7 +71,7 @@ void solver::droplet_transport(std::vector<std::vector<double>>& res, variables&
 
         dm = euler_droplets::droplet_evaporation(i,var.W[i],res[i]);
         euler_droplets::droplet_drag(i,var.W[i],res[i]);
-        euler_droplets::droplet_heat(i,var.W[i],res[i]);
+        // euler_droplets::droplet_heat(i,var.W[i],res[i]);
         var.md[i][2] = dm;
     }
 }
@@ -83,8 +83,8 @@ void solver::reconstruct(variables& var, mesh const& msh, const int from, const 
 
     for(auto i = from; i <= to; i++)
     {
-        // for(auto k = 0; k < var.N_var; k++)
-        for(auto const& k : fluid)
+        for(auto k = 0; k < var.N_var; k++)
+        // for(auto const& k : fluid)
         {
             // phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
             phi = van_albada(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
@@ -165,9 +165,9 @@ inline double solver::van_leer(double a, double b)
     }
 }
 
-void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters const& par)
+void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
 {
-    for(int i = 0; i < var.N_walls; i++)
+    for(int i = from; i <= to; i++)
     {
         for(int k = 0; k < var.N_var; k++)
         {
@@ -232,8 +232,8 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
     double p_right, p_left;
     bool right, left, center;
 
-    std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
-    // std::vector<int> condensed = {3,4,5,6};
+    // std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
+    std::vector<int> condensed = {3,4,5,6};
 
     std::vector<double> W_left(var.N_var);
     std::vector<double> W_right(var.N_var);
@@ -284,8 +284,8 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
         }
 
         // for(int k = 0; k < var.N_var; k++)
-        for(auto const& k : fluid)
-        // for(auto const& k : condensed)
+        // for(auto const& k : fluid)
+        for(auto const& k : condensed)
         {
             var.flux[i][k] = left*F_left[k] + center*((sr*F_left[k] - sl*F_right[k] + sr*sl*(W_right[k]-W_left[k]))/(sr-sl))
                             +right*F_right[k];

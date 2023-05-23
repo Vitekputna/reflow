@@ -89,7 +89,7 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
 
         res[frac_idx] += -md;
         res[mom_idx] += -md*u_drop;
-        res[eng_idx] += -md*thermo::species[2].C*T_drop + W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop) - md*h_vap;
+        res[eng_idx] += W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop) - md*(h_vap + thermo::species[2].C*T_drop);
 
         res[0] += md;
         res[2] += md;
