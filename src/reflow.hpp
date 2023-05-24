@@ -10,7 +10,7 @@
 #include "chem_solver.hpp"
 
 typedef void(*Boundary_func)(variables&, mesh&, std::vector<double>&);
-typedef void(*flux_func)(variables&, mesh const&, parameters const&, const int, const int);
+typedef void(*flux_func)(variables&, mesh const&, parameters const&, const int, const int, std::vector<int> const&);
 
 class reflow
 {
@@ -46,10 +46,15 @@ class reflow
     double from, to;
 
     // Solver settings
-    bool run_w_particles = false;
+    bool lagrange_particles = false;
+    bool euler_particles = false;
+
     bool reconstruct = true;
     flux_func fluid_flux = solver::AUSM2_flux;
     flux_func dispersed_flux = solver::HLL2_flux;
+
+    std::vector<int> fluid_flux_idx;
+    std::vector<int> dispersed_flux_idx;
 
     // Run criteria
     double max_res;
@@ -66,6 +71,7 @@ class reflow
     reflow(int N, int N_var, std::vector<std::vector<double>> const& init);
 
     void variable_init();
+    void set_flux_func_vectors();
     void divide_data_parallel();
     void set_numThreads(const int _numThreads);
 

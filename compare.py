@@ -105,15 +105,15 @@ def plot_euler(path):
     Te = Te[:,1:]
 
     plt.figure(1)
-    plt.plot(x,u,'k',label = "Eulerian")
+    plt.plot(x,u,'k')
     plt.plot(x,Ue,'b--',label = "Eulerian droplets")
     plt.title("Rychlost v komoře")
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
     plt.figure(2)
-    plt.plot(x,T)
-    plt.plot(x,Te,'b--',label="Euler drop temperature")
+    plt.plot(x,T,'k')
+    plt.plot(x,Te,'b--',label="Eulerian droplets")
     plt.title("Teplota v komoře")
     plt.xlabel("x[m]")
     plt.ylabel("T[K]")
@@ -139,15 +139,15 @@ def plot_lagrange(path):
     Te = Te[:,1:]
 
     plt.figure(1)
-    plt.plot(x,u,'k',label = "Eulerian")
-    plt.plot(particles[:,0],particles[:,2],'r',label = "Lagrangian droplets")
+    plt.plot(x,u,'k')
+    plt.plot(particles[:,0],particles[:,2],'r--',label = "Lagrangian droplets")
     plt.title("Rychlost v komoře")
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
     plt.figure(2)
-    plt.plot(x,T)
-    plt.plot(particles[:,0],particles[:,3],'r',label = "Lagrangian")
+    plt.plot(x,T,'k')
+    plt.plot(particles[:,0],particles[:,3],'r--',label = "Lagrangian droplets")
     plt.title("Teplota v komoře")
     plt.xlabel("x[m]")
     plt.ylabel("T[K]")
@@ -155,4 +155,13 @@ def plot_lagrange(path):
 
 plot_euler("tests/euler/")
 plot_lagrange("tests/lagrange/")
+
+plt.figure(1)
+plt.grid()
+plt.legend()
+
+plt.figure(2)
+plt.grid()
+plt.legend()
+
 plt.show()

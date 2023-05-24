@@ -14,7 +14,7 @@ struct parameters
 namespace solver
 {
     // explicit part
-    void compute_wall_flux(double dt, variables& var, mesh const& msh,void(*flux)(variables&,mesh const&,parameters const&,const int, const int), const int from, const int to);
+    void compute_wall_flux(double dt, variables& var, mesh const& msh,void(*flux)(variables&,mesh const&,parameters const&,const int, const int,std::vector<int> const&), const int from, const int to, std::vector<int> const& flux_idx);
     void compute_exact_flux(variables& var, const int from, const int to);
     void compute_cell_res(std::vector<std::vector<double>>& res, variables& var, mesh const& msh, const int from, const int to);
     void apply_source_terms(std::vector<std::vector<double>>& res, variables& var, mesh const& msh, const int from, const int to);
@@ -33,13 +33,13 @@ namespace solver
     inline double van_leer(double a, double b);
 
     // explicit fluxes
-    void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par, const int from, const int to);
-    void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
-    void HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
-    void HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
-    void AUSM_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
-    void AUSM2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
-    void upwind(variables& var, mesh const& msh, parameters const& par, const int from, const int to);
+    void Lax_Friedrichs_flux(variables& var,mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
+    void Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
+    void HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
+    void HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
+    void AUSM_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
+    void AUSM2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
+    void upwind(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx);
 
     double AUSM_wall_mach_number(double M_left, double M_right);
     double AUSM_wall_pressure(double M_left, double M_right, double p_left, double p_right);

@@ -6,9 +6,9 @@
 #include "euler_droplets.hpp"
 
 void solver::compute_wall_flux(double dt, variables& var, mesh const& msh,
-                               void(*flux)(variables&,mesh const&,parameters const&,const int, const int), const int from, const int to)
+                               void(*flux)(variables&,mesh const&,parameters const&,const int, const int, std::vector<int> const&), const int from, const int to, std::vector<int> const& flux_idx)
 {
-    flux(var, msh, parameters(msh.dx_min,dt,0.7),from,to);
+    flux(var, msh, parameters(msh.dx_min,dt,0.7),from,to,flux_idx);
 }
 
 void solver::compute_exact_flux(variables& var, const int from, const int to)
@@ -83,8 +83,8 @@ void solver::reconstruct(variables& var, mesh const& msh, const int from, const 
 
     for(auto i = from; i <= to; i++)
     {
-        for(auto k = 0; k < var.N_var; k++)
-        // for(auto const& k : fluid)
+        // for(auto k = 0; k < var.N_var; k++)
+        for(auto const& k : fluid)
         {
             // phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
             phi = van_albada(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
@@ -165,25 +165,25 @@ inline double solver::van_leer(double a, double b)
     }
 }
 
-void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::Lax_Friedrichs_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx)
 {
     for(int i = from; i <= to; i++)
     {
-        for(int k = 0; k < var.N_var; k++)
+        for(auto const& k : var_idx)
         {
             var.flux[i][k] = 0.5*(var.exact_flux[i+1][k] + var.exact_flux[i][k]) - par.eps*0.5*par.dx/par.dt*(var.W[i+1][k] - var.W[i][k]);
         }
     }
 }
 
-void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx)
 {
     double sr,sl;
     double cr,cl,ur,ul;
     bool right, left, center;
 
     // std::vector<int> condensed = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
-    std::vector<int> condensed = {3,4,5,6};
+    // std::vector<int> condensed = {3,4,5,6};
 
     for(int i = from; i <= to; i++)
     {
@@ -215,9 +215,7 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
             left = false;
         }
 
-    
-        // for(int k = 0; k < var.N_var; k++)
-        for(auto const& k : condensed)
+        for(auto const& k : var_idx)
         {
             var.flux[i][k] = left*var.exact_flux[i][k] + center*((sr*var.exact_flux[i][k] - sl*var.exact_flux[i+1][k] + sr*sl*(var.W[i+1][k]-var.W[i][k]))/(sr-sl))
                             +right*var.exact_flux[i+1][k];
@@ -225,7 +223,7 @@ void solver::HLL_flux(variables& var, mesh const& msh, parameters const& par, co
     }
 }
 
-void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx)
 {
     double sr,sl;
     double cr,cl,ur,ul;
@@ -233,7 +231,7 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
     bool right, left, center;
 
     // std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
-    std::vector<int> condensed = {3,4,5,6};
+    // std::vector<int> condensed = {3,4,5,6};
 
     std::vector<double> W_left(var.N_var);
     std::vector<double> W_right(var.N_var);
@@ -283,9 +281,7 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
             left = false;
         }
 
-        // for(int k = 0; k < var.N_var; k++)
-        // for(auto const& k : fluid)
-        for(auto const& k : condensed)
+        for(auto const& k : var_idx)
         {
             var.flux[i][k] = left*F_left[k] + center*((sr*F_left[k] - sl*F_right[k] + sr*sl*(W_right[k]-W_left[k]))/(sr-sl))
                             +right*F_right[k];
@@ -334,7 +330,7 @@ void solver::reconstructed_wave_speed(int i, std::vector<double>& a, std::vector
     a[size-1] = W[size-2]/W[0] + c;
 }
 
-void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx)
 {
     std::vector<double> fr(var.N_var,0.0);
     std::vector<double> fl(var.N_var,0.0);
@@ -342,8 +338,6 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
     std::vector<double> al(var.N_var,0.0);
 
     double ul, ur, a;
-
-    std::vector<int> condensed = {3,4,5,6};
 
     for(int i = from; i <= to; i++)
     {
@@ -353,8 +347,7 @@ void solver::Kurganov_Tadmore(variables& var, mesh const& msh, parameters const&
         reconstructed_wave_speed(i,al,var.W[i],var.grad[i],msh.xf[i]-msh.x[i]);
         reconstructed_wave_speed(i+1,ar,var.W[i+1],var.grad[i+1],msh.xf[i]-msh.x[i+1]);
 
-        // for(int k = 0; k < var.N_var; k++)
-        for(auto const& k : condensed)
+        for(auto const& k : var_idx)
         {
             ul = var.W[i][k] + var.grad[i][k]*(msh.xf[i]-msh.x[i]);
             ur = var.W[i+1][k] + var.grad[i+1][k]*(msh.xf[i]-msh.x[i+1]);
@@ -398,7 +391,7 @@ double solver::AUSM_wall_pressure(double M_left, double M_right, double p_left, 
     return P_wall;
 }
 
-void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx)
 {
     double M_right, M_left;
     double p_right, p_left;
@@ -436,7 +429,7 @@ void solver::AUSM_flux(variables& var, mesh const& msh, parameters const& par, c
     }
 }
 
-void solver::AUSM2_flux(variables &var, mesh const &msh, parameters const &par, const int from, const int to)
+void solver::AUSM2_flux(variables &var, mesh const &msh, parameters const &par, const int from, const int to, std::vector<int> const& var_idx)
 {
     double M_right, M_left;
     double p_right, p_left;
@@ -479,17 +472,15 @@ void solver::AUSM2_flux(variables &var, mesh const &msh, parameters const &par, 
     }
 }
 
-void solver::upwind(variables& var, mesh const& msh, parameters const& par, const int from, const int to)
+void solver::upwind(variables& var, mesh const& msh, parameters const& par, const int from, const int to, std::vector<int> const& var_idx)
 {
     int frac_idx, num_idx, mom_idx, eng_idx;
 
     double u_wall;
 
-
     for(int i = from; i <= to; i++)
     {
         
-
 
         for(auto const& idx : variables::active_drop_idx)
         {

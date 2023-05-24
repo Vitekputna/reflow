@@ -23,7 +23,8 @@ inline double lagrange_solver::heat_flux(double r, double T_gas, double T_drop, 
 {
     const double Re = (rho_g*std::abs(u_g - u_l)*2*r)/mu;
     const double Pr = cp*mu/k;
-    const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
+    // const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
+    const double Nu = 2;
 
     return Nu*2*r*M_PI*k*(T_gas-T_drop);
 }
@@ -40,7 +41,7 @@ inline double lagrange_solver::radius_change(double r, double dY, double rho_l, 
 double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<double>& res)
 {
     double K1,K2,K3,K4;
-    double ap,up,rp;
+    double ap,up,rp,Tp;
 
     const double rho_l = thermo::species[2].rho_liq;
     const double rho_gas = thermo::density(W);
@@ -117,9 +118,14 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     // K4 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
     // P.r += K1/6+K2/3+K3/3+K4/6;
 
-    const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
+    // const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
+    // P.T += dt*Q/(P.m*C);
 
-    P.T += dt*Q/(P.m*C);
+    K1 = dt*heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k)/(P.m*C);
+    Tp = P.T + K1/2;
+    K2 = dt*heat_flux(r,Tf,Tp,rho_gas,u_drop,u_gas,mu,cp,k)/(P.m*C);
+    P.T += K2;
+
     // res[variables::eng_idx] -= P.N*Q;
 
     // mass

@@ -13,7 +13,6 @@ extern double kappa;
 reflow::reflow(variables& _var, mesh& _msh) : var{_var}, msh{_msh} 
 {
     thermo::init(N);  
-
     variable_init();  
 }
 
@@ -21,7 +20,6 @@ reflow::reflow(int _N, int _N_var) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N);
     thermo::init(N);
-
     variable_init();
 }
 
@@ -29,7 +27,6 @@ reflow::reflow()
 {
     msh = mesh();
     var = variables();
-
     variable_init();
 }
 
@@ -37,7 +34,6 @@ reflow::reflow(int _N, int _N_var, std::vector<double> const& init) : N{_N}, N_v
 {
     msh = mesh(N);
     var = variables(N_var,N,init);
-
     variable_init();
 }
 
@@ -45,7 +41,6 @@ reflow::reflow(int _N, int _N_var, std::vector<std::vector<double>> const& init)
 {
     msh = mesh(N);
     var = variables(N_var,N,init);
-
     variable_init();
 }
 
@@ -53,14 +48,12 @@ reflow::reflow(int _N, int _N_var, double from, double to, std::vector<double> c
 {
     msh = mesh(N,from,to);
     var = variables(N_var,N,init);
-
     variable_init();
 }
 
 reflow::reflow(int _N, int _N_var, double from, double to) : N{_N}, N_var{_N_var}
 {
     msh = mesh(N,from,to);
-
     variable_init();
 }
 
@@ -75,41 +68,67 @@ void reflow::variable_init()
     CFL = 0.1;
 }
 
+void reflow::set_flux_func_vectors()
+{
+    // fluid flux index
+    for(int i = 0; i < variables::N_comp; i++)
+    {
+        fluid_flux_idx.push_back(i);
+    }
+    fluid_flux_idx.push_back(variables::mom_idx);
+    fluid_flux_idx.push_back(variables::eng_idx);
+
+    // dispersed flux idx
+    for(int i = 0; i < variables::N_drop_eq; i++)
+    {
+        dispersed_flux_idx.push_back(variables::N_comp+i);
+    }
+}
+
 void reflow::initial_conditions(std::vector<double> const& init)
 {
     N_var = init.size();
     var = variables(N_var,N,init);
+    set_flux_func_vectors();
 }
 
 void reflow::initial_conditions(std::vector<std::vector<double>> const& init)
 {
     N_var = init[0].size();
     var = variables(N_var,N,init);
+    set_flux_func_vectors();
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<double> const& init)
 {
     N_var = init.size();
     var = variables(N_var,N,N_drop,drop_momenta,init);
+    euler_particles = true;
+    set_flux_func_vectors();
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, std::vector<std::vector<double>> const& init)
 {
     N_var = init[0].size();
-    
     var = variables(N_var,N,N_drop,drop_momenta,init);
+    euler_particles = true;
+    set_flux_func_vectors();
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<double> const& init)
 {
     N_var = init.size();
     var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
+    euler_particles = true;
+    set_flux_func_vectors();
 }
 
 void reflow::initial_conditions(int N_drop, bool drop_momenta, bool drop_energy, std::vector<std::vector<double>> const& init)
 {
     N_var = init[0].size();
     var = variables(N_var,N,N_drop,drop_momenta,drop_energy,init);
+    euler_particles = true;
+    set_flux_func_vectors();
 }
 
 void reflow::apply_heat_source(double Q, double x_from, double x_to)
@@ -195,7 +214,7 @@ void reflow::export_particles(std::vector<particle>& particles)
 void reflow::init_particles(int N_max, int N_particles, int N_per_group)
 {
     par_man = particle_manager(N_max,N_per_group,N_particles);
-    run_w_particles = true;
+    lagrange_particles = true;
 }
 
 void reflow::add_lagrangian_mono_particles(double specie_idx, double mass_flux, double rho, double r, double x,
@@ -288,6 +307,7 @@ void reflow::load_old_data(std::string path, int _n_comp)
     auto init_data = read_files(path);
 
     var = variables(N_var,N,init_data);
+    set_flux_func_vectors();
 
     // n_comp = _n_comp;
     std::cout << "##########################################\n";
@@ -304,6 +324,7 @@ void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool
     std::cout << N_var << " " << N << " " << n_drop_frac << " " << n_drop_mom << "\n";
 
     var = variables(N_var,N,n_drop_frac,true,init_data);
+    set_flux_func_vectors();
 }
 
 void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool droplet_momenta, bool droplet_energy)
@@ -318,6 +339,7 @@ void reflow::load_old_data(std::string path, int _n_comp, int _n_drop_frac, bool
     std::cout << N_var << " " << N << " " << n_drop_frac << " " << n_drop_mom << "\n";
 
     var = variables(N_var,N,n_drop_frac,true,true,init_data);
+    set_flux_func_vectors();
 }
 
 bool reflow::maximum_time(double T, double res)
@@ -417,8 +439,8 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
 
             #pragma omp barrier
             
-            solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_startIndices[threadID],wall_endIndices[threadID]);
-            solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_startIndices[threadID],wall_endIndices[threadID]);
+            solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_startIndices[threadID],wall_endIndices[threadID],fluid_flux_idx);
+            solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_startIndices[threadID],wall_endIndices[threadID],dispersed_flux_idx);
 
             #pragma omp barrier
 
@@ -428,7 +450,7 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
             solver::droplet_transport(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
 
             // lagrangian particles part
-            if(run_w_particles)
+            if(lagrange_particles)
             {
                 if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
                 lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
@@ -459,7 +481,7 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
                 if(!(n % n_exp))
                 {
                     var.export_to_file(msh,par_man.particles);
-                    if(run_w_particles) export_particles(par_man.particles);
+                    if(lagrange_particles) export_particles(par_man.particles);
                     // var.export_timestep(t,msh,par_man.particles);
                 }
             
@@ -539,8 +561,8 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
 
         solver::compute_exact_flux(var,0,cell_to);
         
-        solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_from,wall_to);
-        // solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_from,wall_to);
+        solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_from,wall_to,fluid_flux_idx);
+        if(euler_particles) solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_from,wall_to,dispersed_flux_idx);
 
         solver::compute_cell_res(res,var,msh,cell_from+1,cell_to-1);
         solver::apply_source_terms(res,var,msh,cell_from+1,cell_to-1);
@@ -548,7 +570,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         solver::droplet_transport(res,var,msh,cell_from+1,cell_to-1);
 
         // lagrangian particles part
-        if(run_w_particles)
+        if(lagrange_particles)
         {
             // apply_lagrangian_particle_inlet(dt);
             if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
@@ -575,7 +597,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         if(!(n % n_exp))
         {
             var.export_to_file(msh,par_man.particles);
-            if(run_w_particles) export_particles(par_man.particles);
+            if(lagrange_particles) export_particles(par_man.particles);
             // var.export_timestep(t,msh,par_man.particles);
         }
     
