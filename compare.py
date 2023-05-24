@@ -111,6 +111,14 @@ def plot_euler(path):
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
+    plt.figure(2)
+    plt.plot(x,T)
+    plt.plot(x,Te,'b--',label="Euler drop temperature")
+    plt.title("Teplota v komoře")
+    plt.xlabel("x[m]")
+    plt.ylabel("T[K]")
+    plt.grid()
+
 def plot_lagrange(path):
     _,r = load_file(path+"r.txt")
     x,p = load_file(path+"p.txt")
@@ -137,6 +145,14 @@ def plot_lagrange(path):
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
-plot_euler("tests/euler2/")
-plot_lagrange("tests/lagrange2/")
+    plt.figure(2)
+    plt.plot(x,T)
+    plt.plot(particles[:,0],particles[:,3],'r',label = "Lagrangian")
+    plt.title("Teplota v komoře")
+    plt.xlabel("x[m]")
+    plt.ylabel("T[K]")
+    plt.grid()
+
+plot_euler("tests/euler/")
+plot_lagrange("tests/lagrange/")
 plt.show()

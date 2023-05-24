@@ -550,8 +550,8 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // lagrangian particles part
         if(run_w_particles)
         {
-            apply_lagrangian_particle_inlet(dt);
-            // if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
+            // apply_lagrangian_particle_inlet(dt);
+            if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
 

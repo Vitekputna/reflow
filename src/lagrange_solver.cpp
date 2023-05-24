@@ -19,9 +19,13 @@ inline double lagrange_solver::acceleration(double r, double rho_l, double rho_g
     return (3*Cd*rho_g*std::abs(du)*du)/(8*r*rho_l);
 }
 
-inline double lagrange_solver::heat_flux(double alfa, double C, double dT)
+inline double lagrange_solver::heat_flux(double r, double T_gas, double T_drop, double rho_g, double u_l, double u_g, double mu, double cp, double k)
 {
-    return alfa*dT/C;
+    const double Re = (rho_g*std::abs(u_g - u_l)*2*r)/mu;
+    const double Pr = cp*mu/k;
+    const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
+
+    return Nu*2*r*M_PI*k*(T_gas-T_drop);
 }
 
 inline double lagrange_solver::radius_change(double r, double dY, double rho_l, double rho_g, double u_l, double u_g, double mu, double D)
@@ -60,6 +64,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     const double cp = thermo::cp_mix_comp(comp,Tf);
     const double k = thermo::thermal_conductivity(comp,Tf);
     const double h_vap = thermo::species[2].h_vap;
+    const double C = thermo::species[2].C;
 
     // const double Re = (rho_gas*std::abs(u_gas - u_drop)*2*r)/mu;
     const double Pr = cp*mu/k;
@@ -97,9 +102,6 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     
     P.x += P.u*dt;
 
-    // Temperature
-    // P.T += alfa*dt*(Tf - P.T);
-
     if(P.x <= 0.005)
     {
         return 0.0;
@@ -115,6 +117,11 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     // K4 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
     // P.r += K1/6+K2/3+K3/3+K4/6;
 
+    const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
+
+    P.T += dt*Q/(P.m*C);
+    // res[variables::eng_idx] -= P.N*Q;
+
     // mass
     const double m0 = P.M;
     double md;
@@ -125,23 +132,26 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
         // res[0] += md;
         // res[2] += md;
-        res[3] += md*P.u;
+        // res[3] += md*P.u;
         // res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
         P.reset();
+
         return md;
     }
+    else
+    {
+        P.m = 4*M_PI*pow(P.r,3)*P.rho/3;
 
-    P.m = 4*M_PI*pow(P.r,3)*P.rho/3;
+        P.M = P.N*P.m;
 
-    P.M = P.N*P.m;
+        md = (m0 - P.M)/dt/V;
 
-    md = (m0 - P.M)/dt/V;
-
-    // res[0] += md;
-    // res[2] += md;
-    res[3] += md*P.u + (P.u-u_drop)*P.M/dt/V;
-    // res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
+        // res[0] += md;
+        // res[2] += md;
+        // res[3] += md*P.u + (P.u-u_drop)*P.M/dt/V;
+        // res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
+    }
 
     return md;
 }
@@ -150,7 +160,7 @@ void lagrange_solver::update_particles(double dt, std::vector<particle>& particl
 {
     double V;
 
-    omp_set_num_threads(6);
+    omp_set_num_threads(12);
     #pragma omp parallel for shared(dt, particles, var, msh, res) private(V)
     for(int j = 0; j < particles.size();j++)
     {
