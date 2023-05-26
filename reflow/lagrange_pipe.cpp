@@ -16,7 +16,7 @@ double md = 100;
 // double m_F = md/(OF+1);
 // double m_OX = md-m_F;
 
-double OF = 1;
+double OF = 5;
 double m_OX = 100;
 double m_F = m_OX/OF;
 
@@ -26,6 +26,7 @@ int main(int argc, char** argv)
     reflow Simulation;
 
     // Mesh generation
+    // Simulation.refine_mesh(std::vector<std::vector<double>>{{0,0.1,200},{0.1,5,1000}});
     Simulation.refine_mesh(std::vector<std::vector<double>>{{0,5,1000}});
     Simulation.msh.constant_area(0.002);
 
@@ -56,7 +57,7 @@ int main(int argc, char** argv)
 
     // Lagrangian particles manager and specie init
     Simulation.init_particles(1e6,1e3,1000);
-    Simulation.add_lagrangian_mono_particles(2,m_F,700,30e-6 ,-0.0004,0.5*u,350,300,1e5,1e3);
+    Simulation.add_lagrangian_mono_particles(2,m_F,700,30e-6 ,-0.0004,0.5*u,300,300,1e5,1e3);
     // Simulation.add_lagrangian_unif_particles(2,20,700,1e-4,1e-6,0,15,300,300,1e5,1e-3);
     // Simulation.add_lagrangian_norm_particles(2,m_F,700,30e-6,1e-6,0,40,300,300,1e5,1e-3);
 

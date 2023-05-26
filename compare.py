@@ -119,6 +119,24 @@ def plot_euler(path):
     plt.ylabel("T[K]")
     plt.grid()
 
+    r = radius(X,N,700)
+    plt.figure(3)
+    # plt.plot(x,r[:,1:],'')
+    plt.plot(x,r[:,0],'b--',label = "Eulerian")
+    plt.title("Poloměr kapiček")
+    plt.xlabel("x[m]")
+    plt.ylabel(r"$r[m]$")
+    plt.grid()
+
+    plt.figure(4)
+    plt.plot(md_add[:,0],md_add[:,3],'b',label="Eulerian")
+    plt.title("Hmotnostní tok z kapalné fáze")
+    plt.xlabel("x[m]")
+    plt.ylabel(r"$\dot{m}[kgs^{-1}]$")
+    plt.grid()
+
+
+
 def plot_lagrange(path):
     _,r = load_file(path+"r.txt")
     x,p = load_file(path+"p.txt")
@@ -153,14 +171,32 @@ def plot_lagrange(path):
     plt.ylabel("T[K]")
     plt.grid()
 
-plot_euler("tests/euler/")
-plot_lagrange("tests/lagrange/")
+    plt.figure(3)
+    plt.plot(particles[:,0],particles[:,1],'r--',label = "Lagrangian")
+    plt.title("Poloměr kapiček")
+    plt.xlabel("x[m]")
+    plt.ylabel(r"$r[m]$")
+    plt.grid()
+
+    plt.figure(4)
+    plt.plot(md_add[:,0],md_add[:,3],'r',label="Lagrangian")
+    plt.title("Hmotnostní tok z kapalné fáze")
+    plt.xlabel("x[m]")
+    plt.ylabel(r"$\dot{m}[kgs^{-1}]$")
+    plt.grid()
+
+plot_euler("tests/euler_all/")
+plot_lagrange("tests/lagrange_all/")
 
 plt.figure(1)
 plt.grid()
 plt.legend()
 
 plt.figure(2)
+plt.grid()
+plt.legend()
+
+plt.figure(3)
 plt.grid()
 plt.legend()
 

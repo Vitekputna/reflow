@@ -13,7 +13,7 @@ double p0 = 101325;
 double T0 = 300;
 double p2 = 101325;
 double md = 100;
-double OF = 1;
+double OF = 2;
 
 int N_frac = 1;
 int N_comp = 3;
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     using namespace boundary;
 
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,300,0,1,0}); 
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,350,0.5*u,30e-6,1e-6));
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,0.5*u,30e-6,1e-6));
     S.add_boundary_function(subsonic_outlet,std::vector<double>{p2});
 
     S.solve(2,1000,0.3);

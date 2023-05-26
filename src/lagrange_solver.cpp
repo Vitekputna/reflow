@@ -23,8 +23,7 @@ inline double lagrange_solver::heat_flux(double r, double T_gas, double T_drop, 
 {
     const double Re = (rho_g*std::abs(u_g - u_l)*2*r)/mu;
     const double Pr = cp*mu/k;
-    // const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
-    const double Nu = 2;
+    const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
 
     return Nu*2*r*M_PI*k*(T_gas-T_drop);
 }
@@ -35,7 +34,7 @@ inline double lagrange_solver::radius_change(double r, double dY, double rho_l, 
     const double Sc = mu/(rho_g*D);
     const double Sh = 2+0.6*pow(Re,0.5)*pow(Sc,0.333);
 
-    return (Sh*rho_g*D)/(2*r*rho_l)*dY;
+    return std::min(0.0,(Sh*rho_g*D)/(2*r*rho_l)*dY);
 }
 
 double lagrange_solver::integrate_particle(double dt, double V, particle& P, std::vector<double>& W, std::vector<double>& res)
@@ -48,9 +47,8 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
     const double Tf = thermo::T[P.last_cell_idx];
     const double p = thermo::p[P.last_cell_idx];
-    const double uf = W[W.size()-2]/W[0];
+    const double u_gas = W[variables::mom_idx]/W[0];
 
-    const double u_gas = W[0]/W[variables::mom_idx];
     const double u_drop = P.u;
 
     const double r = P.r;
@@ -67,38 +65,24 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     const double h_vap = thermo::species[2].h_vap;
     const double C = thermo::species[2].C;
 
-    // const double Re = (rho_gas*std::abs(u_gas - u_drop)*2*r)/mu;
-    const double Pr = cp*mu/k;
-    // const double Nu = euler_droplets::Ranz_Marshall(Re,Pr);
-
-    // Drag coefficient
-    // const double C = euler_droplets::Kelbaliyev_Ceylan(Re);
-    // const double C = 0.45;
-
-    // Heat transfer coefficient
-    // const double alfa = euler_droplets::Ranz_Marshall(Re,Pr);
-
-    // Mass transfer coefficient
-
-
     // Velocity
     if(P.r > 1e-6)
     {
-        K1 = dt*acceleration(P.r,rho_l,rho_gas,mu,uf - P.u);
+        K1 = dt*acceleration(P.r,rho_l,rho_gas,mu,u_gas - P.u);
         up = P.u + K1/2;
-        ap = acceleration(P.r,rho_l,rho_gas,mu,uf - up);
+        ap = acceleration(P.r,rho_l,rho_gas,mu,u_gas - up);
         K2 = dt*ap;
         up = P.u + K2/2;
-        ap = acceleration(P.r,rho_l,rho_gas,mu,uf - up);
+        ap = acceleration(P.r,rho_l,rho_gas,mu,u_gas - up);
         K3 = dt*ap;
         up = P.u + K3;
-        ap = acceleration(P.r,rho_l,rho_gas,mu,uf - up);
+        ap = acceleration(P.r,rho_l,rho_gas,mu,u_gas - up);
         K4 = dt*ap;
         P.u += K1/6+K2/3+K3/3+K4/6;
     }
     else
     {
-        P.u = uf;   
+        P.u = u_gas;   
     }
     
     P.x += P.u*dt;
@@ -109,37 +93,28 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     }
 
     // radius
-    // K1 = dt*radius_change(r,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
-    // rp = P.r + K1/2;    
-    // K2 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
-    // rp = P.r + K2/2;
-    // K3 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
-    // rp = P.r + K3;
-    // K4 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
-    // P.r += K1/6+K2/3+K3/3+K4/6;
-
-    // const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
-    // P.T += dt*Q/(P.m*C);
-
-    K1 = dt*heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k)/(P.m*C);
-    Tp = P.T + K1/2;
-    K2 = dt*heat_flux(r,Tf,Tp,rho_gas,u_drop,u_gas,mu,cp,k)/(P.m*C);
-    P.T += K2;
-
-    // res[variables::eng_idx] -= P.N*Q;
+    K1 = dt*radius_change(r,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    rp = P.r + K1/2;    
+    K2 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    rp = P.r + K2/2;
+    K3 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    rp = P.r + K3;
+    K4 = dt*radius_change(rp,dY,rho_l,rho_gas,u_drop,u_gas,mu,Df);
+    P.r += K1/6+K2/3+K3/3+K4/6;
 
     // mass
-    const double m0 = P.M;
+    const double M0 = P.M;
+    const double m0 = P.m;
     double md;
 
     if(P.r < 1e-6)
     {
-        md = m0/dt/V;
+        md = M0/dt/V;
 
-        // res[0] += md;
-        // res[2] += md;
-        // res[3] += md*P.u;
-        // res[4] += md*(thermo::enthalpy(Tf,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
+        res[0] += md;
+        res[2] += md;
+        res[3] += md*P.u;
+        res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
 
         P.reset();
 
@@ -151,13 +126,19 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
 
         P.M = P.N*P.m;
 
-        md = (m0 - P.M)/dt/V;
+        md = (M0 - P.M)/dt/V;
 
-        // res[0] += md;
-        // res[2] += md;
-        // res[3] += md*P.u + (P.u-u_drop)*P.M/dt/V;
-        // res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
+        res[0] += md;
+        res[2] += md;
+        res[3] += md*P.u;
+        res[4] += md*(thermo::enthalpy(P.T,std::vector<double>{0,0,1}) + pow(P.u,2)/2);
     }
+
+    //Temperature
+    const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
+    const double dm = m0-P.m;
+
+    P.T += (dt*Q- dm*h_vap)/(P.m*C);
 
     return md;
 }

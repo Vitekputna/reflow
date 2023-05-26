@@ -185,9 +185,7 @@ void euler_droplets::droplet_heat(const int i, std::vector<double> const& W, std
         Re = (rho_gas*std::abs(u_gas-u_drop)*2*r)/mu + 1e-12;
         Pr = cp*mu/k;
 
-        // Nu = Ranz_Marshall(Re,Pr);
-
-        Nu = 2;
+        Nu = Ranz_Marshall(Re,Pr);
 
         res[eng_idx] += W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop);
         // res[variables::eng_idx] += -W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop);
