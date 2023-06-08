@@ -205,6 +205,7 @@ plt.grid()
 # plt.grid()
 
 r = radius(X,N,700)
+
 plt.figure(13)
 plt.plot(x,r[:,1:])
 plt.plot(x,r[:,0],'k--')

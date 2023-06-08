@@ -86,7 +86,7 @@ def radius(X,N,rho):
         return r
     
 def plot_euler(path):
-    _,r = load_file(path+"r.txt")
+    # _,r = load_file(path+"r.txt")
     x,p = load_file(path+"p.txt")
     _,u = load_file(path+"u.txt")
     _,T = load_file(path+"T.txt")
@@ -112,7 +112,7 @@ def plot_euler(path):
     plt.ylabel(r"$u[ms^{-1}]$")
 
     plt.figure(2)
-    plt.plot(x,T,'k')
+    plt.plot(x,T,'b')
     plt.plot(x,Te,'b--',label="Eulerian droplets")
     plt.title("Teplota v komoře")
     plt.xlabel("x[m]")
@@ -135,7 +135,11 @@ def plot_euler(path):
     plt.ylabel(r"$\dot{m}[kgs^{-1}]$")
     plt.grid()
 
-
+    plt.figure(5)
+    plt.plot(x,rho,'b')
+    plt.title("hustota v komoře")
+    plt.xlabel("x[m]")
+    plt.ylabel(r"$\rho[kgm^{-3}]$")
 
 def plot_lagrange(path):
     _,r = load_file(path+"r.txt")
@@ -164,7 +168,7 @@ def plot_lagrange(path):
     plt.ylabel(r"$u[ms^{-1}]$")
 
     plt.figure(2)
-    plt.plot(x,T,'k')
+    plt.plot(x,T,'r')
     plt.plot(particles[:,0],particles[:,3],'r--',label = "Lagrangian droplets")
     plt.title("Teplota v komoře")
     plt.xlabel("x[m]")
@@ -185,8 +189,17 @@ def plot_lagrange(path):
     plt.ylabel(r"$\dot{m}[kgs^{-1}]$")
     plt.grid()
 
-plot_euler("tests/euler_all/")
-plot_lagrange("tests/lagrange_all/")
+    plt.figure(5)
+    plt.plot(x,rho,'r')
+    plt.title("hustota v komoře")
+    plt.xlabel("x[m]")
+    plt.ylabel(r"$\rho[kgm^{-3}]$")
+
+path1 = sys.argv[1]
+path2 = sys.argv[2]
+
+plot_euler(path1)
+plot_lagrange(path2)
 
 plt.figure(1)
 plt.grid()

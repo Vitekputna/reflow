@@ -84,7 +84,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     {
         P.u = u_gas;   
     }
-    
+
     P.x += P.u*dt;
 
     if(P.x <= 0.005)
@@ -106,6 +106,8 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     const double M0 = P.M;
     const double m0 = P.m;
     double md;
+
+    const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
 
     if(P.r < 1e-6)
     {
@@ -135,10 +137,10 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     }
 
     //Temperature
-    const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
     const double dm = m0-P.m;
 
     P.T += (dt*Q- dm*h_vap)/(P.m*C);
+    res[4] += -P.N*Q/V;
 
     return md;
 }
