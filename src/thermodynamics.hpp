@@ -5,6 +5,8 @@
 class thermo
 {
 public:
+    static double Ru;
+
     static std::vector<specie> species;
 
     static std::vector<double> T;
@@ -27,14 +29,20 @@ public:
 
     static double density(std::vector<double> const& W);
     static double pressure(std::vector<double> const& W);
+    static double boil_temp(int spec, double p);
+
     static double speed_of_sound(int i, std::vector<double> const& W);
     static double speed_of_sound(const double p, std::vector<double> const& W);
+
     static double mach_number(int i, std::vector<double> const& W);
     static double mach_number(const double p, std::vector<double> const& W);
+
     static double temperature(std::vector<double> const& W);
+
     static double enthalpy(double T, std::vector<double> const& comp);
     static double enthalpy(int i, std::vector<double> const& W);
     static double enthalpy_stagnate(int i, std::vector<double> const& W);
+
     static void composition(std::vector<double>& comp, std::vector<double> const& W);
 
     static double kappa_mix(std::vector<double> const& W);

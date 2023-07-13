@@ -1,6 +1,14 @@
 #pragma once
 #include <vector>
 
+std::vector<double> steam_cp = {1864,0,0,0,0,0};
+std::vector<double> steam_k = {0.02,0,0,0,0,0};
+std::vector<double> steam_mu = {1e-5,0,0,0,0,0};
+
+std::vector<double> air_cp = {1004,0,0,0,0,0};
+std::vector<double> air_k = {0.03,0,0,0,0,0};
+std::vector<double> air_mu = {1.8e-5,0,0,0,0,0};
+
 std::vector<double> prod_cp = {9.96937272e+02, 4.99819762e-01, -1.52008670e-04, 2.19379352e-08, -1.22526847e-12, 5.91381893e-18};
 std::vector<double> fuel_cp = {3.07442462e+03, 6.17329522e-01, 5.43220153e-06, -3.02716497e-08, 2.00579155e-12, 4.14312108e-16};
 std::vector<double> oxi_cp = {8.98171924e+02, 3.15569811e-01, -7.56464573e-05, -2.24660260e-09, 3.15073707e-12, -2.73504798e-16};

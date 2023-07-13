@@ -67,6 +67,46 @@ void boundary::mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& v
 
     var.W[0][var.eng_idx] = (thermo::enthalpy(values[1],comp) + 0.5*u*u)*var.W[0][0] - p;
 }
+
+// values = (p_0,T_0,Y0,Y1...)
+void boundary::pressure_inlet(variables& var, mesh& msh, std::vector<double>& values)
+{
+    const double p0 = values[0];
+    const double T0 = values[1];
+
+    const std::vector<double> comp = {values[2],values[3],values[4]};
+    const double r = thermo::r_mix_comp(comp);
+    const double k = thermo::kappa_mix_comp(comp);
+
+    const double M = thermo::mach_number(1,var.W[1]);
+
+    const double A = (1+ pow(M,2)*(k-1)/2);
+
+    const double p = pow(A,-k/(k-1))*p0;
+    const double T = pow(A,-1)*T0;
+
+    const double rho = p/(r*T);
+
+    const double c = sqrt(k*r*T);
+    const double u = c*M;
+
+    // Total density
+    var.W[0][0] = rho;
+
+    // Specie density
+    for(auto idx = 1; idx <= var.N_comp-1; idx++)
+    {
+        var.W[0][idx] = rho*comp[idx];
+    }
+
+    // Momentum
+    var.W[0][var.mom_idx] = rho*u;
+
+    // Energy
+    const double h = thermo::enthalpy(T,comp);
+    var.W[0][var.eng_idx] = (h + 0.5*u*u)*rho - p;
+}
+
 // (N,md1,r1,md2,r2...,rho) N = number of {md,r} pairs
 void boundary::quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<double>& values)
 {
@@ -141,9 +181,10 @@ void boundary::active_thermal_drop_inlet(variables& var, mesh& msh, std::vector<
     for(int i = 0; i < N; i++)
     {  
         r_drop = values[2*i+2];
+
         md_frac = values[2*i+1];
 
-        m = 4*M_PI*pow(r_drop,3)*rho_cond/3;
+        m = (4*M_PI*pow(r_drop,3)*rho_cond)/3;
 
         //mass concentraion
         var.W[0][var.N_comp+i*2+1] = md_frac/(msh.A[0]*u_cond);
@@ -163,7 +204,7 @@ void boundary::active_thermal_drop_inlet(variables& var, mesh& msh, std::vector<
 
     const double gas_density = var.W[0][0];
 
-    for(int i = 0; i < variables::N_comp; i++)
+    for(int i = 0; i < variables::N_comp; i++) 
     {
         var.W[0][i] *= gas_vol_frac; 
     }

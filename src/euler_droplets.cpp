@@ -16,6 +16,32 @@ double euler_droplets::fuel_mass_fraction(double p, double T)
     return std::min(1.0,Mm_f*K/(Mm_p - (Mm_p-Mm_f)*K));
 }
 
+double euler_droplets::heat_evap_interp(double T, double T_boil)
+{
+    // Cubic
+    const double b = 0.5*T_boil;
+    const double a = T_boil;
+
+    const double A = a*a*a/3-a*a/2*(a+b)+a*a*b;
+    const double B = b*b*b/3-b*b/2*(a+b)+a*b*b;
+
+    const double c = -1/(A-B);
+    const double d = -A/(A-B)+1;
+
+    if(T < b)
+    {
+        return 0.0;
+    }
+    else if(T >= b && T <= a)
+    {
+        return -c*((T*T*T)/3-(T*T/2)*(a+b)+a*b*T)+d;
+    }
+    else
+    {
+        return 1.0;
+    }
+}
+
 // Handbook of atomization and sprays
 double euler_droplets::Kelbaliyev_Ceylan(const double Re)
 {
@@ -34,12 +60,24 @@ double euler_droplets::Ranz_Marshall(const double Re, const double Pr)
     return 2+0.6*pow(Re,0.5)*pow(Pr,1/3);
 }
 
+double euler_droplets::Sherwood_evaporation(const double Re, const double Sc, const double BM)
+{
+    return (2+0.87*pow(Re,0.5)*pow(Sc,0.33333))/pow(1+BM,0.7);
+}
+
+double euler_droplets::Nusselt_evaporation(const double Re,const double Pr, const double BT)
+{
+    return (2+0.57*pow(Re,0.5)*pow(Pr,0.33333))/pow(1+BT,0.7);
+}
+
 double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, std::vector<double>& res)
 {
     int mom_idx, frac_idx, num_idx, eng_idx;
     double r,u_drop,T_drop,Ys,Re,Sh,Sc,Pr,Nu;
+    double BT,BM;
     double total_m = 0;
-    double md;
+    double md,Q;
+    double phi;
 
     const double rho_l = thermo::species[2].rho_liq;
     const double rho_gas = thermo::density(W);
@@ -56,6 +94,8 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
     const double k = thermo::thermal_conductivity(comp,thermo::T[i]);
     const double h_vap = thermo::species[2].h_vap;
     const double Y_gas = comp[2];
+
+    const double T_boil = thermo::boil_temp(2,thermo::p[i]);
 
     for(int idx = 0; idx < variables::active_drop_idx.size(); idx++)
     {
@@ -80,21 +120,33 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
         Sc = mu/(rho_gas*D);
         Pr = cp*mu/k;
 
-        Nu = Ranz_Marshall(Re,Pr);
-        Sh = 2+0.6*pow(Re,0.5)*pow(Sc,0.333);
+        BT = cp*(T_gas-T_drop)*phi/h_vap;
+        BM = (Ys-Y_gas)/(1-Ys);
 
-        md = W[num_idx]*2*M_PI*r*D*Sh*rho_gas*(Ys-Y_gas);
+        Nu = Nusselt_evaporation(Re,Pr,BT);
+        Sh = Sherwood_evaporation(Re,Sc,BM);
 
+        // Nu = Ranz_Marshall(Re,Pr);
+        // Sh = 2+0.6*pow(Re,0.5)*pow(Sc,0.333);
+
+        md = W[num_idx]*Sh*2*r*M_PI*D*rho_gas*(Ys-Y_gas);
+        Q = W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop);
+        
+        phi = heat_evap_interp(T_drop,T_boil);
+
+        md += std::max(0.0,phi*Q/h_vap);
+        Q += -std::max(0.0,phi*Q);
+            
         total_m += md;
 
         res[frac_idx] += -md;
         res[mom_idx] += -md*u_drop;
-        res[eng_idx] += W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop) - md*(h_vap + thermo::species[2].C*T_drop);
+        res[eng_idx] += Q - md*(h_vap + thermo::species[2].C*T_drop);
 
         res[0] += md;
         res[2] += md;
         res[variables::mom_idx] += md*u_drop;
-        res[variables::eng_idx] += -W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop) + md*thermo::species[2].h(T_drop) + 0.5*md*u_drop*u_drop;
+        res[variables::eng_idx] += -Q + md*thermo::species[2].h(T_drop) + 0.5*md*u_drop*u_drop;
         // res[variables::eng_idx] += md*thermo::species[2].h(T_drop) + 0.5*md*u_drop*u_drop;
     }
 

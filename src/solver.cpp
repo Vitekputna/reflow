@@ -56,8 +56,8 @@ void solver::chemical_reactions(double dt,std::vector<std::vector<double>>& res,
         res[i][1] += -6.6*dm/dt;    // Oxydizer
         res[i][2] += -dm/dt;        // Fuel
 
-        // res[i][var.eng_idx] += dm*33.326e6/dt;
-        // res[i][var.eng_idx] += dm*30e6/dt;
+        res[i][var.eng_idx] += dm*33.326e6/dt;
+        // res[i][var.eng_idx] += dm*10e6/dt;
     }
 }
 
@@ -229,9 +229,6 @@ void solver::HLL2_flux(variables& var, mesh const& msh, parameters const& par, c
     double cr,cl,ur,ul;
     double p_right, p_left;
     bool right, left, center;
-
-    // std::vector<int> fluid = {0,1,2,variables::mom_idx,variables::eng_idx};
-    // std::vector<int> condensed = {3,4,5,6};
 
     std::vector<double> W_left(var.N_var);
     std::vector<double> W_right(var.N_var);

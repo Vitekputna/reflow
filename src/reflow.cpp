@@ -201,9 +201,21 @@ void reflow::add_reaction(reaction& R)
     chemistry.add_reaction(R);
 }
 
-void reflow::export_particles(std::vector<particle>& particles)
+void reflow::export_data()
+{
+    var.export_to_file(export_path,msh,par_man.particles);
+}
+
+void reflow::export_mesh()
+{
+    msh.export_to_file(export_path);
+}
+
+void reflow::export_particles()
 {
     auto p_stream = std::ofstream("out/Lagrangian.txt");
+
+    auto particles = this->par_man.particles;
 
     for(auto& P : particles)
     {
@@ -352,6 +364,13 @@ void reflow::set_numThreads(const int _numThreads)
     numThreads = _numThreads;
 }
 
+void reflow::set_export_path(std::string path)
+{
+    std::cout << "##########################################\n";
+    std::cout << "Setting export path to: " + path +"\n";
+    export_path = path;
+}
+
 void reflow::divide_data_parallel()
 {
     std::cout << "##########################################\n";
@@ -420,6 +439,12 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
     std::cout << "time[s]\ttime step[s]\tresidual[]\n";
     std::cout << "##########################################\n";
 
+    const int cell_from = 0;
+    const int cell_to = var.N-1;
+
+    const int wall_from = 0;
+    const int wall_to = var.N_walls-1;
+
     divide_data_parallel();
     #pragma omp parallel shared(dt,var,msh,res,t,n,residual,stream,t_end) private(RUN_FLAG) num_threads(numThreads)
     {
@@ -427,13 +452,24 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
         do
         {
             // update pressure and temperature
-            thermo::update(var.W,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
-            #pragma omp barrier
-            if(reconstruct)
+            // thermo::update(var.W,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
+            if(threadID == 0)
             {
-                solver::reconstruct(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
-                solver::reconstruct_pressure(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);    
+                thermo::update(var.W);
+
+                if(reconstruct)
+                {
+                    solver::reconstruct(var,msh,cell_from+1,cell_to-1);
+                    solver::reconstruct_pressure(var,msh,cell_from+1,cell_to-1);    
+                }
             }
+
+            // #pragma omp barrier
+            // if(reconstruct)
+            // {
+            //     solver::reconstruct(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+            //     solver::reconstruct_pressure(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);    
+            // }
 
             solver::compute_exact_flux(var,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
 
@@ -460,12 +496,14 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
             #pragma omp barrier
             solver::Explicit_Euler(var,res,dt,cell_startIndices[threadID],cell_endIndices[threadID]);
 
+            #pragma omp barrier
+
             if(threadID == 0)
             {
                 // Runtime stuff
                 if(!(n % n_res)) 
                 {
-                    stream = std::ofstream("out/res.txt",std::ios_base::app);
+                    stream = std::ofstream(export_path+"res.txt",std::ios_base::app);
                     residual = solver::max_residual(res,var,var.eng_idx);
 
                     std::cout << "\b\b\r";
@@ -480,8 +518,8 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
                 // Runtime export
                 if(!(n % n_exp))
                 {
-                    var.export_to_file(msh,par_man.particles);
-                    if(lagrange_particles) export_particles(par_man.particles);
+                    var.export_to_file(export_path, msh, par_man.particles);
+                    if(lagrange_particles) export_particles();
                     // var.export_timestep(t,msh,par_man.particles);
                 }
             
@@ -513,8 +551,8 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
     std::cout << "##########################################\n";
     std::cout << "Number of particles: " << par_man.particles.size() << "\n";
 
-    var.export_to_file(msh,par_man.particles);
-    msh.export_to_file();
+    var.export_to_file(export_path,msh,par_man.particles);
+    msh.export_to_file(export_path);
 }
 
 void reflow::solve(double _t_end, double _max_residual, double _CFL)
@@ -566,7 +604,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
 
         solver::compute_cell_res(res,var,msh,cell_from+1,cell_to-1);
         solver::apply_source_terms(res,var,msh,cell_from+1,cell_to-1);
-        // solver::chemical_reactions(dt,res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+        solver::chemical_reactions(dt,res,var,msh,cell_from+1,cell_to-1);
         solver::droplet_transport(res,var,msh,cell_from+1,cell_to-1);
 
         // lagrangian particles part
@@ -574,6 +612,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         {
             // apply_lagrangian_particle_inlet(dt);
             if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
+            
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
 
@@ -583,7 +622,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // Runtime stuff
         if(!(n % n_res)) 
         {
-            stream = std::ofstream("out/res.txt",std::ios_base::app);
+            stream = std::ofstream(export_path+"res.txt",std::ios_base::app);
             residual = solver::max_residual(res,var,var.eng_idx);
 
             std::cout << "\b\b\r";
@@ -596,8 +635,8 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         // Runtime export
         if(!(n % n_exp))
         {
-            var.export_to_file(msh,par_man.particles);
-            if(lagrange_particles) export_particles(par_man.particles);
+            var.export_to_file(export_path,msh,par_man.particles);
+            if(lagrange_particles) export_particles();
             // var.export_timestep(t,msh,par_man.particles);
         }
     
@@ -622,6 +661,6 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
     std::cout << "##########################################\n";
     std::cout << "Number of particles: " << par_man.particles.size() << "\n";
 
-    var.export_to_file(msh,par_man.particles);
-    msh.export_to_file();
+    var.export_to_file(export_path,msh,par_man.particles);
+    msh.export_to_file(export_path);
 }

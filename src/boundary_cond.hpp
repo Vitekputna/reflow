@@ -6,6 +6,7 @@ namespace boundary
 {
     // abstractions
     void mass_flow_inlet(variables& var, mesh& msh, std::vector<double>& values);
+    void pressure_inlet(variables& var, mesh& msh, std::vector<double>& values);
     void quiscent_droplet_inlet(variables& var, mesh& msh, std::vector<double>& values);
     void active_drop_inlet(variables& var, mesh& msh, std::vector<double>& values);
     void active_thermal_drop_inlet(variables& var, mesh& msh, std::vector<double>& values);

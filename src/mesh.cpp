@@ -265,9 +265,9 @@ void mesh::cubic(std::vector<std::vector<std::vector<double>>> curves, int n)
     compute_volumes();
 }
 
-void mesh::export_to_file()
+void mesh::export_to_file(std::string path)
 {
-    auto stream =  std::ofstream("out/A.txt");
+    auto stream =  std::ofstream(path+"A.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -277,7 +277,7 @@ void mesh::export_to_file()
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/r.txt");
+    stream =  std::ofstream(path+"r.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -287,7 +287,7 @@ void mesh::export_to_file()
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/V.txt");
+    stream =  std::ofstream(path+"V.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -297,7 +297,7 @@ void mesh::export_to_file()
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/Af.txt");
+    stream =  std::ofstream(path+"Af.txt");
 
     for(int i = 0; i < N-1; i++)
     {
@@ -306,14 +306,4 @@ void mesh::export_to_file()
 
     stream << "\n";
     stream.close();
-
-    // stream =  std::ofstream("out/V.txt");
-
-    // for(int i = 0; i < N; i++)
-    // {
-    //     stream << x[i] << " " << V[i] << "\n";
-    // }
-
-    // stream << "\n";
-    // stream.close();
 }

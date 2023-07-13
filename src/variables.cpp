@@ -206,14 +206,14 @@ void variables::apply_mass_source(double M_tot, double T, double x_from, double 
     }
 }
 
-void variables::export_to_file(mesh const& msh,std::vector<particle> const& particles)
+void variables::export_to_file(std::string path, mesh const& msh,std::vector<particle> const& particles)
 {
     double kappa,r;
 
     auto stream = std::ofstream();
     for(int k = 0; k < N_var; k++)
     {
-        stream =  std::ofstream("out/W" + std::to_string(k) + ".txt");
+        stream =  std::ofstream(path + "W" + std::to_string(k) + ".txt");
 
         for(int i = 0; i < N; i++)
         {
@@ -225,7 +225,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
 
     std::vector<double> comp(thermo::n_comp);
-    stream =  std::ofstream("out/Y.txt");
+    stream =  std::ofstream(path+"Y.txt");
     for(int i = 0; i < N; i++)
     {
         thermo::composition(comp,W[i]);
@@ -240,7 +240,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream.close();
     
 
-    stream =  std::ofstream("out/p.txt");
+    stream =  std::ofstream(path+"p.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -250,7 +250,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/u.txt");
+    stream =  std::ofstream(path+"u.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -260,7 +260,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/T.txt");
+    stream =  std::ofstream(path+"T.txt");
 
     double T_max = 0;
 
@@ -273,7 +273,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/H.txt");
+    stream =  std::ofstream(path+"H.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -283,7 +283,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/H0.txt");
+    stream =  std::ofstream(path+"H0.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -293,7 +293,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/M.txt");
+    stream =  std::ofstream(path+"M.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -303,7 +303,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/md.txt");
+    stream =  std::ofstream(path+"md.txt");
 
     for(int i = 0; i < N; i++)
     {
@@ -313,7 +313,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     stream << "\n";
     stream.close();
 
-    stream =  std::ofstream("out/X.txt");
+    stream =  std::ofstream(path+"X.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i];
@@ -325,7 +325,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-    stream =  std::ofstream("out/N.txt");
+    stream =  std::ofstream(path+"N.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i];
@@ -337,7 +337,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-    stream =  std::ofstream("out/Ue.txt");
+    stream =  std::ofstream(path+"Ue.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i];
@@ -349,7 +349,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-    stream =  std::ofstream("out/Te.txt");
+    stream =  std::ofstream(path+"Te.txt");
     for(int i = 0; i < N; i++)
     {
         int frac_idx, mom_idx, eng_idx;
@@ -367,7 +367,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-    stream =  std::ofstream("out/grad.txt");
+    stream =  std::ofstream(path+"grad.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i] << " ";
@@ -379,14 +379,14 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-    stream =  std::ofstream("out/Q_add.txt");
+    stream =  std::ofstream(path+"Q_add.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i] << " " << q[i] << "\n";
     }
     stream.close();
 
-    stream =  std::ofstream("out/md_add.txt");
+    stream =  std::ofstream(path+"md_add.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i] << " ";
@@ -398,7 +398,7 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
     stream.close();
 
-    stream =  std::ofstream("out/liquid_volume_frac.txt");
+    stream =  std::ofstream(path+"liquid_volume_frac.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i] << " ";
@@ -426,10 +426,10 @@ void variables::export_to_file(mesh const& msh,std::vector<particle> const& part
     }
 
     //set boundary elements
-    particle_values[0] = particle_values[1];
-    particle_values.back() = particle_values.rbegin()[1];
+    // particle_values[0] = particle_values[1];
+    // particle_values.back() = particle_values.rbegin()[1];
 
-    stream =  std::ofstream("out/particles.txt");
+    stream =  std::ofstream(path+"particles.txt");
     for(int i = 0; i < N; i++)
     {
         stream << msh.x[i] << " ";

@@ -10,8 +10,12 @@ namespace euler_droplets
     double Ingebo(const double Re);
 
     double Ranz_Marshall(const double Re, const double Pr);
+    double Sherwood_evaporation(const double Re, const double Sc, const double BM);
+    double Nusselt_evaporation(const double Re,const double Pr, const double BT);
 
     double droplet_temperature();
+
+    double heat_evap_interp(double T, double T_boil);
 
     double fuel_mass_fraction(double p, double T);
     double droplet_evaporation(const int i, std::vector<double>& W, std::vector<double>& res);

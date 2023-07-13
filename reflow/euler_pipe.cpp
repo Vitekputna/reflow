@@ -25,7 +25,7 @@ int N_var = N_comp+2*N_frac+droplet_momentum*N_frac+droplet_energy*N_frac+2;
 // double m_F = md/(OF+1);
 // double m_OX = md-m_F;
 // double OF = 1;
-double m_OX = 100;
+double m_OX = 200;
 double m_F = m_OX/OF;
 
 int main(int argc, char** argv)
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     // výpočet motoru
     reflow S;
     // S.refine_mesh(std::vector<std::vector<double>>{{0,0.1,500},{0.1,5,500}});
-    S.refine_mesh(std::vector<std::vector<double>>{{0,5,2000}});
+    S.refine_mesh(std::vector<std::vector<double>>{{0,5,500}});
 
     // S.load_old_data("out/",N_comp,N_frac,true,true);
 
@@ -66,10 +66,11 @@ int main(int argc, char** argv)
     using namespace boundary;
 
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,300,0,1,0}); 
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,400,0.5*u,100e-6,1e-6));
+    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,0.5*u,100e-6,1e-6));
     S.add_boundary_function(subsonic_outlet,std::vector<double>{p2});
 
-    S.solve(10,1000,0.3);
+    
+    S.solve(1,1000,0.1);
     S.var.export_to_file(S.msh,S.par_man.particles);
 
     return 0;

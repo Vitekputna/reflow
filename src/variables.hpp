@@ -55,6 +55,6 @@ struct variables
     void apply_heat_source(double Q_tot, double x_from, double x_to, mesh const& msh);
     void apply_mass_source(double M_tot, double T, double x_from, double x_to, mesh const& msh, std::vector<double> const& comp);
 
-    void export_to_file(mesh const& msh, std::vector<particle> const& particles);
+    void export_to_file(std::string path, mesh const& msh, std::vector<particle> const& particles);
     void export_timestep(double t, mesh const& msh, std::vector<particle> const& particles);
 };

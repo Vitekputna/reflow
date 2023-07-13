@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 
 struct mesh
 {
@@ -40,5 +41,5 @@ struct mesh
     void cubic(std::vector<std::vector<std::vector<double>>> curves, int n);
     void constant_area(double Area);
 
-    void export_to_file();
+    void export_to_file(std::string path);
 };

@@ -108,6 +108,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     double md;
 
     const double Q = heat_flux(r,Tf,P.T,rho_gas,u_drop,u_gas,mu,cp,k);
+    // const double Q = 0;
 
     if(P.r < 1e-6)
     {
@@ -124,7 +125,7 @@ double lagrange_solver::integrate_particle(double dt, double V, particle& P, std
     }
     else
     {
-        P.m = 4*M_PI*pow(P.r,3)*P.rho/3;
+        P.m = (4*M_PI*pow(P.r,3)*P.rho)/3;
 
         P.M = P.N*P.m;
 

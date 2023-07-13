@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
     // Mesh generation
     // Simulation.refine_mesh(std::vector<std::vector<double>>{{0,0.1,200},{0.1,5,1000}});
-    Simulation.refine_mesh(std::vector<std::vector<double>>{{0,5,2000}});
+    Simulation.refine_mesh(std::vector<std::vector<double>>{{0,5,500}});
     Simulation.msh.constant_area(0.002);
 
     // Simulation.load_old_data("out/",3,0,true,true);
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
     // Lagrangian particles manager and specie init
     Simulation.init_particles(1e6,1e3,1000);
-    Simulation.add_lagrangian_mono_particles(2,m_F,700,100e-6 ,-0.0004,0.5*u,400,300,1e5,1e3);
+    Simulation.add_lagrangian_mono_particles(2,m_F,700,100e-6 ,-0.0004,0.5*u,300,300,1e5,1e3);
     // Simulation.add_lagrangian_unif_particles(2,20,700,1e-4,1e-6,0,15,300,300,1e5,1e-3);
     // Simulation.add_lagrangian_norm_particles(2,m_F,700,30e-6,1e-6,0,40,300,300,1e5,1e-3);
 
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     Simulation.add_boundary_function(boundary::subsonic_outlet,std::vector<double>{p2});
 
     // Solving
-    Simulation.solve(50,1000,0.2);
+    Simulation.solve(1,1000,0.2);
 
     // Exporting all lagrangian particles
     Simulation.var.export_to_file(Simulation.msh,Simulation.par_man.particles);

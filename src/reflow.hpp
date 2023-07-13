@@ -60,6 +60,9 @@ class reflow
     double max_res;
     double t_end;
     double CFL;
+
+    // Export
+    std::string export_path = "out/";
     
     // Constructors
     reflow();
@@ -74,6 +77,7 @@ class reflow
     void set_flux_func_vectors();
     void divide_data_parallel();
     void set_numThreads(const int _numThreads);
+    void set_export_path(std::string path);
 
     // Sources
     void apply_heat_source(double Q, double x_from, double x_to);
@@ -123,7 +127,9 @@ class reflow
     void apply_boundary_conditions(); 
 
     // Export
-    void export_particles(std::vector<particle>& particles);
+    void export_data();
+    void export_mesh();
+    void export_particles();
     void init_particles(int N_max, int N_particles, int N_per_group);
 
     // run criteria functions

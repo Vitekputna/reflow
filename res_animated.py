@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import sys
 
 def first_nonzero(data):
     
@@ -27,7 +28,9 @@ def load_comp(filename):
 
     return data
 
-data = load_comp("out/res.txt")
+path = sys.argv[1]
+
+data = load_comp(path + "res.txt")
 
 x = data[:,0]
 y1 = data[:,1]/first_nonzero(data[:,1])
@@ -50,7 +53,7 @@ _,x_max = ax.get_xlim()
 y_min, y_max = ax.get_ylim()
 
 while True:
-    data = load_comp("out/res.txt")
+    data = load_comp(path+"res.txt")
 
     x = data[:,0]
     y1 = data[:,1]/first_nonzero(data[:,1])

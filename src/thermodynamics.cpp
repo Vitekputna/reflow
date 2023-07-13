@@ -9,6 +9,8 @@ std::vector<specie> thermo::species;
 
 std::vector<double> thermo::T, thermo::p;
 
+double thermo::Ru = 8314;
+
 int thermo::n_comp = 0;
 double thermo::thershold_comp = 1e-4;
 
@@ -246,12 +248,13 @@ double thermo::liquid_fraction(std::vector<double> const& W)
         total_bulk_density += W[frac];
     }
 
-    return total_bulk_density/liquid_density;
+    return total_bulk_density/(liquid_density + 1e-12);
 }
 
 double thermo::difusivity(std::vector<double> const& comp, double T)
 {
-    return 1e-5;
+    return 2.3e-5; //Water*Air
+    // return 1e-5;
 }
 
 // dynamic viscosity [Pas]
@@ -374,4 +377,16 @@ void thermo::update(std::vector<std::vector<double>> const& W, const int from, c
         thermo::T[i] = thermo::temp_new(i,comp,W[i]);
         thermo::p[i] = thermo::pressure(i,W[i],comp);
     }
+}
+
+double thermo::boil_temp(int spec, double p)
+{
+    const double T_ref = species[spec].T_ref;
+    const double p_ref = species[spec].p_ref;
+    const double h_vap = species[spec].h_vap;
+    const double Mm = species[spec].Mm;
+
+    double A = 1/T_ref - Ru/(h_vap*Mm)*log(p/p_ref);
+
+    return 1/A;
 }

@@ -105,21 +105,21 @@ def plot_euler(path):
     Te = Te[:,1:]
 
     plt.figure(1)
-    plt.plot(x,u,'k')
+    plt.plot(x,u,'b',label = "Fluid")
     plt.plot(x,Ue,'b--',label = "Eulerian droplets")
-    plt.title("Rychlost v komoře")
+    plt.title("Rychlost")
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
     plt.figure(2)
-    plt.plot(x,T,'b')
+    plt.plot(x,T,'b',label = "Fluid")
     plt.plot(x,Te,'b--',label="Eulerian droplets")
-    plt.title("Teplota v komoře")
+    plt.title("Teplota")
     plt.xlabel("x[m]")
     plt.ylabel("T[K]")
     plt.grid()
 
-    r = radius(X,N,700)
+    r = radius(X,N,1000)
     plt.figure(3)
     # plt.plot(x,r[:,1:],'')
     plt.plot(x,r[:,0],'b--',label = "Eulerian")
@@ -136,8 +136,8 @@ def plot_euler(path):
     plt.grid()
 
     plt.figure(5)
-    plt.plot(x,rho,'b')
-    plt.title("hustota v komoře")
+    plt.plot(x,rho,'b',label = "Fluid (Euler)")
+    plt.title("Hustota")
     plt.xlabel("x[m]")
     plt.ylabel(r"$\rho[kgm^{-3}]$")
 
@@ -161,16 +161,16 @@ def plot_lagrange(path):
     Te = Te[:,1:]
 
     plt.figure(1)
-    plt.plot(x,u,'k')
+    plt.plot(x,u,'r',label = "Fluid")
     plt.plot(particles[:,0],particles[:,2],'r--',label = "Lagrangian droplets")
-    plt.title("Rychlost v komoře")
+    plt.title("Rychlost")
     plt.xlabel("x[m]")
     plt.ylabel(r"$u[ms^{-1}]$")
 
     plt.figure(2)
-    plt.plot(x,T,'r')
+    plt.plot(x,T,'r',label = "Fluid")
     plt.plot(particles[:,0],particles[:,3],'r--',label = "Lagrangian droplets")
-    plt.title("Teplota v komoře")
+    plt.title("Teplota")
     plt.xlabel("x[m]")
     plt.ylabel("T[K]")
     plt.grid()
@@ -190,16 +190,16 @@ def plot_lagrange(path):
     plt.grid()
 
     plt.figure(5)
-    plt.plot(x,rho,'r')
-    plt.title("hustota v komoře")
+    plt.plot(x,rho,'r',label = "Fluid (Lagrange)")
+    plt.title("Hustota")
     plt.xlabel("x[m]")
     plt.ylabel(r"$\rho[kgm^{-3}]$")
 
 path1 = sys.argv[1]
 path2 = sys.argv[2]
 
-plot_euler(path1)
 plot_lagrange(path2)
+plot_euler(path1)
 
 plt.figure(1)
 plt.grid()
@@ -210,6 +210,14 @@ plt.grid()
 plt.legend()
 
 plt.figure(3)
+plt.grid()
+plt.legend()
+
+plt.figure(4)
+plt.grid()
+plt.legend()
+
+plt.figure(5)
 plt.grid()
 plt.legend()
 
