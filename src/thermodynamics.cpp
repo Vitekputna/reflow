@@ -303,7 +303,7 @@ double thermo::dF(std::vector<double> const& comp, double r, double T)
 
 double thermo::temp_new(int idx, std::vector<double> const& comp, std::vector<double> const& W)
 {
-    static double T, T_last, F, rho, C, r, h;
+    double T, T_last, F, rho, C, r, h;
 
     int n = W.size()-1;
     rho = density(W);

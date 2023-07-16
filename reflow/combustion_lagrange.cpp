@@ -15,20 +15,13 @@ double p2 = 101325;
 double md = 1.34;
 double OF = 6.6;
 
-int N_frac = 5;
+int N_frac = 0;
 int N_comp = 3;
-bool droplet_momentum = true;
-bool droplet_energy = true;
 
-int N_var = N_comp+2*N_frac+droplet_momentum*N_frac+droplet_energy*N_frac+2;
+int N_var = N_comp+2;
 
 double m_F = md/(OF+1);
 double m_OX = md-m_F;
-
-const double r = 50e-6;
-const double sig = r/10;
-
-const double ud = 30;
 
 int main(int argc, char** argv)
 {
@@ -44,14 +37,11 @@ int main(int argc, char** argv)
     // výpočet motoru
     reflow S;
 
-    S.set_export_path("tests/euler_30/");
-    S.set_numThreads(6);
-    S.runtime_export(true);
-    S.set_export_frequency(1000);
-    S.set_export_from_time(0.04);
+    S.set_export_path("tests/lagrange2000mono/");
+    // S.set_numThreads(4);
 
-    // S.refine_mesh(std::vector<std::vector<double>>{{0,0.15,2000},{0.15,0.319,1000}});
-    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,500}});
+    // S.refine_mesh(std::vector<std::vector<double>>{{0,0.15,2000},{0.15,0.319,1000}});  
+    S.refine_mesh(std::vector<std::vector<double>>{{0,0.319,2000}});
     S.spline_geometry(curves,100);
 
     S.export_mesh();
@@ -75,19 +65,20 @@ int main(int argc, char** argv)
     double energy = rho*thermo::enthalpy(T0,init_comp) -p0 + rho*u*u/2;
 
     // Initial conditions
-    // S.initial_conditions(N_frac,true,true,std::vector<double>{rho,rho,0,0,0,0,0,momentum,energy});
-    S.initial_conditions(N_frac,true,true,init::nozzle(S.msh.N,N_var,m_OX,T0,p0,p2,0.15,init_comp,S.msh));
+    S.initial_conditions(init::nozzle(S.msh.N,N_var,m_OX,T0,p0,p2,0.15,init_comp,S.msh));
 
     std::cout << "Fuel: " << m_F << ", Oxydizer: " << m_OX << "\n";
 
     using namespace boundary;
 
+    S.init_particles(1e6,1e3,1000);
+    S.add_lagrangian_mono_particles(2,m_F,700,70e-6,-0.002,5,300,300,1e5,1e3);
+
     S.add_boundary_function(mass_flow_inlet,std::vector<double>{m_OX,300,0,1,0}); 
-    S.add_boundary_function(active_thermal_drop_inlet,active_thermal_droplets(normal_distribution,N_frac,m_F,700,300,ud,r,sig));
     S.add_boundary_function(supersonic_outlet,std::vector<double>{p2});
 
-    S.solve_parallel(0.08,1000,0.3); 
-    // S.var.export_to_file(S.msh,S.par_man.particles); 
+    S.solve(0.3,1000,0.2); 
+    S.export_data();
 
     return 0;
 }

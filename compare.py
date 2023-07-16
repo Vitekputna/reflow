@@ -119,7 +119,7 @@ def plot_euler(path):
     plt.ylabel("T[K]")
     plt.grid()
 
-    r = radius(X,N,1000)
+    r = radius(X,N,700)
     plt.figure(3)
     # plt.plot(x,r[:,1:],'')
     plt.plot(x,r[:,0],'b--',label = "Eulerian")

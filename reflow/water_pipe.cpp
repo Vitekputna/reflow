@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     reflow S;
     S.refine_mesh(std::vector<std::vector<double>>{{0,5,2000}});
 
-    S.msh.export_to_file();
+    S.export_mesh();
 
     // Species
     S.add_specie(287,1.3,29,air_cp,air_k,air_mu);                //Air
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     S.add_boundary_function(subsonic_outlet,std::vector<double>{p2});
 
     S.solve(1,1000,0.1);
-    S.var.export_to_file(S.msh,S.par_man.particles);
+    S.export_data();
 
     return 0;
 }

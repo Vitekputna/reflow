@@ -83,8 +83,8 @@ void solver::reconstruct(variables& var, mesh const& msh, const int from, const 
 
     for(auto i = from; i <= to; i++)
     {
-        // for(auto k = 0; k < var.N_var; k++)
-        for(auto const& k : fluid)
+        for(auto k = 0; k < var.N_var; k++)
+        // for(auto const& k : fluid)
         {
             // phi = minmod(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
             phi = van_albada(var.W[i+1][k] - var.W[i][k] , var.W[i][k] - var.W[i-1][k]);
@@ -646,4 +646,16 @@ double solver::max_residual(std::vector<std::vector<double>> const& res, variabl
     }
 
     return max_res;
+}
+
+double solver::L2_norm(mesh const& msh, std::vector<std::vector<double>> const& res, int res_idx)
+{
+    double result = 0;
+
+    for(unsigned int i = 1; i < res.size()-1; i++)
+    {
+        result += (msh.xf[i]-msh.xf[i-1])*res[i][res_idx]*res[i][res_idx];
+    }
+
+    return sqrt(result);
 }

@@ -406,40 +406,44 @@ void variables::export_to_file(std::string path, mesh const& msh,std::vector<par
     }
     stream.close();
 
-    std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
 
-    for(auto const& P : particles)
+    if(particles.size()>0)
     {
-        if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
-    }
+        std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
 
-    double n;
-    for(auto const& P : particles)
-    {
-        if(P.in_use)
+        for(auto const& P : particles)
         {
-            n = particle_values[P.last_cell_idx][3];
-            particle_values[P.last_cell_idx][0] += P.N*P.r/n;
-            particle_values[P.last_cell_idx][1] += P.N*P.u/n;
-            particle_values[P.last_cell_idx][2] += P.N*P.T/n;
+            if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
         }
-    }
 
-    //set boundary elements
-    // particle_values[0] = particle_values[1];
-    // particle_values.back() = particle_values.rbegin()[1];
-
-    stream =  std::ofstream(path+"particles.txt");
-    for(int i = 0; i < N; i++)
-    {
-        stream << msh.x[i] << " ";
-        for(int k = 0; k < 4; k++)
+        double n;
+        for(auto const& P : particles)
         {
-            stream << particle_values[i][k] << " ";
+            if(P.in_use)
+            {
+                n = particle_values[P.last_cell_idx][3];
+                particle_values[P.last_cell_idx][0] += P.N*P.r/n;
+                particle_values[P.last_cell_idx][1] += P.N*P.u/n;
+                particle_values[P.last_cell_idx][2] += P.N*P.T/n;
+            }
         }
-        stream << "\n";
+
+        //set boundary elements
+        // particle_values[0] = particle_values[1];
+        // particle_values.back() = particle_values.rbegin()[1];
+
+        stream =  std::ofstream(path+"particles.txt");
+        for(int i = 0; i < N; i++)
+        {
+            stream << msh.x[i] << " ";
+            for(int k = 0; k < 4; k++)
+            {
+                stream << particle_values[i][k] << " ";
+            }
+            stream << "\n";
+        }
+        stream.close();       
     }
-    stream.close();    
 }
 
 void variables::export_timestep(double t, mesh const& msh, std::vector<particle> const& particles)
@@ -452,27 +456,30 @@ void variables::export_timestep(double t, mesh const& msh, std::vector<particle>
 
     std::vector<std::vector<double>> particle_values(N,std::vector<double>(4,0.0));
 
-    for(auto const& P : particles)
+    if(true)
     {
-        if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
-    }
-
-    int n;
-    for(auto const& P : particles)
-    {
-        if(P.in_use)
+        for(auto const& P : particles)
         {
-            n = particle_values[P.last_cell_idx][3];
-            particle_values[P.last_cell_idx][0] += P.N*P.r/n;
-            particle_values[P.last_cell_idx][1] += P.N*P.u/n;
-            particle_values[P.last_cell_idx][2] += P.N*P.T/n;
+            if(P.in_use) particle_values[P.last_cell_idx][3] += P.N;
         }
-    }
 
-    for(int i = 1; i < N-1; i++)
-    {
-        stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][N_comp]/W[i][0] << "\t" << thermo::p[i] << "\t" << thermo::T[i]
-                           << "\t" << particle_values[i][0] << "\t" << particle_values[i][1] << "\t" << particle_values[i][2] << "\t" << particle_values[i][3] << "\n";
+        int n;
+        for(auto const& P : particles)
+        {
+            if(P.in_use)
+            {
+                n = particle_values[P.last_cell_idx][3];
+                particle_values[P.last_cell_idx][0] += P.N*P.r/n;
+                particle_values[P.last_cell_idx][1] += P.N*P.u/n;
+                particle_values[P.last_cell_idx][2] += P.N*P.T/n;
+            }
+        }
+
+        for(int i = 1; i < N-1; i++)
+        {
+            stream << msh.x[i] << "\t" << W[i][0] << "\t" << W[i][N_comp]/W[i][0] << "\t" << thermo::p[i] << "\t" << thermo::T[i]
+                            << "\t" << particle_values[i][0] << "\t" << particle_values[i][1] << "\t" << particle_values[i][2] << "\t" << particle_values[i][3] << "\n";
+        }
     }
 
 }

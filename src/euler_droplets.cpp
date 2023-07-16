@@ -120,6 +120,8 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
         Sc = mu/(rho_gas*D);
         Pr = cp*mu/k;
 
+        phi = heat_evap_interp(T_drop,T_boil);
+
         BT = cp*(T_gas-T_drop)*phi/h_vap;
         BM = (Ys-Y_gas)/(1-Ys);
 
@@ -132,10 +134,10 @@ double euler_droplets::droplet_evaporation(const int i, std::vector<double>& W, 
         md = W[num_idx]*Sh*2*r*M_PI*D*rho_gas*(Ys-Y_gas);
         Q = W[num_idx]*Nu*2*r*M_PI*k*(T_gas-T_drop);
         
-        phi = heat_evap_interp(T_drop,T_boil);
+        
 
         md += std::max(0.0,phi*Q/h_vap);
-        Q += -std::max(0.0,phi*Q);
+        Q += -std::max(0.0,phi*Q);  
             
         total_m += md;
 

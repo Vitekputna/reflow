@@ -63,6 +63,8 @@ class reflow
 
     // Export
     std::string export_path = "out/";
+    bool runtime_export_flag = false;
+    double export_from_time = 0;
     
     // Constructors
     reflow();
@@ -127,6 +129,10 @@ class reflow
     void apply_boundary_conditions(); 
 
     // Export
+    void set_export_from_time(double time);
+    void set_export_frequency(int freq);
+    void runtime_export(bool state);
+    void export_runtime(const double t);
     void export_data();
     void export_mesh();
     void export_particles();

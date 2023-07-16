@@ -5,6 +5,7 @@
 #include <random>
 #include <string>
 #include <omp.h>
+#include <filesystem>
 #include "lagrange_solver.hpp"
 #include "particle.hpp"
 
@@ -368,7 +369,30 @@ void reflow::set_export_path(std::string path)
 {
     std::cout << "##########################################\n";
     std::cout << "Setting export path to: " + path +"\n";
+    std::filesystem::create_directories(path);
     export_path = path;
+}
+
+void reflow::export_runtime(const double t)
+{
+    std::string timestep_path = export_path + "timesteps/time_" + std::to_string(t)+"/";
+    std::filesystem::create_directories(timestep_path);
+    var.export_to_file(timestep_path,msh,par_man.particles);
+}
+
+void reflow::runtime_export(bool state)
+{
+    runtime_export_flag = state;
+}
+
+void reflow::set_export_frequency(int freq)
+{
+    n_exp = freq;
+}
+
+void reflow::set_export_from_time(double time)
+{
+    export_from_time = time;
 }
 
 void reflow::divide_data_parallel()
@@ -446,43 +470,42 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
     const int wall_to = var.N_walls-1;
 
     divide_data_parallel();
-    #pragma omp parallel shared(dt,var,msh,res,t,n,residual,stream,t_end) private(RUN_FLAG) num_threads(numThreads)
+    #pragma omp parallel shared(dt,var,msh,res,t,n,residual,stream,t_end,CFL,RUN_FLAG,fluid_flux_idx,dispersed_flux_idx) num_threads(numThreads)
     {
         int threadID = omp_get_thread_num();
         do
         {
             // update pressure and temperature
+
+            #pragma omp barrier
             // thermo::update(var.W,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
-            if(threadID == 0)
+            if(threadID == 0) thermo::update(var.W);
+
+            #pragma omp barrier
+            if(reconstruct)
             {
-                thermo::update(var.W);
-
-                if(reconstruct)
-                {
-                    solver::reconstruct(var,msh,cell_from+1,cell_to-1);
-                    solver::reconstruct_pressure(var,msh,cell_from+1,cell_to-1);    
-                }
+                solver::reconstruct(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+                solver::reconstruct_pressure(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);    
             }
-
-            // #pragma omp barrier
-            // if(reconstruct)
-            // {
-            //     solver::reconstruct(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
-            //     solver::reconstruct_pressure(var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);    
-            // }
 
             solver::compute_exact_flux(var,cell_startIndices_full[threadID],cell_endIndices_full[threadID]);
 
-            #pragma omp barrier
+            if(threadID == 0)
+            {
+                solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_from,wall_to,fluid_flux_idx);
+                if(euler_particles) solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_from,wall_to,dispersed_flux_idx);
+            }
+
+            // #pragma omp barrier
             
-            solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_startIndices[threadID],wall_endIndices[threadID],fluid_flux_idx);
-            solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_startIndices[threadID],wall_endIndices[threadID],dispersed_flux_idx);
+            // solver::compute_wall_flux(dt,var,msh,fluid_flux,wall_startIndices[threadID],wall_endIndices[threadID],fluid_flux_idx);
+            // solver::compute_wall_flux(dt,var,msh,dispersed_flux,wall_startIndices[threadID],wall_endIndices[threadID],dispersed_flux_idx);
 
             #pragma omp barrier
 
             solver::compute_cell_res(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
             solver::apply_source_terms(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
-            // solver::chemical_reactions(dt,res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
+            solver::chemical_reactions(dt,res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
             solver::droplet_transport(res,var,msh,cell_startIndices[threadID],cell_endIndices[threadID]);
 
             // lagrangian particles part
@@ -494,6 +517,7 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
 
             // time integration
             #pragma omp barrier
+
             solver::Explicit_Euler(var,res,dt,cell_startIndices[threadID],cell_endIndices[threadID]);
 
             #pragma omp barrier
@@ -504,15 +528,15 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
                 if(!(n % n_res)) 
                 {
                     stream = std::ofstream(export_path+"res.txt",std::ios_base::app);
-                    residual = solver::max_residual(res,var,var.eng_idx);
+                    // residual = solver::max_residual(res,var,var.eng_idx);
+                    residual = solver::L2_norm(msh,res,var.eng_idx);
 
                     std::cout << "\b\b\r";
                     std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
 
-                    stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
+                    // stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
+                    stream << t << "\t" << solver::L2_norm(msh,res,0) << "\t" << solver::L2_norm(msh,res,var.mom_idx) << "\t" << residual << "\n";
                     stream.close();
-
-                    
                 }
 
                 // Runtime export
@@ -520,7 +544,7 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
                 {
                     var.export_to_file(export_path, msh, par_man.particles);
                     if(lagrange_particles) export_particles();
-                    // var.export_timestep(t,msh,par_man.particles);
+                    if(runtime_export_flag && t > export_from_time) export_runtime(t);
                 }
             
                 dt = solver::time_step(var,msh,CFL);
@@ -530,14 +554,11 @@ void reflow::solve_parallel(double _t_end, double _max_residual, double _CFL)
 
                 t += dt;
                 n++;
+
+                RUN_FLAG = maximum_time(t,residual);
             }
 
-            RUN_FLAG = maximum_time(t,residual);
-
-            if(!RUN_FLAG)
-            {
-                std::cout << threadID << " done\n";
-            }
+            #pragma omp barrier
 
         } while (RUN_FLAG);
         // } while (n < 100);  
@@ -611,8 +632,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         if(lagrange_particles)
         {
             // apply_lagrangian_particle_inlet(dt);
-            if(!(n % 5)) apply_lagrangian_particle_inlet(5*dt);
-            
+            if(!(n % 10)) apply_lagrangian_particle_inlet(10*dt);
             lagrange_solver::update_particles(dt,par_man.particles,var,msh,res);
         }
 
@@ -623,12 +643,12 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         if(!(n % n_res)) 
         {
             stream = std::ofstream(export_path+"res.txt",std::ios_base::app);
-            residual = solver::max_residual(res,var,var.eng_idx);
+            residual = solver::L2_norm(msh,res,var.eng_idx);
 
             std::cout << "\b\b\r";
             std::cout << t << " " << dt << " " << residual << "\t" << par_man.N << std::flush; 
 
-            stream << t << "\t" << solver::max_residual(res,var,0) << "\t" << solver::max_residual(res,var,var.mom_idx) << "\t" << residual << "\n";
+            stream << t << "\t" << solver::L2_norm(msh,res,0) << "\t" << solver::L2_norm(msh,res,var.mom_idx) << "\t" << residual << "\n";
             stream.close();
         }
 
@@ -637,7 +657,7 @@ void reflow::solve(double _t_end, double _max_residual, double _CFL)
         {
             var.export_to_file(export_path,msh,par_man.particles);
             if(lagrange_particles) export_particles();
-            // var.export_timestep(t,msh,par_man.particles);
+            var.export_timestep(t,msh,par_man.particles);
         }
     
         dt = solver::time_step(var,msh,CFL);

@@ -59,8 +59,8 @@ int main(int argc, char** argv)
     Simulation.solve(1,1000,0.1);
 
     // Exporting all lagrangian particles
-    Simulation.var.export_to_file(Simulation.msh,Simulation.par_man.particles);
-    Simulation.export_particles(Simulation.par_man.particles);
+    Simulation.export_data();
+    Simulation.export_particles();
 
     return 0;
 }
